@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Pricedown&family=Chango&family=VT323&display=swap');
+
+:root[data-theme="gta-sa"] {
+  --bg-image: linear-gradient(rgba(18, 14, 10, 0.85), rgba(8, 6, 4, 0.94)),
+              url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80');
+  --bg-color: #0d0a08;
+  --panel-bg: #1c1510;
+  --text-main: #dfd2be;
+  --text-dim: #7a6e5a;
+  --text-bright: #ffffff;
+  --border-color: #594532;
+  
+  --accent-action: #2d8a4e; /* Grove Street Green */
+  --accent-glow: rgba(45, 138, 78, 0.4);
+  --status-ok: #2d8a4e;
+  --status-err: #8a2424;
+}
+
+[data-theme="gta-sa"] body {
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+  font-family: 'Trebuchet MS', 'Arial Black', sans-serif;
+}
+
+[data-theme="gta-sa"] .brand-text,
+[data-theme="gta-sa"] .section-label {
+  font-family: 'Impact', 'Arial Black', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #55b768 !important;
+  text-shadow: 3px 3px 0px #000000;
+}
+
+[data-theme="gta-sa"] .service-block,
+[data-theme="gta-sa"] .telemetry-bar {
+  background: rgba(28, 21, 16, 0.9) !important;
+  border: 2px solid #594532 !important;
+  border-radius: 0px !important;
+  box-shadow: 4px 4px 0px #000000 !important;
+}
+
+[data-theme="gta-sa"] .service-block:hover {
+  border-color: #55b768 !important;
+}

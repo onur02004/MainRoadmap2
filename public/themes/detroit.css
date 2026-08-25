@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
+
+:root[data-theme="detroit"] {
+  --bg-image: linear-gradient(rgba(10, 16, 24, 0.88), rgba(4, 8, 14, 0.96)),
+              url('https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=1600&auto=format&fit=crop&q=80');
+  --bg-color: #04080e;
+  --panel-bg: #09131f;
+  --text-main: #b4cce8;
+  --text-dim: #436285;
+  --text-bright: #ffffff;
+  --border-color: #00aaff;
+  
+  --accent-action: #00aaff; /* CyberLife LED Blue */
+  --accent-glow: rgba(0, 170, 255, 0.5);
+  --status-ok: #00aaff;
+  --status-err: #ff3300; /* Deviant Red */
+
+  --grid-line: rgba(0, 170, 255, 0.12);
+  --box-bg-start: #0f243a;
+  --box-bg-end: #050e18;
+  --box-border: #00aaff;
+  --box-glow: rgba(0, 170, 255, 0.2);
+  --box-glow-hover: rgba(255, 51, 0, 0.6);
+}
+
+[data-theme="detroit"] body {
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+  letter-spacing: 0.5px;
+}
+
+[data-theme="detroit"] .brand-text,
+[data-theme="detroit"] .service-block h3,
+[data-theme="detroit"] .section-label {
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+[data-theme="detroit"] .service-block,
+[data-theme="detroit"] .telemetry-bar {
+  background: rgba(9, 19, 31, 0.9) !important;
+  border: 1px solid #00aaff !important;
+  border-left: 4px solid #00aaff !important;
+  border-radius: 0px 8px 0px 8px !important;
+  box-shadow: 0 0 15px rgba(0, 170, 255, 0.15) !important;
+}
+
+[data-theme="detroit"] .service-block:hover {
+  border-color: #ff3300 !important;
+  border-left-color: #ff3300 !important;
+  box-shadow: 0 0 25px rgba(255, 51, 0, 0.4) !important;
+}

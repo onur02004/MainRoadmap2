@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@800&family=Cinzel:wght@900&display=swap');
+
+:root[data-theme="dark-deception"] {
+  --bg-image: radial-gradient(circle at center, rgba(30, 8, 45, 0.75) 0%, rgba(6, 3, 10, 0.98) 85%),
+              url('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1019931/ss_972d67e61d6a2ecbce52e75fbb76b949b4d77257.jpg');
+  --bg-color: #06030a;
+  --panel-bg: #140b1e;
+  --text-main: #dfd4ea;
+  --text-dim: #79668d;
+  --text-bright: #ffffff;
+  --border-color: #9900cc;
+  --border-subtle: rgba(153, 0, 204, 0.15);
+  
+  --accent-action: #9900cc;
+  --accent-glow: rgba(153, 0, 204, 0.55);
+  --status-ok: #00ffaa;
+  --status-err: #ff0044;
+}
+
+[data-theme="dark-deception"] body {
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+[data-theme="dark-deception"] .service-block,
+[data-theme="dark-deception"] .telemetry-bar,
+[data-theme="dark-deception"] .gui-user-card-panel {
+  background: rgba(20, 11, 30, 0.92) !important;
+  border: 2px solid #9900cc !important;
+  border-radius: 6px !important;
+  box-shadow: 0 0 25px rgba(153, 0, 204, 0.3) !important;
+}
+
+/* --- 2D TABLET OYUN GÖRÜNÜMÜ --- */
+.dd-maze-viewport {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 950;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  padding: 24px;
+}
+
+.dd-tablet-frame {
+  width: 530px;
+  background: #0d0515;
+  border: 4px solid #9900cc;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(153, 0, 204, 0.4);
+  pointer-events: auto;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dd-tablet-frame.expanded {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow: 0 0 100px rgba(0, 0, 0, 0.95), 0 0 60px rgba(153, 0, 204, 0.7);
+}
+
+.dd-tablet-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: #180c25;
+  border-bottom: 2px solid #9900cc;
+  font-size: 0.65rem;
+  color: #bf00ff;
+  font-weight: 700;
+}
+
+.tablet-branding {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tablet-cam-lens {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00ffaa;
+  box-shadow: 0 0 8px #00ffaa;
+}
+
+.tablet-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tablet-stats strong {
+  color: #ffffff;
+}
+
+.dd-btn-toggle-view {
+  background: transparent;
+  border: 1px solid #9900cc;
+  color: #bf00ff;
+  font-size: 0.8rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Canvas & Jumpscare Katmanı */
+.dd-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  background: #040207;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#ddMazeCanvas {
+  display: block;
+}
+
+/* Flash Screamer */
+.dd-jumpscare-flash {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 0, 68, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+  z-index: 20;
+}
+
+.dd-jumpscare-flash.active {
+  opacity: 1;
+}
+
+.dd-monkey-screamer {
+  font-size: 6rem;
+  animation: monkeyShake 0.12s infinite alternate;
+  filter: drop-shadow(0 0 30px #ff0044);
+}
+
+@keyframes monkeyShake {
+  0% { transform: scale(1) rotate(-8deg); }
+  100% { transform: scale(1.3) rotate(8deg); }
+}
+
+.dd-jumpscare-quote {
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #ff0044;
+  text-shadow: 0 0 15px #ff0044;
+  margin-top: 10px;
+}
+
+/* Game Overlay */
+.dd-game-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 3, 10, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+}
+
+.overlay-modal {
+  text-align: center;
+  padding: 20px;
+}
+
+.overlay-modal h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.6rem;
+  color: #ff0044;
+  text-shadow: 0 0 15px #ff0044;
+  margin-bottom: 8px;
+}
+
+.overlay-modal p {
+  font-size: 0.75rem;
+  color: #dfd4ea;
+  margin-bottom: 16px;
+}
+
+.dd-restart-btn {
+  background: #ff0044;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 0 20px #ff0044;
+}
+
+/* Alt Bar */
+.dd-tablet-bottombar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: #180c25;
+  border-top: 1px solid rgba(153, 0, 204, 0.3);
+  font-size: 0.62rem;
+  color: #a092b3;
+}
+
+.ability-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(153, 0, 204, 0.2);
+  border: 1px solid #9900cc;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.ability-icon {
+  font-size: 1.2rem;
+  color: #00ffee;
+}
+
+.ability-txt strong {
+  color: #ffffff;
+  font-size: 0.65rem;
+}
+
+.ability-txt small {
+  color: #00ffee;
+  display: block;
+  font-size: 0.55rem;
+}
+
+.dash-hint strong {
+  color: #00ffaa;
+}

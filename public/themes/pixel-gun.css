@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root[data-theme="pixel-gun"] {
+  --bg-color: #14161d;
+  --panel-bg: #222633;
+  --text-main: #e2e8f0;
+  --text-dim: #717d96;
+  --text-bright: #ffffff;
+  --border-color: #3b4259;
+  
+  --accent-action: #f39c12; /* Armory Gold */
+  --accent-glow: rgba(243, 156, 18, 0.5);
+  --status-ok: #2ecc71;
+  --status-err: #e74c3c;
+
+  --grid-line: rgba(243, 156, 18, 0.15);
+  --box-bg-start: #353b4f;
+  --box-bg-end: #1a1d26;
+  --box-border: #f39c12;
+  --box-glow: rgba(0, 0, 0, 0.8);
+  --box-glow-hover: rgba(243, 156, 18, 0.4);
+}
+
+[data-theme="pixel-gun"] body {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  line-height: 1.8;
+  image-rendering: pixelated;
+  background: #14161d;
+}
+
+[data-theme="pixel-gun"] .service-block,
+[data-theme="pixel-gun"] .telemetry-bar,
+[data-theme="pixel-gun"] .theme-btn {
+  border-radius: 0px !important;
+  background: #222633 !important;
+  border: 3px solid #000000 !important;
+  box-shadow: inset 3px 3px 0px #424b66, inset -3px -3px 0px #12141c, 4px 4px 0px #000000 !important;
+}
+
+[data-theme="pixel-gun"] .service-block:hover {
+  border-color: #f39c12 !important;
+}

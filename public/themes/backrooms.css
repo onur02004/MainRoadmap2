@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root[data-theme="backrooms"] {
+  --bg-image: radial-gradient(circle at center, rgba(35, 32, 18, 0.7) 0%, rgba(14, 13, 8, 0.96) 80%),
+              url('https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Backrooms_model.jpg/1280px-Backrooms_model.jpg?utm_source=tr.wikipedia.org&utm_campaign=index&utm_content=thumbnail');
+  --bg-color: #0e0d08;
+  --panel-bg: #1a180f;
+  --text-main: #c4ba8b;
+  --text-dim: #615c41;
+  --text-bright: #ebdca4;
+  --border-color: rgba(212, 184, 52, 0.28);
+  --border-subtle: rgba(212, 184, 52, 0.08);
+  
+  --accent-action: #d4b834; /* Fluorescent Yellow/Brown */
+  --accent-glow: rgba(212, 184, 52, 0.35);
+  --status-ok: #a3964d;
+  --status-err: #8a3030;
+
+  --grid-line: rgba(212, 184, 52, 0.08);
+  --box-bg-start: #262316;
+  --box-bg-end: #12110b;
+  --box-border: rgba(212, 184, 52, 0.3);
+  --box-glow: rgba(0, 0, 0, 0.8);
+  --box-glow-hover: rgba(212, 184, 52, 0.3);
+}
+
+[data-theme="backrooms"] body {
+  font-family: 'Courier Prime', monospace;
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+  color: var(--text-main);
+  animation: fluorescentBuzz 8s infinite alternate;
+}
+
+/* Floresan Lamba Titreme Efekti */
+@keyframes fluorescentBuzz {
+  0%, 100% { filter: brightness(1) contrast(1); }
+  50% { filter: brightness(0.96) contrast(1.05); }
+  52% { filter: brightness(0.88); }
+  54% { filter: brightness(1); }
+}
+
+[data-theme="backrooms"] .telemetry-bar,
+[data-theme="backrooms"] .service-block {
+  background: rgba(26, 24, 15, 0.85) !important;
+  border: 1px solid rgba(212, 184, 52, 0.25) !important;
+  border-radius: 0px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="backrooms"] .service-block:hover {
+  border-color: var(--accent-action) !important;
+}

@@ -1,0 +1,311 @@
+@import url('https://fonts.googleapis.com/css2?family=Teko:wght@700&family=Share+Tech+Mono&family=Orbitron:wght@900&display=swap');
+
+:root[data-theme="nfs-most-wanted"] {
+  --bg-image: linear-gradient(rgba(20, 15, 8, 0.75), rgba(10, 8, 4, 0.94)),
+              url('https://images.alphacoders.com/602/602058.jpg');
+  --bg-color: #0d0a06;
+  --panel-bg: #1a140d;
+  --text-main: #e8ded1;
+  --text-dim: #8c7f6e;
+  --text-bright: #ffffff;
+  --border-color: #d4a017;
+  --border-subtle: rgba(212, 160, 23, 0.2);
+  
+  --accent-action: #ff9900; /* Most Wanted Amber Gold */
+  --accent-glow: rgba(255, 153, 0, 0.55);
+  --status-ok: #00d2ff;
+  --status-err: #ff2a00;
+}
+
+[data-theme="nfs-most-wanted"] body {
+  background: var(--bg-image) no-repeat center center fixed !important;
+  background-size: cover !important;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+[data-theme="nfs-most-wanted"] .service-block,
+[data-theme="nfs-most-wanted"] .telemetry-bar,
+[data-theme="nfs-most-wanted"] .gui-user-card-panel {
+  background: rgba(26, 20, 13, 0.92) !important;
+  border: 2px solid #d4a017 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 25px rgba(212, 160, 23, 0.25), inset 0 0 15px rgba(0,0,0,0.8) !important;
+}
+
+[data-theme="nfs-most-wanted"] .service-block:hover {
+  border-color: #ff9900 !important;
+  box-shadow: 0 0 35px rgba(255, 153, 0, 0.45) !important;
+}
+
+/* --- NFS SEPIA & SPEED FILTERS --- */
+.nfs-hud-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 900;
+  overflow: hidden;
+}
+
+.nfs-sepia-filter {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle, transparent 40%, rgba(212, 160, 23, 0.18) 100%);
+  pointer-events: none;
+}
+
+/* Speedbreaker Ağır Çekim Efekti */
+.nfs-speedbreaker-fx {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 153, 0, 0.28);
+  backdrop-filter: blur(2px) contrast(140%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 910;
+}
+
+.nfs-speedbreaker-fx.active {
+  opacity: 1;
+}
+
+/* NOS Warp Blur Tüneli */
+.nfs-nos-tunnel {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle, transparent 30%, rgba(0, 210, 255, 0.35) 90%);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 920;
+}
+
+.nfs-nos-tunnel.active {
+  opacity: 1;
+  animation: nosShake 0.08s infinite alternate;
+}
+
+@keyframes nosShake {
+  from { transform: scale(0.995); }
+  to { transform: scale(1.005); }
+}
+
+/* --- POLİS KOVALAMACA & HEAT LEVEL (SOL ÜST) --- */
+.nfs-pursuit-hud {
+  position: fixed;
+  top: 24px;
+  left: 200px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(18, 14, 9, 0.95);
+  border: 2px solid #ff2a00;
+  padding: 8px 16px;
+  border-radius: 4px;
+  box-shadow: 0 0 25px rgba(255, 42, 0, 0.4);
+  pointer-events: auto;
+  z-index: 950;
+}
+
+.heat-flame-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-right: 2px solid rgba(255, 42, 0, 0.4);
+  padding-right: 12px;
+}
+
+.heat-lbl { font-size: 0.6rem; color: #ff9900; font-weight: 800; }
+.heat-level { font-family: 'Teko', sans-serif; font-size: 2rem; color: #ff2a00; line-height: 1; }
+
+.pursuit-meta { display: flex; flex-direction: column; gap: 3px; }
+.pursuit-title { font-size: 0.65rem; font-weight: 900; color: #ffffff; letter-spacing: 0.5px; }
+.bounty-val { font-size: 0.65rem; color: #d4a017; }
+.bounty-val strong { color: #ffffff; }
+
+.pursuit-bar-wrap {
+  width: 160px;
+  height: 6px;
+  background: #331100;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.pursuit-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff9900, #ff2a00);
+}
+
+/* --- POLİS TELSİZ KONSOĞU (SOL ALT) --- */
+.nfs-police-scanner {
+  position: fixed;
+  bottom: 24px;
+  left: 40px;
+  width: 320px;
+  background: rgba(18, 14, 9, 0.92);
+  border: 1px solid #d4a017;
+  padding: 8px 12px;
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+  pointer-events: auto;
+  z-index: 950;
+}
+
+.scanner-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.58rem;
+  color: #ff9900;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.blinking-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff2a00;
+  animation: pulseDot 0.8s infinite alternate;
+}
+
+@keyframes pulseDot { from { opacity: 0.2; } to { opacity: 1; } }
+
+.scanner-log {
+  font-size: 0.65rem;
+  color: #dfd5c6;
+  font-style: italic;
+  line-height: 1.35;
+}
+
+/* --- TAKOMETRE & NOS CLUSTER (SAĞ ALT) --- */
+.nfs-gauge-cluster {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  pointer-events: auto;
+  z-index: 950;
+}
+
+.gauge-ring {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(20, 15, 8, 0.95) 60%, rgba(212, 160, 23, 0.25) 100%);
+  border: 3px solid #d4a017;
+  border-radius: 50%;
+  box-shadow: 0 0 30px rgba(0,0,0,0.9), 0 0 20px rgba(212, 160, 23, 0.3);
+}
+
+.gauge-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.gauge-bg-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 6;
+  stroke-dasharray: 400;
+  stroke-dashoffset: 80;
+}
+
+.gauge-redline {
+  fill: none;
+  stroke: #ff2a00;
+  stroke-width: 8;
+  stroke-dasharray: 80;
+  stroke-dashoffset: 0;
+}
+
+.gauge-needle {
+  stroke: #ff9900;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transform-origin: 100px 100px;
+  transition: transform 0.06s linear;
+  filter: drop-shadow(0 0 6px #ff9900);
+}
+
+.gauge-center-hud {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.gear-val {
+  font-family: 'Teko', sans-serif;
+  font-size: 2rem;
+  color: #ff9900;
+  line-height: 0.9;
+}
+
+.speed-val {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(255,255,255,0.6);
+}
+
+.speed-unit { font-size: 0.55rem; color: #d4a017; font-weight: 800; }
+
+/* Barlar (NOS & Speedbreaker) */
+.gauge-bars-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 130px;
+}
+
+.nfs-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bar-lbl { font-size: 0.58rem; font-weight: 800; letter-spacing: 0.5px; }
+.bar-lbl.nos { color: #00d2ff; }
+.bar-lbl.sb { color: #ff9900; }
+
+.nfs-meter-track {
+  width: 100%;
+  height: 8px;
+  background: #110d08;
+  border: 1px solid #443725;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.nfs-meter-fill.nos {
+  height: 100%;
+  background: linear-gradient(90deg, #0088cc, #00e5ff);
+  box-shadow: 0 0 10px #00e5ff;
+}
+
+.nfs-meter-fill.sb {
+  height: 100%;
+  background: linear-gradient(90deg, #cc6600, #ffaa00);
+  box-shadow: 0 0 10px #ffaa00;
+}
+
+/* Kontrol İpucu */
+.nfs-controls-hint {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  font-size: 0.62rem;
+  color: #a89a87;
+}
+
+.nfs-controls-hint strong { color: #ff9900; }

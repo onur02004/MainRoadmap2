@@ -1,0 +1,168 @@
+/*DEBUG HER 5 SANIYEDE SPOTIFY NE DINLENIYO DINLER */
+
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotify Entegrasyonu</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #121212;
+      color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #181818;
+      border: 1px solid #282828;
+      border-radius: 12px;
+      padding: 24px;
+      width: 360px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-spotify {
+      background-color: #1DB954;
+      color: #000000;
+      font-weight: 700;
+      font-size: 14px;
+      border: none;
+      border-radius: 50px;
+      padding: 12px 28px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 20px;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .btn-spotify:hover {
+      background-color: #1ed760;
+      transform: scale(1.04);
+    }
+
+    .card {
+      margin-top: 15px;
+      background: #242424;
+      border-radius: 8px;
+      padding: 16px;
+      display: none;
+    }
+
+    .album-art {
+      width: 140px;
+      height: 140px;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-bottom: 12px;
+    }
+
+    .track-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 6px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .track-artist {
+      font-size: 14px;
+      color: #B3B3B3;
+      margin: 0;
+    }
+
+    .status-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #1DB954;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .inactive-text {
+      color: #B3B3B3;
+      font-size: 14px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Müzik Durumu</h2>
+    
+    <!-- 1. Giriş Yapma Butonu -->
+    <a href="/api/spotify/login" class="btn-spotify">
+      Spotify ile Bağlan
+    </a>
+
+    <!-- 2. Şarkı Bilgisi Kartı -->
+    <div id="player-card" class="card">
+      <span class="status-badge" id="status-text">ŞU AN ÇALIYOR</span>
+      <br>
+      <img id="album-art" class="album-art" src="" alt="Album Art">
+      <p id="track-title" class="track-title">-</p>
+      <p id="track-artist" class="track-artist">-</p>
+    </div>
+
+    <p id="empty-state" class="inactive-text">Bağlandıktan sonra çalan şarkı burada gözükecektir.</p>
+  </div>
+
+  <script>
+    const playerCard = document.getElementById('player-card');
+    const emptyState = document.getElementById('empty-state');
+    const albumArt = document.getElementById('album-art');
+    const trackTitle = document.getElementById('track-title');
+    const trackArtist = document.getElementById('track-artist');
+
+    async function fetchNowPlaying() {
+      try {
+        const response = await fetch('/api/spotify/now-playing');
+        
+        // Henüz giriş yapılmamışsa veya hata varsa
+        if (!response.ok) {
+          playerCard.style.display = 'none';
+          emptyState.style.display = 'block';
+          emptyState.innerText = 'Lütfen önce yukarıdaki butondan Spotify hesabınızı bağlayın.';
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.isPlaying) {
+          albumArt.src = data.albumArt || '';
+          trackTitle.innerText = data.title;
+          trackArtist.innerText = data.artist;
+
+          playerCard.style.display = 'block';
+          emptyState.style.display = 'none';
+        } else {
+          playerCard.style.display = 'none';
+          emptyState.style.display = 'block';
+          emptyState.innerText = 'Şu anda Spotify üzerinde çalan bir şarkı yok.';
+        }
+      } catch (err) {
+        console.error('Veri çekilemedi:', err);
+      }
+    }
+
+    // Sayfa açıldığında ilk kontrolü yap
+    fetchNowPlaying();
+
+    // Her 5 saniyede bir otomatik olarak şarkıyı güncelle (Polling)
+    setInterval(fetchNowPlaying, 5000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Share+Tech+Mono&display=swap');
+
+:root[data-theme="beyond-two-souls"] {
+  --bg-image: radial-gradient(circle at center, rgba(35, 10, 30, 0.6) 0%, rgba(6, 4, 8, 0.96) 80%),
+              url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80');
+  --bg-color: #060408;
+  --panel-bg: #140c17;
+  --text-main: #dfc8e3;
+  --text-dim: #6d4b75;
+  --text-bright: #ffffff;
+  --border-color: rgba(255, 64, 129, 0.35);
+  
+  --accent-action: #ff4081; /* Aiden Tether Red/Magenta */
+  --accent-glow: rgba(255, 64, 129, 0.5);
+  --status-ok: #00e5ff; /* Spirit Blue */
+  --status-err: #ff0055;
+
+  --grid-line: rgba(255, 64, 129, 0.1);
+  --box-bg-start: #240f28;
+  --box-bg-end: #0b050d;
+  --box-border: #ff4081;
+  --box-glow: rgba(255, 64, 129, 0.2);
+  --box-glow-hover: rgba(0, 229, 255, 0.6);
+}
+
+[data-theme="beyond-two-souls"] body {
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+[data-theme="beyond-two-souls"] .brand-text,
+[data-theme="beyond-two-souls"] .service-block h3 {
+  font-family: 'Cinzel', serif;
+  letter-spacing: 1px;
+}
+
+[data-theme="beyond-two-souls"] .service-block,
+[data-theme="beyond-two-souls"] .telemetry-bar {
+  background: rgba(20, 12, 23, 0.88) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 64, 129, 0.4) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 20px rgba(255, 64, 129, 0.2) !important;
+}
+
+[data-theme="beyond-two-souls"] .service-block:hover {
+  border-color: #00e5ff !important;
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.45) !important;
+}

@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap');
+
+:root[data-theme="geometry-dash"] {
+  --bg-image: linear-gradient(135deg, #0b001a 0%, #001f3f 50%, #000814 100%);
+  --bg-color: #000814;
+  --panel-bg: #0d1b2a;
+  --text-main: #e0f2fe;
+  --text-dim: #38bdf8;
+  --text-bright: #ffffff;
+  --border-color: #00ff44;
+  
+  --accent-action: #00ff44;
+  --accent-glow: rgba(0, 255, 68, 0.6);
+  --status-ok: #00ff44;
+  --status-err: #ff0055;
+
+  --grid-line: rgba(0, 255, 68, 0.2);
+  --box-bg-start: #003820;
+  --box-bg-end: #00140a;
+  --box-border: #00ff44;
+  --box-glow: rgba(0, 255, 68, 0.3);
+  --box-glow-hover: rgba(0, 255, 68, 0.8);
+}
+
+[data-theme="geometry-dash"] body {
+  background: var(--bg-image) fixed;
+  font-family: 'Orbitron', monospace;
+  letter-spacing: 0.5px;
+}
+
+[data-theme="geometry-dash"] .service-block,
+[data-theme="geometry-dash"] .telemetry-bar {
+  background: #0d1b2a !important;
+  border: 3px solid #00ff44 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 15px rgba(0, 255, 68, 0.35), inset 0 0 10px rgba(0, 255, 68, 0.15) !important;
+}
+
+[data-theme="geometry-dash"] .service-block:hover {
+  transform: scale(1.02);
+  border-color: #ff0055 !important;
+  box-shadow: 0 0 25px rgba(255, 0, 85, 0.6) !important;
+}
+
+[data-theme="geometry-dash"] .progress-fill {
+  background: linear-gradient(90deg, #00ff44, #ffe600, #ff0055) !important;
+}
+
+/* --- HERO ALTINA YAPIŞAN RUNNER SAHNESİ --- */
+.gd-stage {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 90px;
+  overflow: hidden;
+  z-index: 10;
+  cursor: pointer;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 255, 68, 0.06) 100%);
+  border-bottom: 3px solid #00ff44;
+  box-shadow: 0 0 20px rgba(0, 255, 68, 0.3);
+}
+
+/* Zemin Neon Izgarası */
+.gd-ground-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: #00ff44;
+  box-shadow: 0 0 12px #00ff44;
+}
+
+/* Geometry Dash Küpü */
+.gd-player {
+  position: absolute;
+  bottom: 4px;
+  left: 80px;
+  width: 38px;
+  height: 38px;
+  background: #00ff44;
+  border: 3px solid #000000;
+  border-radius: 4px;
+  box-shadow: 0 0 14px #00ff44;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: bottom 0.25s cubic-bezier(0.2, 0.8, 0.4, 1), transform 0.5s linear;
+}
+
+.gd-face {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  background: #00aa2a;
+  border: 2px solid #000000;
+}
+
+.gd-eye {
+  position: absolute;
+  top: 4px;
+  width: 4px;
+  height: 7px;
+  background: #000000;
+}
+.gd-eye.left { left: 4px; }
+.gd-eye.right { right: 4px; }
+
+.gd-mouth {
+  position: absolute;
+  bottom: 4px;
+  left: 5px;
+  right: 5px;
+  height: 3px;
+  background: #000000;
+}
+
+/* Zıplama Animasyonu */
+.gd-player.jumping {
+  bottom: 58px;
+  animation: gdFlip 0.5s linear forwards;
+}
+
+@keyframes gdFlip {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.gd-player.dead {
+  background: #ff0055 !important;
+  box-shadow: 0 0 20px #ff0055 !important;
+  transform: scale(0.6) rotate(45deg);
+}
+
+/* Spawn Olan Üçgen Engeller (Spikes) */
+.gd-spike {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 26px solid #ff0055;
+  filter: drop-shadow(0 0 6px #ff0055);
+}
+
+/* Skor & Bilgi HUD */
+.gd-hud {
+  position: absolute;
+  top: 8px;
+  left: 80px;
+  right: 40px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: #00ff44;
+  font-weight: 700;
+  text-shadow: 0 0 8px #00ff44;
+  pointer-events: none;
+}
+
+.gd-hint {
+  color: #38bdf8;
+  opacity: 0.8;
+}
+
+/* Game Over Ekranı */
+.gd-game-over {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 8, 20, 0.85);
+  color: #ff0055;
+  font-size: 1.1rem;
+  font-weight: 900;
+  text-shadow: 0 0 12px #ff0055;
+  z-index: 5;
+}
+
+.gd-game-over small {
+  font-size: 0.65rem;
+  color: #ffffff;
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+  .gd-stage {
+    height: 75px;
+  }
+  .gd-player {
+    left: 24px;
+    width: 32px;
+    height: 32px;
+  }
+  .gd-hud {
+    left: 24px;
+    right: 16px;
+    font-size: 0.58rem;
+  }
+}

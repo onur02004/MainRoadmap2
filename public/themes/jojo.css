@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
+
+:root[data-theme="jojo"] {
+  --bg-color: #120824;
+  --panel-bg: #221040;
+  --text-main: #f0db4f;
+  --text-dim: #9a85d6;
+  --text-bright: #ffffff;
+  --border-color: #9b51e0;
+  
+  --accent-action: #f0db4f; /* Stand Gold */
+  --accent-glow: rgba(240, 219, 79, 0.45);
+  --status-ok: #00ffaa;
+  --status-err: #ff007f;
+}
+
+[data-theme="jojo"] .brand-text,
+[data-theme="jojo"] .service-block h3 {
+  font-family: 'Bangers', cursive;
+  font-size: 1.4rem;
+  letter-spacing: 1.5px;
+}
+
+[data-theme="jojo"] .service-block,
+[data-theme="jojo"] .telemetry-bar {
+  background: #221040 !important;
+  border: 3px solid #9b51e0 !important;
+  border-radius: 8px !important;
+  box-shadow: 4px 4px 0px #f0db4f !important;
+}

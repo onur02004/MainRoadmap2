@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap');
+
+:root[data-theme="the-sims"] {
+  --bg-image: linear-gradient(135deg, #e6f9ed 0%, #c8f2d5 100%);
+  --bg-color: #e6f9ed;
+  --panel-bg: #ffffff;
+  --text-main: #2c3e50;
+  --text-dim: #7f8c8d;
+  --text-bright: #1b2631;
+  --border-color: #a3e4b7;
+  
+  --accent-action: #1abc9c; /* Plumbob Emerald */
+  --accent-glow: rgba(26, 188, 156, 0.4);
+  --status-ok: #2ecc71;
+  --status-err: #e74c3c;
+}
+
+[data-theme="the-sims"] body {
+  font-family: 'Quicksand', sans-serif;
+  background: var(--bg-image) fixed;
+  color: #2c3e50;
+}
+
+[data-theme="the-sims"] .service-block,
+[data-theme="the-sims"] .telemetry-bar,
+[data-theme="the-sims"] .theme-btn {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 2px solid #a3e4b7 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 25px rgba(46, 204, 113, 0.15) !important;
+}
+
+[data-theme="the-sims"] .service-block:hover {
+  border-color: #1abc9c !important;
+  transform: translateY(-4px);
+}

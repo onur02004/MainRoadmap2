@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech&display=swap');
+
+:root[data-theme="portal"] {
+  --bg-image: linear-gradient(rgba(12, 15, 20, 0.88), rgba(8, 10, 14, 0.95)),
+              url('https://images.unsplash.com/photo-1518770660439-4636190af475?w=1600&auto=format&fit=crop&q=80');
+  --bg-color: #0c0f14;
+  --panel-bg: #141922;
+  --text-main: #a8b8cc;
+  --text-dim: #4d5b6e;
+  --text-bright: #ffffff;
+  --border-color: rgba(0, 162, 255, 0.3);
+  --border-subtle: rgba(255, 127, 0, 0.15);
+  
+  --accent-action: #00a2ff; /* Portal Blue */
+  --accent-glow: rgba(0, 162, 255, 0.45);
+  --status-ok: #00a2ff;
+  --status-err: #ff7f00; /* Portal Orange */
+
+  --grid-line: rgba(0, 162, 255, 0.1);
+  --box-bg-start: #1c2430;
+  --box-bg-end: #0e1218;
+  --box-border: #00a2ff;
+  --box-glow: rgba(0, 162, 255, 0.15);
+  --box-glow-hover: rgba(255, 127, 0, 0.5);
+}
+
+[data-theme="portal"] body {
+  font-family: 'Share Tech', sans-serif;
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+  color: var(--text-main);
+}
+
+[data-theme="portal"] .telemetry-bar,
+[data-theme="portal"] .service-block {
+  background: rgba(20, 25, 34, 0.9) !important;
+  border: 1px solid rgba(0, 162, 255, 0.35) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 20px rgba(0, 162, 255, 0.12) !important;
+}
+
+[data-theme="portal"] .service-block:hover {
+  border-color: #ff7f00 !important;
+  box-shadow: 0 0 25px rgba(255, 127, 0, 0.35) !important;
+}

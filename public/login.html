@@ -1,120 +1,296 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="supabase-dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MainSite2 - Login</title>
-    <style>
-        :root {
-            --primary: #6366f1;
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --text: #f8fafc;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auth Handshake // Sys-Cluster</title>
+  
+  <!-- FOUC Önleyici Hızlı Tema Yükleyici -->
+  <script>
+    (function() {
+      const activeTheme = localStorage.getItem('app-theme') || 'supabase-dark';
+      document.documentElement.setAttribute('data-theme', activeTheme);
+      if (activeTheme !== 'supabase-dark' && activeTheme !== 'render-dark') {
+        const link = document.createElement('link');
+        link.id = 'dynamicThemeStyle';
+        link.rel = 'stylesheet';
+        link.href = `themes/${activeTheme}.css`;
+        document.head.appendChild(link);
+      }
+    })();
+  </script>
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
 
-        .login-card {
-            background: var(--card-bg);
-            padding: 2.5rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 400px;
-        }
+  <style>
+    .login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      z-index: 2;
+    }
 
-        h2 { text-align: center; margin-bottom: 1.5rem; color: var(--primary); }
+    .login-terminal-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--app-radius, 8px);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 30px var(--box-glow);
+      overflow: hidden;
+    }
 
-        .form-group { margin-bottom: 1.2rem; }
+    .card-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: rgba(0, 0, 0, 0.35);
+      border-bottom: 1px solid var(--border-subtle);
+    }
 
-        input {
-            width: 100%;
-            padding: 0.8rem;
-            margin-top: 0.5rem;
-            border-radius: 6px;
-            border: 1px solid #334155;
-            background: #0f172a;
-            color: white;
-            box-sizing: border-box;
-        }
+    .card-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--accent-action);
+      letter-spacing: 0.8px;
+    }
 
-        button {
-            width: 100%;
-            padding: 0.8rem;
-            background: var(--primary);
-            border: none;
-            color: white;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
+    .status-ping {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--status-ok);
+      box-shadow: 0 0 6px var(--status-ok);
+    }
 
-        button:hover { opacity: 0.9; }
+    .login-body {
+      padding: 28px 24px;
+    }
 
-        #message { margin-top: 1rem; text-align: center; font-size: 0.9rem; }
-    </style>
+    .login-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 4px;
+    }
+
+    .login-sub {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: var(--app-radius, 4px);
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-color);
+      color: var(--text-bright);
+      font-family: inherit;
+      font-size: 0.8rem;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-group input:focus {
+      border-color: var(--accent-action);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .btn-handshake {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent-action);
+      color: #000000;
+      border: none;
+      border-radius: var(--app-radius, 4px);
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: filter 0.2s ease, transform 0.1s ease;
+    }
+
+    .btn-handshake:hover { filter: brightness(1.1); }
+    .btn-handshake:active { transform: scale(0.98); }
+    .btn-handshake:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .alert-panel {
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      margin-bottom: 18px;
+      display: none;
+      border: 1px solid transparent;
+    }
+
+    .alert-panel.err {
+      background: rgba(248, 81, 73, 0.1);
+      border-color: var(--status-err);
+      color: var(--status-err);
+    }
+
+    .alert-panel.ok {
+      background: rgba(62, 207, 142, 0.1);
+      border-color: var(--status-ok);
+      color: var(--status-ok);
+    }
+
+    .login-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border-subtle);
+      font-size: 0.68rem;
+    }
+
+    .login-footer a {
+      color: var(--text-dim);
+      text-decoration: none;
+    }
+    .login-footer a:hover { color: var(--accent-action); }
+  </style>
 </head>
 <body>
 
-<div class="login-card">
-    <h2>MainSite2</h2>
-    <form id="loginForm">
-        <div class="form-group">
-            <label>Email or Username</label>
-            <input type="text" id="identifier" placeholder="onur_dev" required>
+  <div class="fixed-background-grid-layer" id="bgGridLayer">
+    <div class="render-corner-grid" id="cornerGrid"></div>
+  </div>
+
+  <main class="login-wrapper">
+    <div class="login-terminal-card" id="loginCard">
+      
+      <div class="card-top-bar">
+        <span class="card-badge">// SECURE_GATEWAY_V1</span>
+        <span class="status-ping"></span>
+      </div>
+
+      <div class="login-body">
+        <h1 class="login-title">&gt; CLUSTER_HANDSHAKE</h1>
+        <p class="login-sub">Provide valid identity credentials to obtain JWT bearer cipher.</p>
+
+        <div id="alertBox" class="alert-panel"></div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="identifier">IDENTIFIER (USERNAME OR EMAIL)</label>
+            <input type="text" id="identifier" placeholder="e.g. onur or onur@sys.local" autocomplete="username" required />
+          </div>
+
+          <div class="form-group">
+            <label for="password">CIPHER (PASSWORD)</label>
+            <input type="password" id="password" placeholder="••••••••••••" autocomplete="current-password" required />
+          </div>
+
+          <button type="submit" id="submitBtn" class="btn-handshake">
+            INITIATE HANDSHAKE
+          </button>
+        </form>
+
+        <div class="login-footer">
+          <a href="/">&larr; Return to Matrix</a>
+          <span style="color: var(--text-dim);">STATUS: STANDBY</span>
         </div>
-        <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="password" placeholder="••••••••" required>
-        </div>
-        <button type="submit">Sign In</button>
-    </form>
-    <div id="message"></div>
-</div>
+      </div>
 
-<script>
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const msgDiv = document.getElementById('message');
-        
-        const payload = {
-            identifier: document.getElementById('identifier').value,
-            password: document.getElementById('password').value
-        };
+    </div>
+  </main>
 
-        try {
-            const response = await fetch('http://localhost:5000/api/users/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+  <script type="module">
+    import { ThemeManager } from './themes/theme-registry.js';
+    new ThemeManager();
 
-            const result = await response.json();
-
-            if (response.ok) {
-                msgDiv.style.color = '#4ade80';
-                msgDiv.innerText = "Login Successful! Redirecting...";
-                localStorage.setItem('token', result.data.token);
-                // window.location.href = '/dashboard.html';
-            } else {
-                msgDiv.style.color = '#f87171';
-                msgDiv.innerText = result.message || "Invalid credentials.";
-            }
-        } catch (err) {
-            msgDiv.innerText = "Error connecting to server.";
+    // 1. Zaten oturum açılmışsa /account'a aktar
+    const activeToken = localStorage.getItem('token');
+    if (activeToken) {
+      try {
+        const res = await fetch('/api/users/profile', {
+          headers: { 'Authorization': `Bearer ${activeToken}` }
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+          window.location.replace('/account');
+        } else {
+          localStorage.removeItem('token');
         }
-    });
-</script>
+      } catch (err) {
+        localStorage.removeItem('token');
+      }
+    }
 
+    // 2. Form Giriş İşlemi
+    const form = document.getElementById('loginForm');
+    const alertBox = document.getElementById('alertBox');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const identifier = document.getElementById('identifier').value.trim();
+      const password = document.getElementById('password').value;
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'AUTHENTICATING...';
+      showAlert('', false);
+
+      try {
+        const response = await fetch('/api/users/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.status === 'success') {
+          localStorage.setItem('token', data.data.token);
+          showAlert('[AUTH] Handshake verified. Forwarding...', true, 'ok');
+          setTimeout(() => {
+            window.location.replace('/account');
+          }, 600);
+        } else {
+          showAlert(`[ERR] ${data.message || 'Invalid credentials.'}`, true, 'err');
+        }
+      } catch (error) {
+        showAlert('[SYS_ERR] Connection to gateway refused.', true, 'err');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'INITIATE HANDSHAKE';
+      }
+    });
+
+    function showAlert(msg, show, type = 'err') {
+      if (!show) {
+        alertBox.style.display = 'none';
+        return;
+      }
+      alertBox.textContent = msg;
+      alertBox.className = `alert-panel ${type}`;
+      alertBox.style.display = 'block';
+    }
+  </script>
 </body>
 </html>

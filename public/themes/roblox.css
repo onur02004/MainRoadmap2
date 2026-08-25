@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap');
+
+:root[data-theme="roblox"] {
+  --bg-image: linear-gradient(rgba(24, 26, 32, 0.85), rgba(16, 18, 22, 0.92)),
+              url('https://wallpapers-clan.com/wp-content/uploads/2025/04/roblox-nuggets-minimalist-meme-wallpaper-preview.jpg');
+  --bg-color: #181a20;
+  --panel-bg: #23252d;
+  --text-main: #e2e4eb;
+  --text-dim: #787c8a;
+  --text-bright: #ffffff;
+  --border-color: #393b45;
+  --border-subtle: #2b2d35;
+  
+  --accent-action: #e2231a; /* Roblox Red */
+  --accent-glow: rgba(226, 35, 26, 0.4);
+  --status-ok: #00b06f;
+  --status-err: #e2231a;
+
+  --grid-line: rgba(255, 255, 255, 0.08);
+  --box-bg-start: #2e313b;
+  --box-bg-end: #1c1d24;
+  --box-border: #4f5361;
+  --box-glow: rgba(0, 0, 0, 0.5);
+  --box-glow-hover: rgba(226, 35, 26, 0.4);
+}
+
+[data-theme="roblox"] body {
+  font-family: 'Fredoka', cursive, sans-serif;
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+  color: var(--text-main);
+  letter-spacing: 0.4px;
+}
+
+[data-theme="roblox"] .service-block,
+[data-theme="roblox"] .telemetry-bar,
+[data-theme="roblox"] .theme-btn {
+  border-radius: 12px !important;
+  background: #23252d !important;
+  border: 2px solid #393b45 !important;
+  box-shadow: 0 6px 0px #121317 !important;
+}
+
+[data-theme="roblox"] .service-block:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-action) !important;
+  box-shadow: 0 9px 0px #121317, 0 0 15px var(--accent-glow) !important;
+}
+
+[data-theme="roblox"] .service-block:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0px #121317 !important;
+}

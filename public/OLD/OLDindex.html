@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Roadmap 2</title>
+    <link rel="stylesheet" href="homestyle.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Caveat:wght@700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script type="module" src="homescript.js"></script>
+</head>
+
+<body>
+    <div class="area">
+        <ul class="circles">
+            <li></li><li></li><li></li><li></li><li></li>
+            <li></li><li></li><li></li><li></li><li></li>
+        </ul>
+    </div>
+
+    <header class="top-nav">Onur Donmez</header>
+
+    <div id="bg-welcome-text" class="bg-text-container hidden">
+        <h1 class="bg-main-text">
+            <div class="word-row"><span>W</span><span>E</span><span>L</span></div>
+            <div class="word-row"><span>C</span><span>O</span><span>M</span><span>E</span></div>
+        </h1>
+    </div>
+
+    <section class="screen-section" id="hero-section">
+        <div id="welcome-screen" class="screen">
+            <h1 class="welcome-modern">
+                <span data-char="W">W</span><span data-char="e">e</span><span data-char="l">l</span><span data-char="c">c</span><span data-char="o">o</span><span data-char="m">m</span><span data-char="e">e</span>
+            </h1>
+            
+            <div class="login-container">
+                <button id="go-to-login-btn" class="forward-btn">
+                    Continue to Login
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="dashboard" class="screen hidden">
+            <div id="floating-albums" class="floating-albums-container"></div>
+
+            <p class="tiny-welcome">Mainroadmap V2.0B</p>
+            <div class="card-glow"></div>
+            
+            <div class="profile-card" id="main-profile-card">
+                <div class="card-header fade-in-stagger delay-1 parallax-element">
+                    <div class="dots"><span></span><span></span><span></span></div>
+                </div>
+                
+                <div class="pfp-container fade-in-stagger delay-2 parallax-element">
+                    <img id="user-image" src="https://raw.githubusercontent.com/onur02004/MainRoadmap/main/src/public/media/avatars/metehan/12.png" alt="Profile">
+                </div>
+
+                <div class="card-content fade-in-stagger delay-3 parallax-element">
+                    <h2 id="username" class="typing-target"></h2>
+                    <p class="user-subtitle">Gyan Jyoti Member</p>
+                    <div class="card-footer fade-in-stagger delay-4 parallax-element">
+                        <span class="donation-link">Admin Role</span>
+                        <button class="follow-btn">Account</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroll-icon hidden" id="scroll-indicator"></div>
+    </section>
+
+    <section class="screen-section hidden" id="extended-ui">
+        <div class="dashboard-grid-container scroll-reveal">
+            
+            <div class="grid-section">
+                <div class="section-header">
+                    <h3>Kişisel Servisler & Projeler</h3>
+                    <div class="section-line"></div>
+                </div>
+                
+                <div class="app-grid">
+                    <div class="app-card tilt-element">
+                        <div class="app-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><circle cx="12" cy="12" r="3"></circle></svg></div>
+                        <span class="app-title">Live Room Cam</span>
+                        <span class="app-subtitle" style="font-size: 10px; color:#888; margin-top:4px;">Secure Auth Route</span>
+                    </div>
+
+                    <div class="app-card tilt-element">
+                        <div class="app-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+                        <span class="app-title">Pi5 Server Failsafe</span>
+                        <span class="app-subtitle" style="font-size: 10px; color:#888; margin-top:4px;">PM2 & Crontab</span>
+                    </div>
+
+                    <div class="app-card tilt-element">
+                        <div class="app-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg></div>
+                        <span class="app-title">Matrix Control</span>
+                        <span class="app-subtitle" style="font-size: 10px; color:#888; margin-top:4px;">Clock / Album UI</span>
+                    </div>
+
+                    <div class="app-card tilt-element">
+                        <div class="app-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
+                        <span class="app-title">Uni Docs</span>
+                        <span class="app-subtitle" style="font-size: 10px; color:#888; margin-top:4px;">Datenbankensysteme</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-section" style="margin-top: 20px;">
+                <div class="section-header exclusive-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <h3>Geliştirici Araçları</h3>
+                    <div class="section-line exclusive-line"></div>
+                </div>
+                
+                <div class="exclusive-grid">
+                    <div class="app-card exclusive-card tilt-element">
+                        <span class="exclusive-tag">ALPHA TIER</span>
+                        <div class="app-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+                        <div class="card-text">
+                            <span class="app-title">Revvgea Dashboard</span>
+                            <span class="app-subtitle">Lobby & Minigame Sunucusu</span>
+                        </div>
+                    </div>
+
+                    <div class="app-card exclusive-card tilt-element">
+                        <span class="exclusive-tag">CAN BUS</span>
+                        <div class="app-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></div>
+                        <div class="card-text">
+                            <span class="app-title">Astra J Telemetry</span>
+                            <span class="app-subtitle">ESP32 & OBD2 Gerçek Zamanlı Veri</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- YENİ BİLDİRİM PANELİ ÇEKMECESİ -->
+    <aside id="notification-panel" class="hidden-panel glass-drawer">
+        <div class="notif-header">
+            <h3>Bildirimler</h3>
+            <button id="close-notif-btn" class="glass-btn" aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div id="notif-feed" class="notif-feed-container">
+            <!-- Bildirimler buraya JS ile yüklenecek -->
+        </div>
+    </aside>
+
+</body>
+</html>

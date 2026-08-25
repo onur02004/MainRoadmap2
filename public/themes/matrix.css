@@ -1,0 +1,35 @@
+:root[data-theme="matrix-green"] {
+  --bg-color: #030a05;
+  --panel-bg: #07140b;
+  --text-main: #52c471;
+  --text-dim: #235431;
+  --text-bright: #8affaa;
+  --border-color: rgba(82, 196, 113, 0.28);
+  --border-subtle: rgba(82, 196, 113, 0.08);
+  
+  --accent-action: #52c471;
+  --accent-glow: rgba(82, 196, 113, 0.4);
+  --status-ok: #52c471;
+  --status-err: #e06c75;
+
+  --grid-line: rgba(82, 196, 113, 0.08);
+  --box-bg-start: #0a1e10;
+  --box-bg-end: #030a05;
+  --box-border: rgba(82, 196, 113, 0.35);
+  --box-glow: rgba(82, 196, 113, 0.1);
+  --box-glow-hover: rgba(82, 196, 113, 0.4);
+}
+
+[data-theme="matrix-green"] body {
+  text-shadow: 0 0 4px rgba(82, 196, 113, 0.5);
+}
+
+[data-theme="matrix-green"] .service-block:hover {
+  border-color: var(--accent-action) !important;
+  box-shadow: 0 0 20px var(--accent-glow) !important;
+}
+
+[data-theme="matrix-green"] .progress-fill {
+  background: var(--accent-action) !important;
+  box-shadow: 0 0 10px var(--accent-action) !important;
+}

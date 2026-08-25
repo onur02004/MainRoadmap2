@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap');
+
+:root[data-theme="resident-evil"] {
+  /* Karanlık Yeraltı Laboratuvarı Atmosferi */
+  --bg-image: radial-gradient(circle at center, rgba(30, 5, 8, 0.6) 0%, rgba(5, 5, 7, 0.96) 80%),
+              url('https://images6.alphacoders.com/889/thumb-1920-889551.jpg');
+  --bg-color: #060608;
+  --panel-bg: #120c0e;
+  --text-main: #d1b8b8;
+  --text-dim: #6e4e52;
+  --text-bright: #ffffff;
+  --border-color: rgba(255, 30, 50, 0.25);
+  --border-subtle: rgba(255, 30, 50, 0.08);
+  
+  --accent-action: #ff1e38; /* Umbrella Red */
+  --accent-glow: rgba(255, 30, 56, 0.45);
+  --status-ok: #00ff66; /* ECG Fine */
+  --status-err: #ff1e38; /* Danger */
+
+  --grid-line: rgba(255, 30, 50, 0.1);
+  --box-bg-start: #240c10;
+  --box-bg-end: #0c0507;
+  --box-border: rgba(255, 30, 56, 0.35);
+  --box-glow: rgba(255, 30, 56, 0.12);
+  --box-glow-hover: rgba(255, 30, 56, 0.45);
+}
+
+[data-theme="resident-evil"] body {
+  font-family: 'Share Tech Mono', monospace;
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+  color: var(--text-main);
+  text-shadow: 0 0 3px rgba(255, 30, 56, 0.4);
+}
+
+/* CRT Tarama Çizgisi Efekti */
+[data-theme="resident-evil"] body::before {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%),
+              linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  z-index: 999;
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+}
+
+[data-theme="resident-evil"] .telemetry-bar,
+[data-theme="resident-evil"] .service-block {
+  background: rgba(18, 12, 14, 0.88) !important;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 30, 50, 0.35) !important;
+  box-shadow: 0 0 15px rgba(255, 30, 56, 0.15) !important;
+}
+
+[data-theme="resident-evil"] .service-block:hover {
+  border-color: var(--accent-action) !important;
+  box-shadow: 0 0 25px var(--accent-glow) !important;
+}
+
+[data-theme="resident-evil"] .progress-fill {
+  background: var(--accent-action) !important;
+  box-shadow: 0 0 10px var(--accent-action) !important;
+}

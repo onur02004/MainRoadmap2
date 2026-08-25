@@ -1,0 +1,26 @@
+CREATE TABLE custom_themes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id VARCHAR(50) NOT NULL, -- örn: 'onur' veya session ID
+  theme_key VARCHAR(50) UNIQUE NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  category VARCHAR(20) DEFAULT 'custom',
+  has_cli BOOLEAN DEFAULT true,
+  show_grid BOOLEAN DEFAULT true,
+  dot_color VARCHAR(20) NOT NULL,
+  status_text VARCHAR(100),
+  
+  -- Özelleştirilebilir CSS Değişkenleri (JSONB)
+  css_variables JSONB NOT NULL DEFAULT '{
+    "--bg-color": "#0a0a0f",
+    "--panel-bg": "#12121c",
+    "--text-main": "#e0e0e0",
+    "--text-bright": "#ffffff",
+    "--accent-action": "#00ffaa",
+    "--border-color": "rgba(255, 255, 255, 0.15)"
+  }'::jsonb,
+  
+  -- Arka Plan Resmi ve Gizlilik
+  bg_image_url TEXT,
+  is_public BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

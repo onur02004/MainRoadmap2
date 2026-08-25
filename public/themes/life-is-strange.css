@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Share+Tech+Mono&display=swap');
+
+:root[data-theme="life-is-strange"] {
+  --bg-image: linear-gradient(rgba(20, 28, 40, 0.75), rgba(45, 25, 30, 0.85)),
+              url('https://i.redd.it/nga7yl29ar041.jpg');
+  --bg-color: #141822;
+  --panel-bg: #f5eedc; /* Polaroid White */
+  --text-main: #332d29;
+  --text-dim: #7a7065;
+  --text-bright: #1c1815;
+  --border-color: #d1c4b2;
+  
+  --accent-action: #4fa3d1; /* Butterfly Blue */
+  --accent-glow: rgba(79, 163, 209, 0.4);
+  --status-ok: #5fa868;
+  --status-err: #d9534f;
+}
+
+[data-theme="life-is-strange"] body {
+  font-family: 'Share Tech Mono', monospace;
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+}
+
+[data-theme="life-is-strange"] .brand-text,
+[data-theme="life-is-strange"] .service-block h3 {
+  font-family: 'Caveat', cursive;
+  font-size: 1.4rem;
+  color: #1c1815 !important;
+}
+
+[data-theme="life-is-strange"] .service-block,
+[data-theme="life-is-strange"] .telemetry-bar {
+  background: #fdfbf7 !important;
+  border: 1px solid #dcd3c4 !important;
+  border-radius: 2px !important;
+  box-shadow: 3px 4px 15px rgba(0, 0, 0, 0.35) !important;
+}

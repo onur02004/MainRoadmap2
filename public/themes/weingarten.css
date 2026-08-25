@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap');
+
+:root[data-theme="weingarten"] {
+  --bg-image: linear-gradient(rgba(20, 17, 12, 0.85), rgba(12, 10, 7, 0.94)),
+              url('./basilika.jpeg');
+  --bg-color: #120f0a;
+  --panel-bg: #211c14;
+  --text-main: #dfd5c4;
+  --text-dim: #7d7260;
+  --text-bright: #ffffff;
+  --border-color: #c59b27; /* Basilika Barok Altını */
+  
+  --accent-action: #c59b27;
+  --accent-glow: rgba(197, 155, 39, 0.4);
+  --status-ok: #5fa868;
+  --status-err: #a63a2a;
+}
+
+[data-theme="weingarten"] body {
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+}
+
+[data-theme="weingarten"] .brand-text,
+[data-theme="weingarten"] .service-block h3,
+[data-theme="weingarten"] .section-label {
+  font-family: 'Cinzel', serif;
+}
+
+[data-theme="weingarten"] .service-block,
+[data-theme="weingarten"] .telemetry-bar {
+  background: rgba(33, 28, 20, 0.9) !important;
+  border: 1px solid #c59b27 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
+}

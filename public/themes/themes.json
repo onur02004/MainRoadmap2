@@ -1,0 +1,286 @@
+{
+  "supabase-dark": {
+    "name": "SUPABASE EMERALD",
+    "category": "cli",
+    "hasCli": true,
+    "showGrid": true,
+    "dotColor": "#3ecf8e",
+    "statusText": "POSTGRES V15.2 HEALTHY",
+    "stylesheet": null
+  },
+  "render-dark": {
+    "name": "RENDER DARK",
+    "category": "cli",
+    "hasCli": true,
+    "showGrid": true,
+    "dotColor": "#b485ff",
+    "statusText": "INSTANCE ONLINE (RENDER)",
+    "stylesheet": null
+  },
+  "cyberpunk": {
+    "name": "CYBERPUNK (NIGHT CITY)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#ff003c",
+    "statusText": "KIROSHI NETLINK V4.2 // ARASAKA ACTIVE",
+    "stylesheet": "themes/cyberpunk.css",
+    "module": "cyberpunk-nightcity.js"
+  },
+  "fnaf": {
+    "name": "FIVE NIGHTS AT FREDDY'S",
+    "category": "retro",
+    "hasCli": true,
+    "showGrid": false,
+    "dotColor": "#e8a838",
+    "statusText": "12:00 AM // POWER: 99%",
+    "stylesheet": "themes/fnaf.css",
+    "module": "fnaf-glitch.js"
+  },
+  "life-is-strange": {
+    "name": "LIFE IS STRANGE",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#4fa3d1",
+    "statusText": "THIS ACTION WILL HAVE CONSEQUENCES",
+    "stylesheet": "themes/life-is-strange.css"
+  },
+  "friends": {
+    "name": "FRIENDS (CENTRAL PERK)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#d4582f",
+    "statusText": "PIVOT! PIVOT! // COFFEE READY",
+    "stylesheet": "themes/friends.css",
+    "module": "friends-pivot.js"
+  },
+  "himym": {
+    "name": "HOW I MET YOUR MOTHER",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#f7d02c",
+    "statusText": "LEGEN... WAIT FOR IT... DARY!",
+    "stylesheet": "themes/himym.css",
+    "module": "himym-legendary.js"
+  },
+  "rick-astley": {
+    "name": ":)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#ff6b8b",
+    "statusText": "NEVER GONNA LET YOU DOWN",
+    "stylesheet": "themes/rick-astley.css"
+  },
+  "undertale": {
+    "name": "UNDERTALE (DETERMINATION)",
+    "category": "retro",
+    "hasCli": true,
+    "showGrid": false,
+    "dotColor": "#ff2a2a",
+    "statusText": "LV 19 // HP 20/20 // DETERMINATION",
+    "stylesheet": "themes/undertale.css",
+    "module": "undertale-battle.js"
+  },
+  "danganronpa": {
+    "name": "DANGANRONPA (MONOKUMA)",
+    "category": "retro",
+    "hasCli": true,
+    "showGrid": true,
+    "dotColor": "#ff1493",
+    "statusText": "CLASS TRIAL // HOPE VS DESPAIR",
+    "stylesheet": "themes/danganronpa.css",
+    "module": "danganronpa-trial.js"
+  },
+  "dark-deception": {
+    "name": "DARK DECEPTION",
+    "category": "retro",
+    "hasCli": true,
+    "showGrid": true,
+    "dotColor": "#9900cc",
+    "statusText": "SOUL SHARDS: 0/18 // RUN",
+    "stylesheet": "themes/dark-deception.css",
+    "module": "dark-deception-maze.js"
+  },
+  "jojo": {
+    "name": "JOJO'S BIZARRE ADVENTURE",
+    "category": "retro",
+    "hasCli": true,
+    "showGrid": true,
+    "dotColor": "#9b51e0",
+    "statusText": "MENACING ゴゴゴ // STAND: ACTIVE",
+    "stylesheet": "themes/jojo.css"
+  },
+  "aot": {
+    "name": "ATTACK ON TITAN (SCOUT)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#2f5233",
+    "statusText": "WALL ROSE // SHINZOU WO SASAGEYO",
+    "stylesheet": "themes/aot.css"
+  },
+  "weingarten": {
+    "name": "WEINGARTEN (BASILIKA)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#c59b27",
+    "statusText": "ST. MARTIN BASILIKA // RWU CAMPUS",
+    "stylesheet": "themes/weingarten.css"
+  },
+  "wuerzburg": {
+    "name": "WÜRZBURG (RESIDENZ & WEIN)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#8f3b4d",
+    "statusText": "ALTE MAINBRÜCKE // SILVANER READY",
+    "stylesheet": "themes/wuerzburg.css"
+  },
+  "winxp": {
+    "name": "WINDOWS XP (BLISS)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#245edb",
+    "statusText": "WINDOWS XP SP3: READY",
+    "stylesheet": "themes/winxp.css",
+    "module": "winxp-desktop.js"
+  },
+  "minecraft": {
+    "name": "MINECRAFT (8-BIT)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": true,
+    "dotColor": "#5b8731",
+    "statusText": "SERVER: 20.0 TPS",
+    "stylesheet": "themes/minecraft.css",
+    "module": "minecraft-mining.js"
+  },
+  "roblox": {
+    "name": "ROBLOX (CLASSIC STUDIO)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#e2231a",
+    "statusText": "STUDIO: BASEPLATE LOADED",
+    "stylesheet": "themes/roblox.css"
+  },
+  "geometry-dash": {
+    "name": "GEOMETRY DASH (STEREO MADNESS)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": true,
+    "dotColor": "#00ff44",
+    "statusText": "ATTEMPT 42 // PROGRESS: 87%",
+    "stylesheet": "themes/geometry-dash.css",
+    "module": "geometry-dash-jump.js"
+  },
+  "among-us": {
+    "name": "AMONG US (THE SKELD)",
+    "category": "retro",
+    "hasCli": true,
+    "showGrid": false,
+    "dotColor": "#c51111",
+    "statusText": "TASKS: 1/4 // IMPOSTOR NEARBY",
+    "stylesheet": "themes/among-us.css",
+    "module": "among-us-task.js"
+  },
+  "gta-sa": {
+    "name": "GTA SAN ANDREAS (GROVE ST)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#2d8a4e",
+    "statusText": "RESPECT + // MISSION PASSED",
+    "stylesheet": "themes/gta-sa.css"
+  },
+  "pixel-gun": {
+    "name": "PIXEL GUN 3D",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": true,
+    "dotColor": "#f39c12",
+    "statusText": "ARMORY: FAST DEATH // GEMS: 250",
+    "stylesheet": "themes/pixel-gun.css"
+  },
+  "the-sims": {
+    "name": "THE SIMS (PLUMBOB)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#2ecc71",
+    "statusText": "SUL SUL! // MOOD: INSPIRED",
+    "stylesheet": "themes/the-sims.css"
+  },
+  "avatar": {
+    "name": "AVATAR (PANDORA BIOLUMINESCENCE)",
+    "category": "cli",
+    "hasCli": true,
+    "showGrid": true,
+    "dotColor": "#00e5ff",
+    "statusText": "EYWA LINK: SYNCHRONIZED",
+    "stylesheet": "themes/avatar.css"
+  },
+  "macos-finder": {
+    "name": "MACOS (FINDER & PHOTO BOOTH)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#0071e3",
+    "statusText": "MACOS SEQUOIA // FINDER & PHOTO BOOTH VAULT",
+    "stylesheet": "themes/macos-finder.css",
+    "module": "macos-finder.js"
+  },
+  "detroit": {
+    "name": "DETROIT: BECOME HUMAN (CYBERLIFE)",
+    "category": "cli",
+    "hasCli": true,
+    "showGrid": true,
+    "dotColor": "#00aaff",
+    "statusText": "SOFTWARE INSTABILITY ▲ // LED: BLUE",
+    "stylesheet": "themes/detroit.css"
+  },
+  "beyond-two-souls": {
+    "name": "BEYOND: TWO SOULS (AIDEN LINK)",
+    "category": "cli",
+    "hasCli": true,
+    "showGrid": true,
+    "dotColor": "#ff4081",
+    "statusText": "INFRAWATERS LINKED // ENTITY: ACTIVE",
+    "stylesheet": "themes/beyond-two-souls.css"
+  },
+  "nfs-most-wanted": {
+    "name": "NEED FOR SPEED (MOST WANTED)",
+    "category": "retro",
+    "hasCli": true,
+    "showGrid": true,
+    "dotColor": "#ff9900",
+    "statusText": "ROCKPORT PD // PURSUIT ACTIVE",
+    "stylesheet": "themes/nfs-most-wanted.css",
+    "module": "nfs-most-wanted.js"
+  },"nfs-hot-pursuit": {
+    "name": "NFS HOT PURSUIT REMASTERED",
+    "category": "retro",
+    "hasCli": true,
+    "showGrid": true,
+    "dotColor": "#00d2ff",
+    "statusText": "SCPD // AUTOLOG ACTIVE // EMP READY",
+    "stylesheet": "themes/nfs-hot-pursuit.css",
+    "module": "nfs-hot-pursuit.js"
+  },
+  "nfs-underground-2": {
+    "name": "NFS UNDERGROUND 2 (BAYVIEW)",
+    "category": "retro",
+    "hasCli": true,
+    "showGrid": true,
+    "dotColor": "#00ff66",
+    "statusText": "BAYVIEW TUNING // RACHEL 350Z // NEON READY",
+    "stylesheet": "themes/nfs-underground-2.css",
+    "module": "nfs-underground-2.js"
+  }
+}

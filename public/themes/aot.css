@@ -1,0 +1,27 @@
+:root[data-theme="aot"] {
+  --bg-image: linear-gradient(rgba(18, 24, 18, 0.85), rgba(10, 14, 10, 0.94)),
+              url('https://external-preview.redd.it/looking-for-an-awesome-aot-wallpaper-i-just-found-an-one-os-v0-e5rh7TFaXnOdyb_wpjZwbboo9U05BtCxm9s8RrBm69c.jpg?width=1080&crop=smart&auto=webp&s=b05a7ad66624e363fba2e8e7346c4af057fffac4');
+  --bg-color: #0e140f;
+  --panel-bg: #1b241c;
+  --text-main: #c4cebe;
+  --text-dim: #63705d;
+  --text-bright: #ffffff;
+  --border-color: #3b5e3f;
+  
+  --accent-action: #3b5e3f; /* Scout Cloak Green */
+  --accent-glow: rgba(59, 94, 63, 0.4);
+  --status-ok: #5fa868;
+  --status-err: #8b2500;
+}
+
+[data-theme="aot"] body {
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+}
+
+[data-theme="aot"] .service-block,
+[data-theme="aot"] .telemetry-bar {
+  background: rgba(27, 36, 28, 0.9) !important;
+  border: 2px solid #3b5e3f !important;
+  border-radius: 4px !important;
+}

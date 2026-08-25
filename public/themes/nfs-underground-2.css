@@ -1,0 +1,413 @@
+@import url('https://fonts.googleapis.com/css2?family=Teko:wght@700&family=Share+Tech+Mono&family=Orbitron:wght@900&display=swap');
+
+:root[data-theme="nfs-underground-2"] {
+  --bg-image: radial-gradient(circle at center, rgba(10, 18, 12, 0.82) 0%, rgba(3, 8, 4, 0.98) 85%),
+              url('https://images.alphacoders.com/602/602058.jpg');
+  --bg-color: #030804;
+  --panel-bg: #0a140d;
+  --text-main: #d0edd5;
+  --text-dim: #5a7d60;
+  --text-bright: #ffffff;
+  --border-color: #00ff66; /* Bayview Toxic Green Neon */
+  --border-subtle: rgba(0, 255, 102, 0.2);
+  
+  --accent-action: #00ff66;
+  --accent-glow: rgba(0, 255, 102, 0.6);
+  --status-ok: #00ff66;
+  --status-err: #ff0055;
+}
+
+[data-theme="nfs-underground-2"] body {
+  background: var(--bg-image) no-repeat center center fixed !important;
+  background-size: cover !important;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+[data-theme="nfs-underground-2"] .service-block,
+[data-theme="nfs-underground-2"] .telemetry-bar,
+[data-theme="nfs-underground-2"] .gui-user-card-panel {
+  background: rgba(10, 20, 13, 0.92) !important;
+  border: 2px solid #00ff66 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 25px rgba(0, 255, 102, 0.25), inset 0 0 15px rgba(0,0,0,0.8) !important;
+}
+
+[data-theme="nfs-underground-2"] .service-block:hover {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 35px rgba(0, 255, 102, 0.55) !important;
+}
+
+/* --- NFSU2 STAGE LAYER --- */
+.ug-stage-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 900;
+  overflow: hidden;
+}
+
+.ug-asphalt-wet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40vh;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
+  pointer-events: none;
+}
+
+.ug-neon-underglow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  transition: background 0.3s ease;
+}
+
+/* --- SOL ÜST: FLIP PHONE & BANKA --- */
+.ug-top-left-dock {
+  position: fixed;
+  top: 24px;
+  left: 200px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  pointer-events: auto;
+  z-index: 950;
+}
+
+.ug-flip-phone {
+  background: #0d1a10;
+  border: 2px solid #00ff66;
+  border-radius: 6px;
+  padding: 8px 12px;
+  width: 220px;
+  box-shadow: 0 0 20px rgba(0, 255, 102, 0.3);
+}
+
+.phone-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.55rem;
+  color: #00ff66;
+  border-bottom: 1px solid rgba(0, 255, 102, 0.3);
+  padding-bottom: 2px;
+  margin-bottom: 4px;
+}
+
+.sms-sender { font-size: 0.62rem; color: #ffffff; }
+.phone-sms p { font-size: 0.6rem; color: #a4d4ab; line-height: 1.3; margin-top: 2px; }
+.phone-badge { font-size: 0.52rem; color: #00ff66; font-weight: 800; margin-top: 4px; }
+
+.ug-bank-meter {
+  background: rgba(10, 20, 13, 0.95);
+  border: 1px solid #00ff66;
+  padding: 8px 14px;
+  border-radius: 4px;
+}
+.bank-lbl { font-size: 0.58rem; color: #5a7d60; font-weight: 800; }
+.ug-bank-meter strong { font-size: 0.95rem; color: #00ff66; margin-left: 6px; }
+
+/* --- SOL TARAF: İKONİK NFSU2 MENÜSÜ --- */
+.ug-main-menu {
+  position: fixed;
+  top: 140px;
+  left: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  pointer-events: auto;
+  z-index: 950;
+}
+
+.menu-brand h2 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  color: #ffffff;
+  letter-spacing: 2px;
+}
+
+.menu-brand h1 {
+  font-family: 'Teko', sans-serif;
+  font-size: 2.8rem;
+  color: #ffffff;
+  line-height: 0.9;
+}
+
+.menu-brand h1 span {
+  color: #00ff66;
+  text-shadow: 0 0 15px #00ff66;
+}
+
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 240px;
+}
+
+.ug-menu-btn {
+  background: rgba(10, 20, 13, 0.9);
+  border: 1px solid #00ff66;
+  color: #d0edd5;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 8px 14px;
+  text-align: left;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ug-menu-btn:hover,
+.ug-menu-btn.active {
+  background: #00ff66;
+  color: #000000;
+  box-shadow: 0 0 20px #00ff66;
+  transform: translateX(6px);
+}
+
+/* --- ORTA: 3D ARABA SHOWCASE ALANI --- */
+.ug-car-stage {
+  position: fixed;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  z-index: 920;
+}
+
+.ug-car-sprite {
+  width: 440px;
+  height: 220px;
+  object-fit: contain;
+  filter: drop-shadow(0 15px 25px rgba(0,0,0,0.9));
+  transition: opacity 0.2s ease, transform 0.3s ease;
+}
+
+.car-neon-glow {
+  width: 380px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: -15px;
+  transition: box-shadow 0.3s ease;
+}
+
+.car-carousel-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.car-nav-arrow {
+  background: rgba(10, 20, 13, 0.9);
+  border: 1px solid #00ff66;
+  color: #00ff66;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.7rem;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.car-nav-arrow:hover { background: #00ff66; color: #000000; }
+.car-name-plate { text-align: center; }
+.car-name-plate h3 { font-size: 1.1rem; color: #ffffff; text-shadow: 0 0 10px #00ff66; }
+.car-stars { font-size: 0.85rem; color: #ffaa00; }
+
+/* --- SAĞ TARAF: MODİFİYE & DYNO INSPECTOR --- */
+.ug-inspector-drawer {
+  position: fixed;
+  top: 140px;
+  right: 40px;
+  width: 260px;
+  background: rgba(10, 20, 13, 0.95);
+  border: 2px solid #00ff66;
+  border-radius: 4px;
+  padding: 16px;
+  box-shadow: 0 0 30px rgba(0, 255, 102, 0.3);
+  pointer-events: auto;
+  z-index: 950;
+}
+
+.tab-sec-title {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #00ff66;
+  border-bottom: 1px dashed rgba(0, 255, 102, 0.3);
+  padding-bottom: 4px;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+.tab-sec-title:first-child { margin-top: 0; }
+
+.stat-spec-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  margin-bottom: 8px;
+}
+.stat-spec-row strong { color: #ffffff; }
+
+.neon-color-palette {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.neon-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 2px solid #ffffff;
+  cursor: pointer;
+}
+
+.ug-select {
+  width: 100%;
+  background: #050d07;
+  border: 1px solid #00ff66;
+  color: #ffffff;
+  padding: 6px;
+  font-family: inherit;
+  font-size: 0.65rem;
+  border-radius: 3px;
+}
+
+.dyno-meter-wrap {
+  background: #050d07;
+  border: 1px solid #00ff66;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+.dyno-val-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  margin-bottom: 4px;
+}
+.dyno-val-line strong { color: #00ff66; font-size: 0.85rem; }
+
+.ug-action-btn.dyno {
+  width: 100%;
+  background: #00ff66;
+  border: none;
+  color: #000000;
+  padding: 8px;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 900;
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: 0 0 15px #00ff66;
+}
+
+/* --- DVD MAGAZINE MODAL --- */
+.ug-magazine-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(6px);
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.magazine-cover {
+  position: relative;
+  width: 360px;
+  height: 480px;
+  background: #0d1a10;
+  border: 4px solid #00ff66;
+  padding: 20px;
+  box-shadow: 0 0 50px #00ff66;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.mag-title {
+  font-family: 'Teko', sans-serif;
+  font-size: 3.5rem;
+  color: #00ff66;
+  line-height: 0.85;
+}
+.mag-issue { font-size: 0.6rem; color: #ffffff; font-weight: 800; }
+.mag-car-img { width: 100%; height: 180px; object-fit: contain; }
+.mag-headlines h3 { font-size: 1.1rem; color: #ffffff; }
+.mag-headlines p { font-size: 0.65rem; color: #a4d4ab; }
+
+.mag-close-btn {
+  background: #00ff66;
+  border: none;
+  color: #000000;
+  font-weight: 900;
+  padding: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* --- SAĞ ALT: TAKOMETRE & NOS PURGE --- */
+.ug-gauge-dock {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  pointer-events: auto;
+  z-index: 950;
+}
+
+.ug-analog-tach {
+  width: 90px;
+  height: 90px;
+  background: #050d07;
+  border: 2px solid #00ff66;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(0, 255, 102, 0.4);
+}
+
+.tach-center { text-align: center; }
+.tach-rpm { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; color: #ffffff; font-weight: 900; }
+.tach-center small { font-size: 0.5rem; color: #00ff66; display: block; }
+
+.ug-nos-bottle-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.nos-meter {
+  width: 14px;
+  height: 60px;
+  background: #050d07;
+  border: 1px solid #00ff66;
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.nos-fill {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: #00d2ff;
+  box-shadow: 0 0 10px #00d2ff;
+  transition: height 0.2s;
+}
+
+.ug-nos-bottle-wrap small { font-size: 0.55rem; color: #00d2ff; font-weight: 800; }

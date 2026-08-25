@@ -1,0 +1,302 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root[data-theme="minecraft"] {
+  --bg-color: #14110d;
+  --panel-bg: #2b241e;
+  --text-main: #d0c8be;
+  --text-dim: #7a6e60;
+  --text-bright: #ffffff;
+  --border-color: #4a3e31;
+  --border-subtle: #362c22;
+  
+  --accent-action: #5b8731;
+  --accent-glow: rgba(91, 135, 49, 0.4);
+  --status-ok: #5b8731;
+  --status-err: #a82e2e;
+
+  --grid-line: rgba(74, 62, 49, 0.4);
+  --box-bg-start: #3b3127;
+  --box-bg-end: #1f1913;
+  --box-border: #000000;
+  --box-glow: rgba(0, 0, 0, 0.6);
+  --box-glow-hover: rgba(91, 135, 49, 0.4);
+  --cell-size: 125px;
+}
+
+[data-theme="minecraft"] body {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 10px !important;
+  line-height: 1.8;
+  image-rendering: pixelated;
+}
+
+/* Izgara Katmanı Tıklanabilirliği */
+[data-theme="minecraft"] .fixed-background-grid-layer,
+[data-theme="minecraft"] .render-corner-grid {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}
+
+/* --- PNG DOKULU VOXEL MADEN BLOKLARI --- */
+.mc-voxel-block {
+  position: relative;
+  border: 4px solid #000000 !important;
+  cursor: grab !important;
+  user-select: none;
+  overflow: hidden;
+  border-radius: 0px !important;
+  box-shadow: inset 3px 3px 0px rgba(255, 255, 255, 0.2), inset -3px -3px 0px rgba(0, 0, 0, 0.5) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  image-rendering: pixelated !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  padding: 6px;
+}
+
+/* themes/ klasöründeki PNG görselleri (Fallback renkli) */
+.mc-oak {
+  background-color: #85542b !important;
+  background-image: url('./modules/oak.png') !important;
+}
+.mc-stone {
+  background-color: #686868 !important;
+  background-image: url('./modules/stone.png') !important;
+}
+.mc-coal {
+  background-color: #333333 !important;
+  background-image: url('./modules/coal.png') !important;
+}
+.mc-iron {
+  background-color: #888888 !important;
+  background-image: url('./modules/iron.png') !important;
+}
+.mc-diamond {
+  background-color: #4a9999 !important;
+  background-image: url('./modules/diamond.png') !important;
+  box-shadow: inset 0 0 16px #00ffff !important;
+}
+
+/* Maden Kazılırken Sallantı (Hit Vibration) */
+.mc-voxel-block.mc-mining-active {
+  cursor: grabbing !important;
+  animation: mcBlockVibrate 0.1s infinite alternate;
+}
+
+@keyframes mcBlockVibrate {
+  0% { transform: scale(0.96) translate(0px, 0px); }
+  50% { transform: scale(0.96) translate(-1.5px, 1.5px); }
+  100% { transform: scale(0.96) translate(1.5px, -1px); }
+}
+
+.mc-block-label {
+  font-size: 0.5rem;
+  color: #ffffff;
+  text-shadow: 2px 2px 0px #000000;
+  pointer-events: none;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 1px 4px;
+}
+
+/* Çatlak Katmanı (Mine Cracking Overlay) */
+.mc-crack-layer {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(45deg, #000000, #000000 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(-45deg, #000000, #000000 4px, transparent 4px, transparent 8px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mc-voxel-block.mc-broken-state {
+  opacity: 0.1;
+  transform: scale(0.6) rotate(15deg);
+  pointer-events: none;
+  transition: all 0.2s ease-out;
+}
+
+/* --- CRAFTING BUTONU & HOTBAR --- */
+.mc-crafting-btn {
+  position: fixed;
+  top: 90px;
+  right: 24px;
+  background: #737373;
+  border: 4px solid #000000;
+  border-top-color: #b8b8b8;
+  border-left-color: #b8b8b8;
+  border-right-color: #383838;
+  border-bottom-color: #383838;
+  color: #ffffff;
+  padding: 10px 16px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.65rem;
+  cursor: pointer;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.mc-crafting-btn:hover {
+  background: #8b8b8b;
+  transform: translateY(-2px);
+}
+
+.mc-inventory-hotbar {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  gap: 5px;
+  background: #2b241e;
+  border: 4px solid #000000;
+  padding: 6px;
+  z-index: 120;
+}
+
+.mc-hotbar-slot {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  background: #3b3127;
+  border: 3px solid #1a1510;
+  border-right-color: #574839;
+  border-bottom-color: #574839;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+.mc-slot-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 0.55rem;
+  color: #ffffff;
+  text-shadow: 1px 1px 0px #000000;
+}
+
+.mc-craft-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mc-craft-window {
+  width: 90%;
+  max-width: 440px;
+  background: #c6c6c6;
+  border: 4px solid #000000;
+  border-top-color: #ffffff;
+  border-left-color: #ffffff;
+  border-right-color: #555555;
+  border-bottom-color: #555555;
+  padding: 16px;
+  color: #383838;
+}
+
+.mc-craft-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 0.72rem;
+}
+
+.mc-modal-x {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.mc-craft-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.mc-grid-3x3 {
+  display: grid;
+  grid-template-columns: repeat(3, 42px);
+  gap: 3px;
+}
+
+.mc-cell-slot {
+  width: 42px;
+  height: 42px;
+  background: #8b8b8b;
+  border: 2px solid #373737;
+  border-right-color: #ffffff;
+  border-bottom-color: #ffffff;
+}
+
+.mc-result-slot {
+  width: 54px;
+  height: 54px;
+  background: #8b8b8b;
+  border: 3px solid #373737;
+  border-right-color: #ffffff;
+  border-bottom-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+}
+
+.mc-craft-arrow {
+  font-size: 1.4rem;
+}
+
+.mc-recipe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mc-recipe-action {
+  background: #8b8b8b;
+  border: 2px solid #000000;
+  border-top-color: #ffffff;
+  border-left-color: #ffffff;
+  color: #ffffff;
+  padding: 8px 10px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.58rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mc-recipe-action:hover {
+  background: #5b8731;
+}
+
+.mc-float-text {
+  position: fixed;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.72rem;
+  color: #55ff55;
+  text-shadow: 2px 2px 0px #000000;
+  pointer-events: none;
+  z-index: 1001;
+  animation: mcFloatAnim 1s ease-out forwards;
+}
+
+@keyframes mcFloatAnim {
+  0% { transform: translate(-50%, 0); opacity: 1; }
+  100% { transform: translate(-50%, -40px); opacity: 0; }
+}

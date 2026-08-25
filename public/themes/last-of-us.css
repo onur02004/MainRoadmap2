@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+:root[data-theme="last-of-us"] {
+  /* Post-apokaliptik karanlık dokulu orman/harabe arkaplanı */
+  --bg-image: linear-gradient(rgba(10, 14, 11, 0.88), rgba(6, 8, 7, 0.94)),
+              url('https://i.redd.it/8wfbc23yxncd1.jpeg');
+  --bg-color: #0b0f0c;
+  --panel-bg: #151c16;
+  --text-main: #b2bda8;
+  --text-dim: #5c6654;
+  --text-bright: #e3ebd8;
+  --border-color: rgba(140, 160, 120, 0.22);
+  --border-subtle: rgba(140, 160, 120, 0.08);
+  
+  --accent-action: #d4a343; /* Firefly Gold / Survival Amber */
+  --accent-glow: rgba(212, 163, 67, 0.3);
+  --status-ok: #7da85b;
+  --status-err: #a84232;
+
+  --grid-line: rgba(125, 168, 91, 0.08);
+  --box-bg-start: #1c261e;
+  --box-bg-end: #0f1410;
+  --box-border: rgba(125, 168, 91, 0.25);
+  --box-glow: rgba(0, 0, 0, 0.8);
+  --box-glow-hover: rgba(212, 163, 67, 0.35);
+}
+
+[data-theme="last-of-us"] body {
+  font-family: 'Share Tech Mono', monospace;
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+  color: var(--text-main);
+  letter-spacing: 0.5px;
+}
+
+/* Çizilmiş / Eskitilmiş Envanter Kartları */
+[data-theme="last-of-us"] .telemetry-bar,
+[data-theme="last-of-us"] .service-block,
+[data-theme="last-of-us"] .non-cli-placeholder {
+  background: rgba(21, 28, 22, 0.85) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(140, 160, 120, 0.25) !important;
+  border-left: 3px solid var(--accent-action) !important;
+  border-radius: 2px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8) !important;
+}
+
+[data-theme="last-of-us"] .service-block:hover {
+  border-color: var(--accent-action) !important;
+  box-shadow: 0 0 20px rgba(212, 163, 67, 0.2) !important;
+}
+
+[data-theme="last-of-us"] .corner-unit.solid-box {
+  border-radius: 2px;
+  border: 1px solid rgba(140, 160, 120, 0.3);
+}
+
+[data-theme="last-of-us"] .progress-fill {
+  background: linear-gradient(90deg, #7da85b 0%, #d4a343 100%) !important;
+}

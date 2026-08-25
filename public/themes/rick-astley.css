@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
+
+:root[data-theme="rick-astley"] {
+  --bg-image: linear-gradient(rgba(30, 10, 40, 0.82), rgba(15, 5, 20, 0.92)),
+              url('https://upload.wikimedia.org/wikipedia/it/f/f0/Screenshot_Videoclip_Never_Gonna_Give_You_Up.png?utm_source=it.wikipedia.org&utm_campaign=index&utm_content=original');
+  --bg-color: #1a0826;
+  --panel-bg: #2d1040;
+  --text-main: #f3d2f7;
+  --text-dim: #996eab;
+  --text-bright: #ffffff;
+  --border-color: #ff6b8b;
+  
+  --accent-action: #ff6b8b; /* 80s Neon Pink */
+  --accent-glow: rgba(255, 107, 139, 0.45);
+  --status-ok: #00f0ff;
+  --status-err: #ff0055;
+}
+
+[data-theme="rick-astley"] body {
+  background: var(--bg-image) no-repeat center center fixed;
+  background-size: cover;
+}
+
+[data-theme="rick-astley"] .brand-text,
+[data-theme="rick-astley"] .service-block h3 {
+  font-family: 'Righteous', cursive;
+  letter-spacing: 1px;
+}
+
+[data-theme="rick-astley"] .service-block,
+[data-theme="rick-astley"] .telemetry-bar {
+  background: rgba(45, 16, 64, 0.85) !important;
+  border: 2px solid #ff6b8b !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 15px rgba(255, 107, 139, 0.25) !important;
+}
