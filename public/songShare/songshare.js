@@ -1,763 +1,713 @@
-// songshare.js
+let ytPlayer;
+let isYTReady = false;
+let syncedLyrics = [];
+let lyricsTimer;
 
-function getToken() {
-  return localStorage.getItem('token');
+// Global HTML helper
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
-/* ŞARKI VERİTABANI */
-const TRACK_DATABASE = {
-  rebel: {
-    title: 'Rebel Yell',
-    artist: 'Billy Idol',
-    cover: 'https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352',
-    tempo: '166 BPM',
-    key: 'B Minor',
-    energy: '92%',
-    vibe: 'Synth Rock',
-    trivia: 'Billy Idol bu parçanın adını The Rolling Stones ile katıldığı bir partide keşfetti.',
-    lyrics: [{ time: 144, text: 'In the midnight hour, she cried "more, more, more!"', active: true }]
-  },
-  skyfull: {
-    title: 'A Sky Full of Stars',
-    artist: 'Coldplay',
-    cover: 'https://i.scdn.co/image/ab67616d00001e028ff7c3580d429c8212b9a3b6',
-    tempo: '125 BPM',
-    key: 'F Major',
-    energy: '88%',
-    vibe: 'EDM / Pop',
-    trivia: 'Avicii ile ortak prodüksiyon sürecinden geçti.',
-    lyrics: [{ time: 20, text: "Cause you're a sky full of stars...", active: true }]
-  },
-  everlong: {
-    title: 'Everlong',
-    artist: 'Foo Fighters',
-    cover: 'https://i1.sndcdn.com/artworks-000079984264-e8xxju-t500x500.jpg',
-    tempo: '158 BPM',
-    key: 'D Major',
-    energy: '95%',
-    vibe: 'Alternative Rock',
-    trivia: 'Dave Grohl akustik versiyonunu tek seferde kaydetti.',
-    lyrics: [{ time: 110, text: 'If everything could ever feel this real forever...', active: true }]
-  },
-  aklimda: {
-    title: 'Aklımda Biri Var',
-    artist: 'Artis',
-    cover: 'https://i.scdn.co/image/ab67616d0000b273960635da26f6fbccbeb36b2d',
-    tempo: '120 BPM',
-    key: 'C Major',
-    energy: '78%',
-    vibe: 'Pop Rock',
-    trivia: 'Stüdyo kayıtlarında akustik gitar altyapısı tercih edildi.',
-    lyrics: [{ time: 10, text: 'Aklımda biri var, her şeyim yarım kalan...', active: true }]
-  },
-  selfaware: {
-    title: 'Self Aware',
-    artist: 'Alternative',
-    cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpAp5NlImEisne6bbOOYVnPRHVm5B1gT4YQfF1Vi5dDQ&s=10',
-    tempo: '130 BPM',
-    key: 'D Minor',
-    energy: '82%',
-    vibe: 'Indie Rock',
-    trivia: 'Alternatif sahnenin bağımsız projelerinden.',
-    lyrics: [{ time: 15, text: 'Trying to keep my mind unclouded...', active: true }]
-  },
-  joinme: {
-    title: 'Join Me',
-    artist: 'HIM',
-    cover: 'https://i.scdn.co/image/ab67616d0000b273a8cfc41719dc2c2028e0aad5',
-    tempo: '114 BPM',
-    key: 'G Minor',
-    energy: '85%',
-    vibe: 'Gothic Rock',
-    trivia: 'Melodik metal ve gotik romantizmin harmanı.',
-    lyrics: [{ time: 30, text: 'Join me in death, feel no regret...', active: true }]
-  },
-  denize: {
-    title: 'Denize Bıraksam',
-    artist: 'Turkish Rock',
-    cover: 'https://i.scdn.co/image/ab67616d0000b2736054a3d4d3fadf0173dbdf07',
-    tempo: '108 BPM',
-    key: 'A Minor',
-    energy: '70%',
-    vibe: 'Anadolu Rock',
-    trivia: 'Yaz akşamı nostaljisi yaşatan modern akustik parça.',
-    lyrics: [{ time: 25, text: 'Denize bıraksam bütün dertleri...', active: true }]
-  },
-  bitik: {
-    title: 'Bi Tik',
-    artist: 'Pop Mix',
-    cover: 'https://i1.sndcdn.com/artworks-ixY9Sl5eXz1mPMyZ-Sq9u8Q-t500x500.jpg',
-    tempo: '128 BPM',
-    key: 'E Major',
-    energy: '90%',
-    vibe: 'Club / Dance',
-    trivia: 'Kulüp sahnelerinin dinamik temposu.',
-    lyrics: [{ time: 10, text: 'Hadi bir tık daha yaklaş bana...', active: true }]
-  },
-  hot: {
-    title: 'Hot',
-    artist: 'Inna',
-    cover: 'https://i.scdn.co/image/ab67616d0000b2733d6413c7dc24318bdbd5b366',
-    tempo: '128 BPM',
-    key: 'A Minor',
-    energy: '94%',
-    vibe: 'Dance Pop',
-    trivia: 'Global listeleri sallayan dans marşı.',
-    lyrics: [{ time: 10, text: 'Every time you look at me, I go hot...', active: true }]
-  },
-  maraton: {
-    title: 'Maraton',
-    artist: 'Ati242',
-    cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s',
-    tempo: '140 BPM',
-    key: 'F Minor',
-    energy: '91%',
-    vibe: 'Turkish Drill / Rap',
-    trivia: 'Ati242 nin en popüler yüksek enerjili drill parçalarından biri.',
-    lyrics: [{ time: 30, text: 'Bu bir maraton, durmak yok...', active: true }]
+function formatDuration(ms) {
+  const minutes = Math.floor(ms / 60000);
+  const seconds = ((ms % 60000) / 1000).toFixed(0);
+  return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+}
+
+function formatSecondsSimple(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+}
+
+// ----------------------------------------------------
+// 1. GLOBAL PAYLAŞIM SİHİRBAZI (WIZARD) VE SPOTLIGHT
+// ----------------------------------------------------
+window.goToWizardStep = function (step) {
+  const step1 = document.getElementById('wizardStep1');
+  const step2 = document.getElementById('wizardStep2');
+  const dot1 = document.getElementById('dotStep1');
+  const dot2 = document.getElementById('dotStep2');
+
+  if (step === 1) {
+    step1?.classList.add('active');
+    step2?.classList.remove('active');
+    dot1?.classList.add('active');
+    dot2?.classList.remove('active');
+  } else if (step === 2) {
+    step1?.classList.remove('active');
+    step2?.classList.add('active');
+    dot1?.classList.remove('active');
+    dot2?.classList.add('active');
   }
 };
 
-let currentTrackKey = 'rebel';
+window.switchPreviewMode = function (mode) {
+  const spotifyBtn = document.getElementById('btnModeSpotify');
+  const lyricsBtn = document.getElementById('btnModeLyrics');
+  const spotifyIframe = document.getElementById('spotifyEmbedIframe');
+  const lyricsBox = document.getElementById('wizLyricsStreamBox');
 
-/* ==============================================================
-   SPA (SINGLE PAGE APPLICATION) YÖNETİMİ & SHARE TRACK WIZARD
-   ============================================================== */
-function initSPA() {
-  const links = document.querySelectorAll('.nav-menu-list .nav-link');
-  
-  links.forEach(link => {
-    link.addEventListener('click', (e) => {
-      const href = link.getAttribute('href');
-      
-      if (href && href.startsWith('#')) {
-        e.preventDefault();
-        
-        // Menü aktif sınıfı güncelle
-        links.forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-        
-        // Sayfaları gizle
-        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-        
-        if (href === '#share') {
-          document.getElementById('view-share')?.classList.add('active');
-          window.resetShareWizard();
-        } else if (href === '#home') {
-          document.getElementById('view-home')?.classList.add('active');
-        } else {
-          // Diğer menüler placeholder olduğundan Home'a düşür
-          document.getElementById('view-home')?.classList.add('active');
-        }
-      }
-    });
-  });
-}
-
-// 1. Adıma Dönüş / Sıfırlama
-window.resetShareWizard = function() {
-  document.getElementById('step-1-search')?.classList.add('active');
-  document.getElementById('step-2-settings')?.classList.remove('active');
-  const searchInput = document.getElementById('shareSearchInput');
-  if (searchInput) searchInput.value = '';
+  if (mode === 'spotify') {
+    spotifyBtn?.classList.add('active');
+    lyricsBtn?.classList.remove('active');
+    if (spotifyIframe) spotifyIframe.style.display = 'block';
+    if (lyricsBox) lyricsBox.style.display = 'none';
+    if (isYTReady && ytPlayer?.pauseVideo) ytPlayer.pauseVideo();
+  } else {
+    lyricsBtn?.classList.add('active');
+    spotifyBtn?.classList.remove('active');
+    if (spotifyIframe) spotifyIframe.style.display = 'none';
+    if (lyricsBox) lyricsBox.style.display = 'flex';
+  }
 };
 
-// 1. Adımdan Şarkı Seçildiğinde 2. Adıma Geçiş
-window.selectTrackForShare = function(trackKey) {
-  const track = TRACK_DATABASE[trackKey] || TRACK_DATABASE['rebel'];
-  
-  const imgEl = document.getElementById('selShareImg');
-  const titleEl = document.getElementById('selShareTitle');
-  const artistEl = document.getElementById('selShareArtist');
+window.playToDock = function (title, artist, coverUrl, key = '') {
+  const dockSong = document.getElementById('playerTrackTitle');
+  const dockArtist = document.getElementById('playerTrackArtist');
+  const dockImg = document.getElementById('playerCoverImg');
 
-  if (imgEl) imgEl.src = track.cover;
-  if (titleEl) titleEl.textContent = track.title;
-  if (artistEl) artistEl.textContent = track.artist;
-  
-  // Adım geçişi
-  document.getElementById('step-1-search')?.classList.remove('active');
-  document.getElementById('step-2-settings')?.classList.add('active');
+  if (dockSong) dockSong.textContent = title;
+  if (dockArtist) dockArtist.textContent = artist;
+  if (dockImg && coverUrl) dockImg.src = coverUrl;
+
+  window.fetchSyncedLyricsExternal?.(title, artist);
 };
 
-// Şu Anda Çalan Parçayı Seçme Butonu
-window.shareCurrentlyPlaying = function() {
-  window.selectTrackForShare(currentTrackKey || 'rebel');
-};
-
-// 2. Adım Sonunda Paylaşımı Tamamlama
-window.submitShare = function() {
-  const title = document.getElementById('selShareTitle')?.textContent || 'Şarkı';
-  const highlight = document.getElementById('shareHighlightInput')?.value || '';
-  const comment = document.getElementById('shareCommentInput')?.value || '';
-  const privacy = document.getElementById('sharePrivacySelect')?.value || 'friends';
-
-  alert(`"${title}" başarıyla paylaşıldı!\n\nHighlight: ${highlight || 'Yok'}\nYorum: ${comment || 'Yok'}\nGizlilik: ${privacy}\n\n(Backend hazır olduğunda burası API'ye POST isteği atacaktır)`);
-
-  // Formu temizle ve Home'a geri dön
-  if (document.getElementById('shareHighlightInput')) document.getElementById('shareHighlightInput').value = '';
-  if (document.getElementById('shareCommentInput')) document.getElementById('shareCommentInput').value = '';
-  
-  document.querySelector('.nav-link[href="#home"]')?.click();
-};
-
-
-/* 1. SPOTIFY AUTH */
-async function initSpotifyAuth() {
-  const token = getToken();
-  const btnConnect = document.getElementById('btnConnectSpotify');
-  const metaLabel = document.querySelector('.spotify-text-meta .meta-label');
-  const metaStatus = document.querySelector('.spotify-text-meta .meta-status');
-
-  if (!token) return;
-
-  try {
-    const res = await fetch('/api/spotify/status', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
-
-    if (res.ok && data.connected) {
-      if (metaStatus) {
-        metaStatus.textContent = 'CONNECTED';
-        metaStatus.style.color = 'var(--accent-action)';
-      }
-      if (metaLabel) {
-        metaLabel.textContent = data.account?.displayName || 'Spotify Connected';
-      }
-      if (btnConnect) {
-        btnConnect.textContent = 'RECONNECT';
-        btnConnect.style.background = 'rgba(255, 255, 255, 0.08)';
-        btnConnect.style.color = '#fff';
+// ----------------------------------------------------
+// 2. YOUTUBE IFRAME API
+// ----------------------------------------------------
+window.onYouTubeIframeAPIReady = function () {
+  ytPlayer = new YT.Player('player', {
+    height: '1',
+    width: '1',
+    playerVars: {
+      autoplay: 0,
+      controls: 0,
+      disablekb: 1,
+      enablejsapi: 1,
+      origin: window.location.origin
+    },
+    events: {
+      onReady: () => {
+        isYTReady = true;
+        console.log("✅ YouTube Player Ready");
+      },
+      onStateChange: (event) => {
+        if (window.handleYTStateChange) window.handleYTStateChange(event);
       }
     }
-  } catch (err) {
-    console.error('Spotify auth error:', err);
+  });
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  // YouTube API Script Inject
+  const tag = document.createElement('script');
+  tag.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(tag);
+
+  window.handleYTStateChange = onYTStateChange;
+
+  let currentSelectedTrack = {
+    name: 'Rebel Yell',
+    artist: 'Billy Idol',
+    uri: 'spotify:track:4TIJ7zSBNejNuQIYKjKXNE',
+    imageUrl: 'https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352'
+  };
+
+  // ----------------------------------------------------
+  // 3. SPA VIEW & SAYFA GEÇİŞ YÖNETİMİ (HOME / SHARE TRACK / VB.)
+  // ----------------------------------------------------
+  const navLinks = document.querySelectorAll('.nav-menu-list .nav-link');
+  const viewSections = document.querySelectorAll('.view-section');
+
+  function switchView(targetHash) {
+    const viewName = targetHash.replace('#', '') || 'home';
+
+    navLinks.forEach(link => {
+      const href = link.getAttribute('href');
+      link.classList.toggle('active', href === `#${viewName}`);
+    });
+
+    viewSections.forEach(section => {
+      section.classList.remove('active');
+    });
+
+    const targetSection = document.getElementById(`view-${viewName}`);
+    if (targetSection) {
+      targetSection.classList.add('active');
+    } else {
+      document.getElementById('view-home')?.classList.add('active');
+    }
   }
 
-  btnConnect?.addEventListener('click', async () => {
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const hash = link.getAttribute('href');
+      location.hash = hash;
+      switchView(hash);
+    });
+  });
+
+  window.addEventListener('hashchange', () => switchView(location.hash));
+  switchView(location.hash || '#home');
+
+  // ----------------------------------------------------
+  // 4. SPOTIFY SYNC & CANLI VERİ ENTEGRASYONU
+  // ----------------------------------------------------
+  const btnConnectSpotify = document.getElementById('btnConnectSpotify');
+  btnConnectSpotify?.addEventListener('click', async () => {
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/spotify/login-url', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
-      if (res.ok && data.url) {
+      if (data.url) {
         window.location.href = data.url;
+      } else {
+        alert(data.message || 'Spotify bağlantı linki üretilemedi.');
       }
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error('Spotify login hatası:', err);
     }
   });
-}
 
-/* 2. ARKADAŞ AKTİVİTESİ */
-async function fetchFriendsActivity() {
-  const token = getToken();
-  const container = document.getElementById('friendsListContainer');
-  const counterBadge = document.getElementById('onlineFriendsCount');
-  const navPill = document.getElementById('friendsNavPill');
+  let lastTrackTitle = null;
 
-  if (!token || !container) return;
+  async function loadMyNowPlaying() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
-  try {
-    const res = await fetch('/api/spotify/friends-activity', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const json = await res.json();
+    try {
+      const res = await fetch('/api/spotify/now-playing', {
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
+      });
+      if (!res.ok) return;
 
-    if (res.ok && Array.isArray(json.data) && json.data.length > 0) {
-      const list = json.data;
-      const activeCount = list.filter(f => f.isPlaying).length;
+      const data = await res.json();
+      const dockSong = document.getElementById('playerTrackTitle');
+      const dockArtist = document.getElementById('playerTrackArtist');
+      const dockImg = document.getElementById('playerCoverImg');
+      const dockIndicator = document.getElementById('nowPlayingIndicator');
 
-      if (counterBadge) counterBadge.textContent = `${activeCount} LISTENING`;
-      if (navPill) navPill.textContent = `${activeCount} live`;
+      if (data.isPlaying && data.title) {
+        // Şarkı değiştiyse bilgileri ve sözleri otomatik güncelle
+        if (lastTrackTitle !== data.title) {
+          lastTrackTitle = data.title;
+          if (dockSong) dockSong.textContent = data.title;
+          if (dockArtist) dockArtist.textContent = data.artist;
+          if (dockImg && data.albumArt) dockImg.src = data.albumArt;
+          if (dockIndicator) dockIndicator.textContent = 'LISTENING NOW';
 
-      container.innerHTML = list.map(friend => {
-        const isLive = Boolean(friend.isPlaying && friend.title);
-        const hasRecent = Boolean(!friend.isPlaying && friend.lastTrack);
-        
-        let stateClass = 'state-offline';
-        let statusText = 'Offline';
-        let trackTitle = 'Not Listening';
-        let trackArtist = 'No recent activity';
-        let coverImg = '';
+          // Şarkı sözlerini ve companion panelini yeni şarkıyla güncelle
+          window.fetchSyncedLyricsExternal?.(data.title, data.artist);
+        }
+      } else {
+        // Şarkı çalmıyorsa bekleme moduna al
+        if (lastTrackTitle !== null) {
+          lastTrackTitle = null;
+          if (dockSong) dockSong.textContent = 'Müzik Çalmıyor';
+          if (dockArtist) dockArtist.textContent = 'Spotify Beklemede';
+          if (dockIndicator) dockIndicator.textContent = 'COMPANION';
+        }
+      }
+    } catch (err) {
+      console.warn('Now playing alınamadı:', err);
+    }
+  }
 
-        if (isLive) {
-          stateClass = 'state-live';
-          statusText = 'Listening Now';
-          trackTitle = friend.title;
-          trackArtist = friend.artist || '';
-          coverImg = friend.albumArt || '';
-        } else if (hasRecent) {
-          stateClass = 'state-last-played';
-          statusText = friend.playedAgo ? `Played ${friend.playedAgo}` : 'Last played';
-          trackTitle = friend.lastTrack.title || 'Unknown';
-          trackArtist = friend.lastTrack.artist || '';
-          coverImg = friend.lastTrack.albumArt || '';
+  async function loadFriendsActivity() {
+    const token = localStorage.getItem('token');
+    const container = document.getElementById('friendsListContainer');
+    const pill = document.getElementById('onlineFriendsCount');
+    const navPill = document.getElementById('friendsNavPill');
+
+    if (!container) return;
+
+    try {
+      const res = await fetch('/api/spotify/friends-activity', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        credentials: 'include'
+      });
+
+      if (!res.ok) return;
+
+      const result = await res.json();
+      const activities = result.data || [];
+      const liveCount = activities.filter(a => a.isPlaying).length;
+
+      if (pill) pill.textContent = `${liveCount} LISTENING`;
+      if (navPill) navPill.textContent = `${liveCount} live`;
+
+      if (activities.length === 0) {
+        container.innerHTML = `<p style="font-size:0.75rem; color:var(--text-dim); padding:12px;">Aktif arkadaş bulunmuyor.</p>`;
+        return;
+      }
+
+      container.innerHTML = activities.map(act => {
+        const isLive = Boolean(act.isPlaying && act.title);
+
+        // Profil resmi çözümü: URL değilse /media/ klasörüne yönlendir, yoksa varsayılan bottts avatarı ata
+        let avatarUrl = 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(act.username || 'user');
+        if (act.avatar) {
+          if (act.avatar.startsWith('http')) {
+            avatarUrl = act.avatar;
+          } else if (act.avatar.startsWith('/content/') || act.avatar.startsWith('content/')) {
+            avatarUrl = act.avatar.startsWith('/') ? act.avatar : `/${act.avatar}`;
+          } else {
+            avatarUrl = `/media/${act.avatar.replace(/^\/?(media\/)?/, '')}`;
+          }
         }
 
-        const safeTitle = escapeHtml(trackTitle);
-        const safeArtist = escapeHtml(trackArtist);
-        const safeCover = escapeHtml(coverImg);
-        const safeUser = escapeHtml(friend.username || 'Friend');
-        const safeAvatar = escapeHtml(friend.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120');
+        // Offline ise albüm görseli koyma, düz arka plan kullan
+        const coverArtImg = isLive && act.albumArt
+          ? `<img src="${act.albumArt}" alt="${escapeHtml(act.title)}" class="card-bg-art" />`
+          : '';
 
         return `
-          <div class="ios-friend-card ${stateClass}" onclick="playToDock('${safeTitle}', '${safeArtist}', '${safeCover}')">
-            ${coverImg ? `<img src="${safeCover}" alt="${safeTitle}" class="card-bg-art" />` : ''}
-            <div class="card-backdrop-overlay ${!coverImg ? 'offline-solid' : ''}"></div>
-
+          <div class="ios-friend-card ${isLive ? 'state-live' : 'state-offline'}"
+               onclick="${isLive ? `playToDock('${escapeHtml(act.title)}', '${escapeHtml(act.artist || '')}', '${act.albumArt || ''}')` : ''}">
+            ${coverArtImg}
+            <div class="card-backdrop-overlay ${!isLive ? 'offline-solid' : ''}"></div>
             <div class="card-top-bar">
               <div class="user-chip">
                 <div class="avatar-ring-wrap">
-                  <img src="${safeAvatar}" class="chip-avatar" alt="${safeUser}" />
+                  <img src="${avatarUrl}" class="chip-avatar" alt="${escapeHtml(act.username)}" 
+                       onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(act.username)}'" />
                   ${isLive ? '<span class="live-dot-indicator"></span>' : ''}
                 </div>
                 <div class="chip-names">
-                  <span class="chip-fullname">${safeUser}</span>
-                  <span class="chip-status-text">${statusText}</span>
+                  <span class="chip-fullname">${escapeHtml(act.username)}</span>
+                  <span class="chip-status-text">${isLive ? 'Listening Now' : 'Offline'}</span>
                 </div>
               </div>
-
-              ${isLive ? `
-                <div class="sound-wave-bars">
-                  <span></span><span></span><span></span><span></span>
-                </div>` : ''
-              }
-              ${hasRecent ? `<span class="idle-tag">Last Played</span>` : ''}
+              ${isLive ? '<div class="sound-wave-bars"><span></span><span></span><span></span><span></span></div>' : '<span class="idle-tag">OFFLINE</span>'}
             </div>
-
             <div class="card-bottom-meta">
-              <span class="song-name ${!isLive && !hasRecent ? 'muted' : ''}">${safeTitle}</span>
-              <span class="artist-name ${!isLive && !hasRecent ? 'muted' : ''}">${safeArtist}</span>
-              ${isLive ? `
-                <div class="track-mini-progress">
-                  <div class="mini-progress-fill" style="width: 45%;"></div>
-                </div>` : ''
-              }
+              <span class="song-name ${!isLive ? 'muted' : ''}">${isLive ? escapeHtml(act.title) : 'Offline'}</span>
+              <span class="artist-name ${!isLive ? 'muted' : ''}">${isLive ? escapeHtml(act.artist) : 'Şarkı çalmıyor'}</span>
             </div>
           </div>
         `;
       }).join('');
-    }
-  } catch (err) {
-    console.error('Friends activity fetch error:', err);
-  }
-}
-
-function escapeHtml(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-/* 3. KENDİ SPOTIFY DURUMU */
-async function fetchMyNowPlaying() {
-  const token = getToken();
-  const coverImg = document.getElementById('playerCoverImg');
-  const trackTitle = document.getElementById('playerTrackTitle');
-  const trackArtist = document.getElementById('playerTrackArtist');
-
-  if (!token) return;
-
-  try {
-    const res = await fetch('/api/spotify/now-playing', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
-
-    if (res.ok && data.isPlaying) {
-      if (coverImg) coverImg.src = data.albumArt || '';
-      if (trackTitle) {
-        trackTitle.textContent = data.title;
-        delete trackTitle.dataset.manualSet;
-      }
-      if (trackArtist) trackArtist.textContent = `${data.artist} • ${data.album || ''}`;
-    }
-  } catch (err) {
-    console.error('Now playing error:', err);
-  }
-}
-
-/* 4. TRACK COMPANION SEKME YÖNETİMİ */
-function switchCompanionTab(tabId) {
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
-  });
-
-  document.querySelectorAll('.companion-pane').forEach(pane => {
-    pane.classList.remove('active');
-  });
-
-  const activePane = document.getElementById(`pane-${tabId}`);
-  if (activePane) activePane.classList.add('active');
-}
-
-function initCompanionTabs() {
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tabId = btn.getAttribute('data-tab');
-      switchCompanionTab(tabId);
-    });
-  });
-}
-
-/* 5. BÜYÜTME (EXPAND TOGGLE) */
-function initExpandToggle() {
-  const btnExpand = document.getElementById('btnToggleExpand');
-  const companionDock = document.getElementById('mainPlayerDock');
-
-  btnExpand?.addEventListener('click', () => {
-    companionDock.classList.toggle('expanded-mode');
-  });
-}
-
-/* 6. 3D APPLE-STYLE COVERFLOW VE DİNAMİK ARKA PLAN GEÇİŞİ */
-let spotlightIndex = 4;
-
-window.slideToOffset = function(targetOffset) {
-  spotlightIndex += targetOffset;
-  updateCoverflowPositions();
-};
-
-window.moveCoverflow = function(direction) {
-  spotlightIndex += direction;
-  updateCoverflowPositions();
-};
-
-function updateCoverflowPositions() {
-  const items = document.querySelectorAll('.coverflow-item');
-  if (!items.length) return;
-
-  if (spotlightIndex < 0) spotlightIndex = 0;
-  if (spotlightIndex >= items.length) spotlightIndex = items.length - 1;
-
-  items.forEach((item, idx) => {
-    const offset = idx - spotlightIndex;
-    item.style.setProperty('--offset', offset);
-    item.classList.toggle('active', offset === 0);
-  });
-
-  const activeItem = items[spotlightIndex];
-  if (activeItem) {
-    const title = activeItem.getAttribute('data-title');
-    const artist = activeItem.getAttribute('data-artist');
-    const img = activeItem.getAttribute('data-img');
-
-    const islandImg = document.getElementById('spotIslandImg');
-    const islandTitle = document.getElementById('spotIslandTitle');
-    const islandArtist = document.getElementById('spotIslandArtist');
-
-    if (islandImg) islandImg.src = img;
-    if (islandTitle) islandTitle.textContent = title;
-    if (islandArtist) islandArtist.textContent = artist;
-
-    const dynamicBg = document.getElementById('spotlightDynamicBg');
-    if (dynamicBg) {
-      dynamicBg.style.opacity = '0.3';
-      setTimeout(() => {
-        dynamicBg.style.backgroundImage = `url('${img}')`;
-        dynamicBg.style.opacity = '1';
-      }, 250);
+    } catch (err) {
+      console.warn('Friends activity yüklenemedi:', err);
     }
   }
-}
 
-window.togglePauseState = function() {
-  console.log('Spotlight playback toggled');
-};
-
-/* 7. TASTE MATCH TOOLTIP & REPOST SİSTEMİ */
-window.showMatchTooltip = function(el) {
-  const matchVal = el.getAttribute('data-match');
-  let tip = el.querySelector('.match-tooltip-popup');
-  if (!tip) {
-    tip = document.createElement('div');
-    tip.className = 'match-tooltip-popup';
-    el.appendChild(tip);
-  }
-  tip.textContent = `Beğenme İhtimalin: %${matchVal}`;
-  el.classList.add('show-tip');
-};
-
-window.hideMatchTooltip = function(el) {
-  el.classList.remove('show-tip');
-};
-
-const userRepostStates = { 1: true, 2: false, 3: false };
-
-window.toggleRepost = function(cardId) {
-  userRepostStates[cardId] = !userRepostStates[cardId];
-  const countEl = document.getElementById(`repostCount-${cardId}`);
-  const podContainer = document.getElementById(`repostWing-${cardId}`);
-  const avatarsGrid = document.getElementById(`rfwList-${cardId}`) || document.createElement('div');
-  
-  let currentCount = parseInt(countEl.textContent) || 0;
-
-  if (userRepostStates[cardId]) {
-    currentCount += 1;
-    if (podContainer) podContainer.style.display = 'flex';
-    
-    const myBubbleId = `myPodBubble-${cardId}`;
-    if (!document.getElementById(myBubbleId)) {
-      const bubble = document.createElement('div');
-      bubble.className = 'pod-orbit-bubble';
-      bubble.id = myBubbleId;
-      bubble.innerHTML = `
-        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80" alt="Sen" />
-        <span class="pod-holo-tooltip">Sen • Repostladın</span>
-      `;
-      avatarsGrid.appendChild(bubble);
-    }
-  } else {
-    currentCount = Math.max(0, currentCount - 1);
-    const myBubble = document.getElementById(`myPodBubble-${cardId}`);
-    if (myBubble) myBubble.remove();
-
-    if (podContainer && avatarsGrid.children.length === 0 && currentCount === 0) {
-      podContainer.style.display = 'none';
-    }
-  }
-  countEl.textContent = currentCount;
-};
-
-window.handleCommentKey = function(e, cardId) {
-  if (e.key === 'Enter') {
-    submitComment(cardId);
-  }
-};
-
-window.submitComment = function(cardId) {
-  const input = document.getElementById(`commentInput-${cardId}`);
-  const list = document.getElementById(`commentList-${cardId}`);
-  if (!input || !list) return;
-
-  const val = input.value.trim();
-  if (!val) return;
-
-  const commentHtml = `
-    <div class="comment-bubble">
-      <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80" class="c-avatar" alt="Onur" />
-      <div class="c-content">
-        <div class="c-top"><strong>Onur Dönmez</strong> <span class="c-time">Şimdi</span></div>
-        <p>${escapeHtml(val)}</p>
-      </div>
-    </div>
-  `;
-
-  list.insertAdjacentHTML('beforeend', commentHtml);
-  input.value = '';
-  list.scrollTop = list.scrollHeight;
-};
-
-/* 8. TAM EKRAN DİNLEME MODU */
-window.openFullscreenCompanion = function(trackKey = currentTrackKey) {
-  const modal = document.getElementById('fullscreenPlayerModal');
-  const track = TRACK_DATABASE[trackKey] || TRACK_DATABASE.rebel;
-
-  const fsCover = document.getElementById('fsCoverImg');
-  const fsTitle = document.getElementById('fsTrackTitle');
-  const fsArtist = document.getElementById('fsTrackArtist');
-  const fsTrivia = document.getElementById('fsTriviaText');
-  const fsBlurBg = document.getElementById('fullscreenDynamicBlur');
-  const fsLyrics = document.getElementById('fsLyricsContainer');
-
-  if (fsCover) fsCover.src = track.cover;
-  if (fsTitle) fsTitle.textContent = track.title;
-  if (fsArtist) fsArtist.textContent = track.artist;
-  if (fsTrivia) fsTrivia.textContent = track.trivia;
-  if (fsBlurBg) fsBlurBg.style.backgroundImage = `url('${track.cover}')`;
-
-  if (fsLyrics && Array.isArray(track.lyrics)) {
-    fsLyrics.innerHTML = track.lyrics.map(l => `
-      <div class="fs-lyric-item ${l.active ? 'active' : ''}" data-time="${l.time}">
-        ${escapeHtml(l.text)}
-      </div>
-    `).join('');
-  }
-
-  modal?.classList.add('active');
-};
-
-function closeFullscreenCompanion() {
-  const modal = document.getElementById('fullscreenPlayerModal');
-  modal?.classList.remove('active');
-}
-
-function initFullscreenControls() {
-  const btnClose = document.getElementById('btnCloseFullscreen');
-  const btnToggleFs = document.getElementById('btnToggleFullscreen');
-
-  btnToggleFs?.addEventListener('click', () => {
-    window.openFullscreenCompanion(currentTrackKey);
-  });
-
-  btnClose?.addEventListener('click', closeFullscreenCompanion);
-
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeFullscreenCompanion();
-      document.getElementById('mainPlayerDock')?.classList.remove('expanded-mode');
-      closeRatingModal();
-    }
-  });
-}
-
-window.playToDock = function(title, artist, coverUrl, trackKey = 'rebel') {
-  if (!title || title === 'Not Listening') return;
-
-  currentTrackKey = trackKey;
-  const coverImg = document.getElementById('playerCoverImg');
-  const trackTitle = document.getElementById('playerTrackTitle');
-  const trackArtist = document.getElementById('playerTrackArtist');
-
-  if (coverImg && coverUrl) coverImg.src = coverUrl;
-  if (trackTitle) {
-    trackTitle.textContent = title;
-    trackTitle.dataset.manualSet = 'true';
-  }
-  if (trackArtist) trackArtist.textContent = artist;
-
-  const trackData = TRACK_DATABASE[trackKey] || TRACK_DATABASE.rebel;
-  if (trackData) {
-    const elTempo = document.getElementById('dnaTempo');
-    const elKey = document.getElementById('dnaKey');
-    const elEnergy = document.getElementById('dnaEnergy');
-    const elVibe = document.getElementById('dnaVibe');
-    if (elTempo) elTempo.textContent = trackData.tempo;
-    if (elKey) elKey.textContent = trackData.key;
-    if (elEnergy) elEnergy.textContent = trackData.energy;
-    if (elVibe) elVibe.textContent = trackData.vibe;
-
-    const elTrivia = document.getElementById('triviaTextBox');
-    if (elTrivia) elTrivia.textContent = trackData.trivia;
-
-    const elLyrics = document.getElementById('lyricsStreamBox');
-    if (elLyrics && Array.isArray(trackData.lyrics)) {
-      elLyrics.innerHTML = trackData.lyrics.map(l => `
-        <p class="lyric-line ${l.active ? 'active-line' : 'upcoming'}" data-time="${l.time}">
-          ${escapeHtml(l.text)}
-        </p>
-      `).join('');
-    }
-  }
-};
-
-/* 10. SCROLL ANİMASYONU */
-function initScrollMorphAnimations() {
-  const scrollContainer = document.getElementById('feedScrollContainer');
-  const friendsStrip = document.getElementById('friendsListeningStrip');
-
-  if (!scrollContainer || !friendsStrip) return;
-
-  let ticking = false;
-
-  scrollContainer.addEventListener('scroll', () => {
-    if (!ticking) {
-      window.requestAnimationFrame(() => {
-        const scrollTop = scrollContainer.scrollTop;
-
-        if (scrollTop > 80) {
-          if (!friendsStrip.classList.contains('is-docked-right')) {
-            friendsStrip.classList.add('is-docked-right');
-            switchCompanionTab('lyrics');
-          }
-        } else {
-          if (friendsStrip.classList.contains('is-docked-right')) {
-            friendsStrip.classList.remove('is-docked-right');
-            switchCompanionTab('player');
-          }
-        }
-        ticking = false;
+  // "Şu Anda Çalanı Al" butonu
+  window.shareCurrentlyPlaying = async function () {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('/api/spotify/now-playing', {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      ticking = true;
-    }
-  }, { passive: true });
-}
+      if (!res.ok) throw new Error();
+      const data = await res.json();
 
-window.openRatingModal = function(songTitle, overallScore, totalVotes) {
-  const backdrop = document.getElementById('ratingModalBackdrop');
-  document.getElementById('modalSongTitle').textContent = songTitle;
-  document.getElementById('modalBigScore').textContent = overallScore;
-  
-  if (totalVotes === '0' || totalVotes === 0 || overallScore === '--') {
-    document.getElementById('modalTotalVotes').textContent = 'Bu parça için henüz yeterli oylama yapılmadı';
-  } else {
-    document.getElementById('modalTotalVotes').textContent = `Based on ${totalVotes} friend ratings`;
+      if (data.isPlaying && data.songUrl) {
+        const parts = data.songUrl.split('/');
+        const trackId = parts[parts.length - 1];
+
+        currentSelectedTrack = {
+          name: data.title,
+          artist: data.artist,
+          imageUrl: data.albumArt,
+          uri: `spotify:track:${trackId}`
+        };
+
+        applyTrackToWizard(currentSelectedTrack);
+      } else {
+        alert('Şu anda Spotify hesabınızda çalan aktif bir şarkı bulunamadı.');
+      }
+    } catch (e) {
+      alert('Şu an çalan şarkı bilgisi alınamadı. Spotify hesabınızın bağlı olduğundan emin olun.');
+    }
+  };
+
+  // ----------------------------------------------------
+  // 5. YOUTUBE SYNCED LYRICS PREVIEW VE COMPANION
+  // ----------------------------------------------------
+  async function fetchSyncedLyrics(trackName, artistName) {
+    const wrapper = document.getElementById('l-scroll-wrapper');
+    const playBtn = document.getElementById('l-play-btn');
+
+    if (!wrapper) return;
+    wrapper.innerHTML = `<div class="lyric-line active">Senkronize sözler aranıyor...</div>`;
+    if (playBtn) playBtn.style.opacity = "0.5";
+
+    try {
+      const res = await fetch(`/api/auto-sync?track=${encodeURIComponent(trackName)}&artist=${encodeURIComponent(artistName)}`);
+      const data = await res.json();
+
+      if (data.videoId) {
+        syncedLyrics = data.lyrics || [];
+
+        const attemptCue = () => {
+          if (isYTReady && ytPlayer?.cueVideoById) {
+            ytPlayer.cueVideoById(data.videoId);
+            if (playBtn) {
+              playBtn.style.opacity = "1";
+              playBtn.disabled = false;
+            }
+          } else {
+            setTimeout(attemptCue, 200);
+          }
+        };
+        attemptCue();
+
+        wrapper.innerHTML = syncedLyrics.length > 0
+          ? syncedLyrics.map((l, i) => `<div class="lyric-line" id="l-line-${i}">${escapeHtml(l.words)}</div>`).join('')
+          : `<div class="lyric-line active">Şarkı sözü bulunamadı, parçayı dinleyebilirsiniz.</div>`;
+      } else {
+        wrapper.innerText = "Senkron video bulunamadı.";
+      }
+    } catch (err) {
+      wrapper.innerText = "Söz servisi yanıt vermedi.";
+    }
+  }
+  window.fetchSyncedLyricsExternal = fetchSyncedLyrics;
+
+  document.getElementById('l-play-btn')?.addEventListener('click', () => {
+    if (!isYTReady || !ytPlayer) return;
+    const state = ytPlayer.getPlayerState();
+    if (state === YT.PlayerState.PLAYING) {
+      ytPlayer.pauseVideo();
+    } else {
+      ytPlayer.playVideo();
+    }
+  });
+
+  const lTimeline = document.getElementById('l-timeline');
+  lTimeline?.addEventListener('input', () => {
+    if (isYTReady && ytPlayer?.seekTo) {
+      ytPlayer.seekTo(lTimeline.value, true);
+      const currLabel = document.getElementById('l-currTime');
+      if (currLabel) currLabel.innerText = formatDuration(lTimeline.value * 1000);
+    }
+  });
+
+  function onYTStateChange(event) {
+    const btn = document.getElementById('l-play-btn');
+    if (event.data === YT.PlayerState.PLAYING) {
+      if (btn) btn.innerHTML = '<i class="fas fa-pause"></i>';
+      const duration = ytPlayer.getDuration();
+      if (lTimeline) lTimeline.max = duration;
+
+      clearInterval(lyricsTimer);
+      lyricsTimer = setInterval(syncLyricsUI, 100);
+    } else {
+      if (btn) btn.innerHTML = '<i class="fas fa-play"></i>';
+      clearInterval(lyricsTimer);
+    }
   }
 
-  backdrop?.classList.add('active');
-};
+  function syncLyricsUI() {
+    if (!ytPlayer || !isYTReady) return;
 
-function closeRatingModal() {
-  const backdrop = document.getElementById('ratingModalBackdrop');
-  backdrop?.classList.remove('active');
-}
+    const time = ytPlayer.getCurrentTime() - 0.2;
+    const curr = document.getElementById('l-currTime');
+    const view = document.getElementById('l-lyrics-view');
+    const scroll = document.getElementById('l-scroll-wrapper');
 
-window.toggleRateMiniPopup = function(cardId, event) {
-  event.stopPropagation();
-  document.querySelectorAll('.rate-mini-popup').forEach(p => {
-    if (p.id !== `ratePopup-${cardId}`) p.classList.remove('active');
-  });
+    if (lTimeline) lTimeline.value = ytPlayer.getCurrentTime();
+    if (curr) curr.innerText = formatDuration(ytPlayer.getCurrentTime() * 1000);
 
-  const popup = document.getElementById(`ratePopup-${cardId}`);
-  popup?.classList.toggle('active');
-};
+    if (!scroll || !view || !syncedLyrics.length) return;
 
-window.updateMiniScore = function(cardId, val) {
-  const valSpan = document.getElementById(`rangeVal-${cardId}`);
-  if (valSpan) valSpan.textContent = val;
-};
+    const idx = syncedLyrics.findLastIndex(l => l.time <= time);
+    if (idx !== -1) {
+      const lines = scroll.querySelectorAll('.lyric-line');
+      const activeLine = document.getElementById(`l-line-${idx}`);
 
-window.submitRate = function(cardId) {
-  const val = document.getElementById(`rangeInput-${cardId}`).value;
-  const popup = document.getElementById(`ratePopup-${cardId}`);
-  popup?.classList.remove('active');
-  console.log(`Card ${cardId} rated as: ${val}`);
-};
+      if (activeLine && !activeLine.classList.contains('active')) {
+        lines.forEach(el => el.classList.remove('active'));
+        activeLine.classList.add('active');
 
-function initRatingSystemListeners() {
-  const backdrop = document.getElementById('ratingModalBackdrop');
-  const btnClose = document.getElementById('btnCloseRatingModal');
+        const viewHeight = view.offsetHeight;
+        const lineOffset = activeLine.offsetTop;
+        const lineHeight = activeLine.offsetHeight;
+        const scrollPos = lineOffset - (viewHeight / 2) + (lineHeight / 2);
+        scroll.style.transform = `translateY(${-scrollPos}px)`;
+      }
+    }
+  }
 
-  btnClose?.addEventListener('click', closeRatingModal);
-  backdrop?.addEventListener('click', (e) => {
-    if (e.target === backdrop) closeRatingModal();
-  });
+  // ----------------------------------------------------
+  // 6. SPOTIFY BACKEND PARÇA ARAMA VE SEÇİMİ
+  // ----------------------------------------------------
+  const spotifySearchInput = document.getElementById('spotifySearchInput');
+  let searchDebounceTimer = null;
 
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.rate-mini-popup') && !e.target.closest('.btn-rate-trigger')) {
-      document.querySelectorAll('.rate-mini-popup').forEach(p => p.classList.remove('active'));
+  window.handleSpotifySearchInput = function (e) {
+    clearTimeout(searchDebounceTimer);
+    const q = e.target.value.trim();
+    if (q.length < 2) return;
+
+    searchDebounceTimer = setTimeout(async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/spotify/search?q=${encodeURIComponent(q)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const json = await res.json();
+
+        if (json.tracks && json.tracks.length > 0) {
+          const grid = document.getElementById('wizardSongGrid');
+          if (!grid) return;
+
+          grid.innerHTML = json.tracks.map((t, idx) => `
+            <div class="selector-tile ${idx === 0 ? 'selected' : ''}" onclick="selectCustomTrack('${escapeHtml(t.title)}', '${escapeHtml(t.artist)}', '${t.coverUrl}', '${t.spotifyUri}')">
+              <img src="${t.coverUrl || 'https://placehold.co/44'}" alt="${escapeHtml(t.title)}" />
+              <div class="selector-tile-meta">
+                <strong>${escapeHtml(t.title)}</strong>
+                <span>${escapeHtml(t.artist)}</span>
+              </div>
+            </div>
+          `).join('');
+
+          // İlk sonucu otomatik uygula
+          const first = json.tracks[0];
+          selectCustomTrack(first.title, first.artist, first.coverUrl, first.spotifyUri);
+        }
+      } catch (err) {
+        console.error('Spotify arama hatası:', err);
+      }
+    }, 400);
+  };
+
+  window.selectWizardTrack = function (presetKey, trackId) {
+    const presets = {
+      rebel: { name: 'Rebel Yell', artist: 'Billy Idol', img: 'https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352' },
+      everlong: { name: 'Everlong', artist: 'Foo Fighters', img: 'https://i1.sndcdn.com/artworks-000079984264-e8xxju-t500x500.jpg' },
+      skyfull: { name: 'A Sky Full of Stars', artist: 'Coldplay', img: 'https://i.scdn.co/image/ab67616d00001e028ff7c3580d429c8212b9a3b6' },
+      maraton: { name: 'Maraton', artist: 'Ati242', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s' }
+    };
+
+    const sel = presets[presetKey];
+    if (!sel) return;
+
+    selectCustomTrack(sel.name, sel.artist, sel.img, `spotify:track:${trackId}`);
+  };
+
+  window.selectCustomTrack = function (title, artist, coverUrl, spotifyUri) {
+    currentSelectedTrack = { name: title, artist, imageUrl: coverUrl, uri: spotifyUri };
+    applyTrackToWizard(currentSelectedTrack);
+  };
+
+  function applyTrackToWizard(track) {
+    const wizPrevBg = document.getElementById('wizPrevBg');
+    const wizPrevTitle = document.getElementById('wizPrevTitle');
+    const wizPrevArtist = document.getElementById('wizPrevArtist');
+    const step2SelImg = document.getElementById('step2SelImg');
+    const step2SelTitle = document.getElementById('step2SelTitle');
+    const step2SelArtist = document.getElementById('step2SelArtist');
+    const spotifyIframe = document.getElementById('spotifyEmbedIframe');
+    const lAlbumArt = document.getElementById('l-album-art');
+
+    if (wizPrevBg) wizPrevBg.src = track.imageUrl;
+    if (wizPrevTitle) wizPrevTitle.textContent = track.name;
+    if (wizPrevArtist) wizPrevArtist.textContent = track.artist;
+
+    if (step2SelImg) step2SelImg.src = track.imageUrl;
+    if (step2SelTitle) step2SelTitle.textContent = track.name;
+    if (step2SelArtist) step2SelArtist.textContent = track.artist;
+
+    if (lAlbumArt) lAlbumArt.src = track.imageUrl;
+
+    const trackId = track.uri.includes(':') ? track.uri.split(':')[2] : track.uri;
+    if (spotifyIframe && trackId) {
+      spotifyIframe.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`;
+    }
+
+    fetchSyncedLyrics(track.name, track.artist);
+  }
+
+  // ----------------------------------------------------
+  // 7. HIGHLIGHT & RATING SLIDER ANİMASYONLARI
+  // ----------------------------------------------------
+  window.updateWizardHighlightAnimation = function (val) {
+    const display = document.getElementById('wizardHighlightDisplay');
+    if (display) display.textContent = formatSecondsSimple(val);
+  };
+
+  window.updateWizardRatingAnimation = function (val) {
+    const display = document.getElementById('wizardRatingValue');
+    if (display) display.textContent = parseFloat(val).toFixed(1);
+
+    const bars = document.querySelectorAll('#wizardBarsWrapper .bar');
+    bars.forEach((bar, idx) => {
+      if (idx <= val * 2) {
+        bar.style.background = 'var(--accent-action)';
+        bar.style.boxShadow = '0 0 10px var(--accent-action)';
+      } else {
+        bar.style.background = '#2d3748';
+        bar.style.boxShadow = 'none';
+      }
+    });
+  };
+
+  const wizardBars = document.getElementById('wizardBarsWrapper');
+  if (wizardBars && wizardBars.children.length === 0) {
+    for (let i = 0; i <= 20; i++) {
+      const b = document.createElement('div');
+      b.className = 'bar';
+      b.style.height = `${20 + (i * 3)}%`;
+      wizardBars.appendChild(b);
+    }
+    updateWizardRatingAnimation(5);
+  }
+
+  // ----------------------------------------------------
+  // 8. YENİ ŞARKIYI FEED'E YAYINLAMA
+  // ----------------------------------------------------
+  window.submitWizardShare = async function () {
+    const token = localStorage.getItem('token');
+    const comment = document.getElementById('wizardCommentInput')?.value || '';
+    const rating = document.getElementById('wizardRatingSlider')?.value || 5;
+    const highlightSec = document.getElementById('wizardHighlightSlider')?.value || 0;
+    const privacy = document.getElementById('wizardPrivacySelect')?.value || 'public';
+
+    const payload = {
+      song_name: currentSelectedTrack.name,
+      song_artist: currentSelectedTrack.artist,
+      spotify_uri: currentSelectedTrack.uri,
+      song_url: `https://open.spotify.com/track/${currentSelectedTrack.uri.split(':')[2] || ''}`,
+      song_cover_url: currentSelectedTrack.imageUrl,
+      visibility: privacy,
+      rating_by_user: Number(rating) * 10,
+      comment_by_user: comment,
+      recommended_time_by_user: formatSecondsSimple(highlightSec)
+    };
+
+    try {
+      const res = await fetch('/api/songshare', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error('Paylaşım başarısız');
+
+      const toast = document.getElementById('shareToastOverlay');
+      if (toast) {
+        toast.classList.add('active');
+        setTimeout(() => {
+          toast.classList.remove('active');
+          location.hash = '#home';
+          switchView('#home');
+          location.reload();
+        }, 1500);
+      } else {
+        location.hash = '#home';
+        switchView('#home');
+        location.reload();
+      }
+    } catch (err) {
+      alert('Şarkı paylaşılırken hata oluştu: ' + err.message);
+    }
+  };
+
+  // ----------------------------------------------------
+  // 9. FEED AKIŞI ÇEKME (TOKEN İLE 401 ENGELİ KALKTI)
+  // ----------------------------------------------------
+  let feedPage = 1;
+  let isLoadingFeed = false;
+  let hasMoreSuggestions = true;
+
+  async function fetchSuggestions(page) {
+    if (isLoadingFeed || !hasMoreSuggestions) return;
+    isLoadingFeed = true;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/songshare/feed?page=${page}&limit=10`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error('Feed alınamadı');
+
+      const data = await res.json();
+      const suggestions = data.data || data.suggestions || [];
+
+      if (suggestions.length === 0) {
+        hasMoreSuggestions = false;
+      } else {
+        feedPage++;
+      }
+    } catch (err) {
+      console.warn("Feed bilgisi alınamadı:", err.message);
+    } finally {
+      isLoadingFeed = false;
+    }
+  }
+
+  // ----------------------------------------------------
+  // 10. AUTH KONTROLÜ VE BAŞLANGIÇ ÇAĞRILARI
+  // ----------------------------------------------------
+  async function checkLogin() {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const res = await fetch('/api/users/me', {
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+
+      if (data.status === 'success' || data.user) {
+        const user = data.user || data.data?.user;
+        window.currentLoggedInUserId = user?.id;
+      }
+    } catch (err) {
+      console.warn('Oturum doğrulama:', err.message);
+    }
+  }
+
+  async function startup() {
+    await checkLogin();
+    await fetchSuggestions(feedPage);
+
+    // Kendi çalan şarkını hemen getir ve her 5 saniyede bir kontrol et (Realtime Sync)
+    loadMyNowPlaying();
+    setInterval(loadMyNowPlaying, 5000);
+
+    // Arkadaş aktivitelerini hemen getir ve her 15 saniyede bir güncelle
+    loadFriendsActivity();
+    setInterval(loadFriendsActivity, 15000);
+  }
+
+  startup();
+});
+
+const feedScroll = document.getElementById('feedScrollContainer');
+const friendsStrip = document.getElementById('friendsListeningStrip');
+
+if (feedScroll && friendsStrip) {
+  feedScroll.addEventListener('scroll', () => {
+    // 70px'den fazla kaydırıldığında sağ üstteki dock'a kilitlenir
+    if (feedScroll.scrollTop > 70) {
+      friendsStrip.classList.add('is-docked-right');
+    } else {
+      friendsStrip.classList.remove('is-docked-right');
     }
   });
 }
-
-/* INITIALIZATION */
-document.addEventListener('DOMContentLoaded', () => {
-  initSPA();
-  initSpotifyAuth();
-  fetchFriendsActivity();
-  fetchMyNowPlaying();
-  initCompanionTabs();
-  initExpandToggle();
-  initFullscreenControls();
-  initScrollMorphAnimations();
-  initRatingSystemListeners();
-  updateCoverflowPositions();
-
-  const btnHide = document.getElementById('btnHideSpotlight');
-  const panel = document.getElementById('spotlightPanel');
-  
-  btnHide?.addEventListener('click', () => {
-    panel?.classList.add('hidden');
-  });
-
-  document.querySelectorAll('.btn-highlight-time').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const startSec = Number(e.currentTarget.getAttribute('data-start') || 0);
-      console.log(`Jumped to highlight time: ${startSec}s`);
-    });
-  });
-
-  setInterval(() => {
-    fetchFriendsActivity();
-    fetchMyNowPlaying();
-  }, 5000);
-});

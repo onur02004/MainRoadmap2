@@ -301,3 +301,39 @@ export const getActiveFriendsNowPlaying = catchAsync(async (req, res, next) => {
     data: activeActivities
   });
 });
+
+
+/**
+ * Spotify Parça Arama Endpoint'i
+ */
+export const searchSpotifyTracks = catchAsync(async (req, res, next) => {
+  const userId = req.user.id || req.user._id;
+  const query = req.query.q;
+
+  if (!query || query.trim() === '') {
+    return res.status(200).json({ status: 'success', tracks: [] });
+  }
+
+  const accessToken = await getValidAccessTokenForUser(userId);
+
+  if (!accessToken) {
+    return next(new AppError('Spotify hesabı bağlı değil veya oturum yenilenemedi.', 401));
+  }
+
+  const data = await spotifyService.searchTracks(accessToken, query, 6);
+
+  const formattedTracks = data.tracks?.items?.map(item => ({
+    id: item.id,
+    title: item.name,
+    artist: item.artists.map(a => a.name).join(', '),
+    album: item.album.name,
+    coverUrl: item.album.images?.[0]?.url || '',
+    spotifyUri: item.uri,
+    externalUrl: item.external_urls.spotify
+  })) || [];
+
+  res.status(200).json({
+    status: 'success',
+    tracks: formattedTracks
+  });
+});

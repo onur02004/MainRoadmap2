@@ -24,3 +24,49 @@ CREATE TABLE custom_themes (
   is_public BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE TYPE visibility_type AS ENUM ('public', 'friends', 'custom');
+
+CREATE TABLE song_suggestions (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid REFERENCES users(id) ON DELETE SET NULL,
+    song_name text NOT NULL,
+    song_artist text NOT NULL,
+    spotify_uri text,
+    song_url text,
+    song_url_backup text,
+    song_cover_url text,
+    song_cover_url_backup text,
+    song_artist_cover_url text,
+    song_artist_cover_url_backup text,
+    song_release_date date,
+    song_artist_genre text[],
+    overall_dominant_color text,
+    dominant_colors_points text[],
+    
+    -- Değişen / Yeni Alanlar
+    visibility visibility_type NOT NULL DEFAULT 'public',
+    target_users uuid[], -- custom veya friends seçilirse hedef kullanıcılar
+    rating_by_user smallint CHECK (rating_by_user >= 0 AND rating_by_user <= 100),
+    comment_by_user text,
+    recommended_time_by_user character varying(10),
+    song_played_by_user boolean DEFAULT false,
+    
+    -- Şarkıyı oynatanlar / görüntüleyenler (Kullanıcı ID listesi)
+    played_or_viewed_by uuid[] DEFAULT '{}',
+    
+    -- Repost Edenler
+    reposted_by uuid[] DEFAULT '{}',
+    
+    -- Lyrics (Time-synced ve Normal ayrı kolonlar veya JSON yapısı)
+    lyrics text,
+    time_synced_lyrics jsonb,
+    
+    -- Sayaçlar ve Tarihler
+    likes_count integer NOT NULL DEFAULT 0,
+    repost_count integer NOT NULL DEFAULT 0,
+    date_added timestamp with time zone NOT NULL DEFAULT now(),
+    date_edited timestamp with time zone
+);
+
+CREATE INDEX idx_song_suggestions_user_id ON song_suggestions (user_id);

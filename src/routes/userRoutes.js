@@ -25,5 +25,20 @@ router.get('/profile', protect, (req, res) => {
 
 router.post('/profile/avatar', protect, updateAvatar);
 
+router.get('/me', protect, (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: {
+        id: req.user.id,
+        user_name: req.user.user_name,
+        email: req.user.email,
+        relation: req.user.relation,
+        profile_pic_path: req.user.profile_pic_path
+      }
+    }
+  });
+});
+
 
 export default router;

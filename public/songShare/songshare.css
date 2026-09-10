@@ -921,65 +921,91 @@
 
 
 /* ==========================================================================
-   SHARE TRACK VIEW (SPA İÇİN EKLENEN YENİ SAYFA BÖLÜMÜ)
+   SHARE TRACK VIEW (YENİLENEN GENİŞ & MODERN PAYLAŞIM STÜDYOSU)
    ========================================================================== */
 .share-page-container {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 36px 100px 36px;
+  padding: 32px 48px 120px 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.share-wizard-card {
+.share-studio-layout {
   width: 100%;
-  max-width: 620px;
+  max-width: 840px; /* Genişletildi */
   background: rgba(18, 22, 32, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 28px;
-  padding: 36px 40px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(36px);
-  -webkit-backdrop-filter: blur(36px);
+  border-radius: 32px;
+  padding: 44px 52px;
+  box-shadow: 0 35px 90px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
   margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
 }
 
-.share-wizard-header { margin-bottom: 28px; text-align: center; }
+.share-studio-header { text-align: center; }
 .share-pill-badge {
   display: inline-block;
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   color: var(--accent-action);
   background: rgba(62, 207, 142, 0.15);
   border: 1px solid rgba(62, 207, 142, 0.3);
-  padding: 4px 12px;
+  padding: 6px 14px;
   border-radius: 20px;
   margin-bottom: 12px;
 }
 
-.share-wizard-header h2 { margin: 0 0 6px 0; font-size: 1.7rem; color: #fff; letter-spacing: -0.5px; font-weight: 800; }
-.share-wizard-header p { margin: 0; color: var(--text-main); font-size: 0.88rem; }
+.share-studio-header h2 { margin: 0 0 8px 0; font-size: 2rem; color: #fff; letter-spacing: -0.5px; font-weight: 800; }
+.share-studio-header p { margin: 0; color: var(--text-main); font-size: 0.95rem; }
 
-.wizard-step { display: none; flex-direction: column; }
-.wizard-step.active { display: flex; animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+/* 2 Sütunlu Yan Yana / Genişletilmiş Paylaşım Alanı */
+.studio-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+@media (max-width: 900px) {
+  .studio-content-grid { grid-template-columns: 1fr; }
+}
+
+.studio-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 24px;
+  border-radius: 22px;
+}
+
+.studio-column-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--accent-action);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
 }
 
 .btn-block-action {
   width: 100%;
-  background: linear-gradient(135deg, rgba(62, 207, 142, 0.2), rgba(59, 130, 246, 0.2));
-  border: 1px solid rgba(62, 207, 142, 0.4);
+  background: linear-gradient(135deg, rgba(62, 207, 142, 0.25), rgba(59, 130, 246, 0.25));
+  border: 1px solid rgba(62, 207, 142, 0.45);
   color: #fff;
   padding: 14px;
   border-radius: 14px;
   font-weight: 700;
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.25s ease;
   display: flex;
@@ -989,31 +1015,10 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 .btn-block-action:hover {
-  background: linear-gradient(135deg, rgba(62, 207, 142, 0.3), rgba(59, 130, 246, 0.3));
+  background: linear-gradient(135deg, rgba(62, 207, 142, 0.35), rgba(59, 130, 246, 0.35));
   border-color: var(--accent-action);
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(62, 207, 142, 0.25);
 }
-
-.divider-text {
-  text-align: center;
-  font-size: 0.72rem;
-  color: var(--text-dim);
-  margin: 24px 0;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  position: relative;
-}
-.divider-text::before, .divider-text::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 32%;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-}
-.divider-text::before { left: 0; }
-.divider-text::after { right: 0; }
 
 .search-input-wrapper {
   display: flex;
@@ -1022,7 +1027,6 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 14px;
   padding: 12px 16px;
-  margin-bottom: 20px;
   transition: border 0.2s;
 }
 .search-input-wrapper:focus-within { border-color: var(--accent-action); box-shadow: 0 0 12px var(--accent-glow); }
@@ -1034,124 +1038,114 @@
   flex: 1;
   outline: none;
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   margin-left: 12px;
 }
 
-.mock-song-list { display: flex; flex-direction: column; gap: 10px; }
+.mock-song-list { display: flex; flex-direction: column; gap: 10px; max-height: 260px; overflow-y: auto; padding-right: 4px; }
+.mock-song-list::-webkit-scrollbar { width: 4px; }
+.mock-song-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
 
 .mock-song-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
+  gap: 12px;
+  padding: 10px 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
-.mock-song-item:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(62, 207, 142, 0.45);
-  transform: translateX(3px);
+.mock-song-item:hover, .mock-song-item.selected {
+  background: rgba(62, 207, 142, 0.1);
+  border-color: rgba(62, 207, 142, 0.5);
 }
 .mock-song-item img {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   object-fit: cover;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
-.mock-song-meta { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-.mock-song-meta strong { font-size: 0.95rem; color: #fff; font-weight: 700; }
-.mock-song-meta span { font-size: 0.74rem; color: var(--text-main); }
+.mock-song-meta { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow: hidden; }
+.mock-song-meta strong { font-size: 0.88rem; color: #fff; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mock-song-meta span { font-size: 0.7rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.mock-actions { display: flex; align-items: center; gap: 6px; }
-.mock-chip-preview {
-  font-size: 0.62rem;
-  font-weight: 800;
-  padding: 4px 8px;
-  border-radius: 6px;
-  background: rgba(29, 185, 84, 0.15);
-  border: 1px solid rgba(29, 185, 84, 0.3);
-  color: #1db954;
-}
-.mock-chip-preview.yt {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #f87171;
-}
+/* Seçilen Şarkı ve Detay Ayarları Formu */
+.share-settings-form { display: flex; flex-direction: column; gap: 16px; }
 
-/* Seçilen Şarkı Kartı (Step 2) */
-.selected-track-display {
+.selected-track-preview-box {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 14px 16px;
-  background: rgba(0, 0, 0, 0.45);
+  gap: 14px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(62, 207, 142, 0.35);
-  border-radius: 16px;
+  border-radius: 14px;
 }
-.selected-track-display img {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
+.selected-track-preview-box img {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
   object-fit: cover;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
 }
-.selected-track-meta { display: flex; flex-direction: column; gap: 2px; }
-.sel-tag { font-size: 0.6rem; font-weight: 800; color: var(--accent-action); letter-spacing: 0.8px; }
-.selected-track-meta strong { font-size: 1.1rem; font-weight: 800; color: #fff; }
-.selected-track-meta span { font-size: 0.8rem; color: var(--text-dim); }
+.sel-track-info { display: flex; flex-direction: column; gap: 2px; }
+.sel-track-tag { font-size: 0.55rem; font-weight: 800; color: var(--accent-action); letter-spacing: 0.8px; }
+.sel-track-info strong { font-size: 0.95rem; font-weight: 800; color: #fff; }
+.sel-track-info span { font-size: 0.72rem; color: var(--text-dim); }
 
-.share-settings-form { display: flex; flex-direction: column; gap: 18px; margin-top: 22px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
-.form-group label { font-size: 0.72rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; }
+.form-group label { font-size: 0.68rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; }
 
 .form-input {
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 12px 14px;
+  padding: 10px 14px;
   border-radius: 12px;
   color: #fff;
   font-family: inherit;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   outline: none;
   transition: 0.2s;
 }
 .form-input:focus { border-color: var(--accent-action); box-shadow: 0 0 10px rgba(62, 207, 142, 0.2); }
-textarea.form-input { resize: vertical; min-height: 85px; line-height: 1.4; }
+textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.4; }
 select.form-input { cursor: pointer; }
 select.form-input option { background: #12151b; color: #fff; }
 
-.wizard-actions { display: flex; gap: 12px; margin-top: 8px; }
+.studio-actions-footer {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .btn-share-cancel {
-  flex: 1;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: #fff;
-  padding: 12px;
+  padding: 12px 24px;
   border-radius: 12px;
   font-weight: 700;
   font-family: inherit;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: 0.2s;
 }
 .btn-share-cancel:hover { background: rgba(255, 255, 255, 0.12); }
 
 .btn-share-submit {
-  flex: 2;
   background: var(--accent-action);
   color: #000;
   border: none;
-  padding: 12px;
+  padding: 12px 32px;
   border-radius: 12px;
   font-weight: 800;
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(62, 207, 142, 0.35);
   transition: 0.2s;
@@ -1503,3 +1497,498 @@ select.form-input option { background: #12151b; color: #fff; }
 .rev-name { font-size: 0.82rem; font-weight: 700; color: #fff; }
 .rev-tag { font-size: 0.7rem; color: var(--text-main); }
 .rev-score { font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; color: var(--accent-action); }
+
+
+/* songshare.css eklemeler ve güncellemeler */
+.share-page-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 48px 120px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.share-wizard-wrapper {
+  width: 100%;
+  max-width: 760px;
+  background: rgba(18, 22, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 32px;
+  padding: 40px 48px;
+  box-shadow: 0 35px 90px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.wizard-steps-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.wizard-step-dot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.wizard-step-dot.active {
+  color: var(--accent-action);
+}
+
+.wizard-step-dot span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wizard-step-dot.active span {
+  background: rgba(62, 207, 142, 0.2);
+  border-color: var(--accent-action);
+  color: var(--accent-action);
+}
+
+/* Adım 1: Büyük Önizleme & Seçim Alanı */
+.step-pane {
+  display: none;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.step-pane.active {
+  display: flex;
+  animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.preview-stage-card {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.preview-bg-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(8px) brightness(0.5);
+  transform: scale(1.1);
+  z-index: 1;
+}
+
+.preview-overlay-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(10,12,16,0.85) 70%, rgba(10,12,16,0.98) 100%);
+  z-index: 2;
+}
+
+.preview-content-top {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.preview-mode-switchers {
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.preview-mode-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preview-mode-btn.active {
+  background: var(--accent-action);
+  color: #000;
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.preview-content-bottom {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preview-track-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.preview-track-artist {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Embed / Lyrics Gösterim Alanı */
+.preview-player-embed-container {
+  position: relative;
+  width: 100%;
+  height: 100px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-lyrics-stream {
+  width: 100%;
+  height: 100px;
+  overflow-y: auto;
+  padding: 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.preview-lyrics-stream::-webkit-scrollbar { width: 4px; }
+.preview-lyrics-stream::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+
+.preview-lyric-row {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  transition: 0.2s;
+}
+.preview-lyric-row.active {
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.song-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.song-selector-grid::-webkit-scrollbar { width: 4px; }
+.song-selector-grid::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+
+.selector-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.selector-tile:hover, .selector-tile.selected {
+  background: rgba(62, 207, 142, 0.1);
+  border-color: rgba(62, 207, 142, 0.5);
+}
+
+.selector-tile img {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.selector-tile-meta {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.selector-tile-meta strong {
+  font-size: 0.82rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selector-tile-meta span {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wizard-footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* --- ADIM 2: ANİMASYONLU RATING & HIGHLIGHT BİLEŞENLERİ --- */
+:root {
+  --primary-glow: #3b82f6;
+}
+
+.share-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Highlight Zaman Seçici Kartı */
+.time-picker-card {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+#highlightDisplay {
+  font-family: "Jersey 10", sans-serif;
+  font-size: 3.5rem;
+  line-height: 1;
+  color: var(--primary-glow);
+  text-shadow: 0 0 15px var(--primary-glow);
+  transition: all 0.3s ease;
+}
+
+.visualizer-container {
+  position: relative;
+  height: 60px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 3px;
+  margin-bottom: 10px;
+}
+
+.visualizer-container .bar {
+  flex: 1;
+  background: #334155;
+  border-radius: 4px;
+  transition: height 0.3s ease, background 0.2s ease, transform 0.2s ease;
+  min-height: 4px;
+}
+
+.slider-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+  margin: 0;
+}
+
+.slider-overlay::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 2px;
+  height: 60px;
+  background: white;
+  box-shadow: 0 0 15px white;
+}
+
+/* Dinamik Puanlama (Rating) Alanı */
+.rating-dynamic-container {
+  background: rgba(0, 0, 0, 0.35);
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  text-align: center;
+}
+
+#wizardRatingValue {
+  font-family: "Jersey 10", sans-serif;
+  font-size: 4rem;
+  color: var(--primary-glow);
+  margin-bottom: 15px;
+  text-shadow: 0 0 15px var(--primary-glow);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.bars-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  height: 80px;
+  margin-bottom: 20px;
+}
+
+.bars-container .bar {
+  width: 10px;
+  background: #2d3748;
+  border-radius: 5px;
+  transition: all 0.2s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.slider-wrapper {
+  width: 100%;
+}
+
+#wizardRatingSlider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  background: #1f2937;
+  border-radius: 10px;
+  outline: none;
+}
+
+#wizardRatingSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  background: white;
+  border: 4px solid var(--primary-glow);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 15px var(--primary-glow);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+
+/* --- PROFESYONEL BAŞARI TOAST / ANİMASYON BİLDİRİMİ --- */
+.share-toast-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.share-toast-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.share-toast-card {
+  background: rgba(18, 22, 32, 0.95);
+  border: 1px solid rgba(62, 207, 142, 0.4);
+  border-radius: 28px;
+  padding: 36px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 40px rgba(62, 207, 142, 0.25);
+  transform: scale(0.85) translateY(20px);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+  max-width: 380px;
+}
+
+.share-toast-overlay.active .share-toast-card {
+  transform: scale(1) translateY(0);
+}
+
+.toast-success-ring {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(62, 207, 142, 0.18);
+  border: 2px solid var(--accent-action);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-action);
+  box-shadow: 0 0 24px rgba(62, 207, 142, 0.4);
+  animation: successPulse 1.5s infinite ease-in-out;
+}
+
+@keyframes successPulse {
+  0% { box-shadow: 0 0 0 0 rgba(62, 207, 142, 0.5); }
+  70% { box-shadow: 0 0 0 16px rgba(62, 207, 142, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(62, 207, 142, 0); }
+}
+
+.toast-success-ring svg {
+  width: 32px;
+  height: 32px;
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: drawCheck 0.6s 0.2s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+@keyframes drawCheck {
+  to { stroke-dashoffset: 0; }
+}
+
+.toast-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.toast-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.4;
+}

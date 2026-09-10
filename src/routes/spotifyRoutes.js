@@ -20,4 +20,7 @@ router.get('/status', protect, spotifyController.getSpotifyStatus);
 
 router.get('/friends-activity', protect, spotifyController.getFriendsActivity);
 
+// /api/spotify/search?q=sarkiarama
+router.get('/search', protect, spotifyController.searchSpotifyTracks);
+
 export default router;

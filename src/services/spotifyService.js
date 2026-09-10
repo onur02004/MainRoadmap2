@@ -133,3 +133,22 @@ export const getTopTracks = async (accessToken, timeRange = 'medium_term', limit
 
   return await res.json();
 };
+
+/**
+ * Spotify veritabanında parça araması yapar.
+ */
+export const searchTracks = async (accessToken, query, limit = 5) => {
+  const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=${limit}`;
+  
+  const res = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    }
+  });
+
+  if (!res.ok) {
+    return { tracks: { items: [] } };
+  }
+
+  return await res.json();
+};
