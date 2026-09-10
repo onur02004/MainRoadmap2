@@ -1,217 +1,185 @@
+// public/themes/modules/friends-theme.js
+import { loadServices, handleServiceClick } from '../../services-client.js';
+
 export function init() {
-  // 1. Friends Karakterleri & Replik Veritabanı
-  const FRIENDS_CHARACTERS = [
-    { name: 'Joey Tribbiani', quote: 'How you doin\'?', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80' },
-    { name: 'Chandler Bing', quote: 'Could I BE any more of a software engineer?', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80' },
-    { name: 'Monica Geller', quote: 'I know! Everything has to be spotless!', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80' },
-    { name: 'Ross Geller', quote: 'WE WERE ON A BREAK!!', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80' },
-    { name: 'Rachel Green', quote: 'No uterus, no opinion!', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80' },
-    { name: 'Phoebe Buffay', quote: 'Smelly Cat, Smelly Cat, what are they feeding you?', avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&auto=format&fit=crop&q=80' }
-  ];
+  let ytPlayer = null;
+  let isPlaying = false;
 
-  let charIndex = 0;
+  // 1. Obsession ile birebir aynı çalışan IFrame Container yapısı
+  const hiddenYtContainer = document.createElement('div');
+  hiddenYtContainer.id = 'friendsYoutubePlayer';
+  hiddenYtContainer.style.position = 'fixed';
+  hiddenYtContainer.style.top = '-9999px';
+  hiddenYtContainer.style.left = '-9999px';
+  hiddenYtContainer.style.width = '1px';
+  hiddenYtContainer.style.height = '1px';
+  hiddenYtContainer.style.opacity = '0';
+  hiddenYtContainer.style.pointerEvents = 'none';
+  document.body.appendChild(hiddenYtContainer);
 
-  // 2. Sol Alttaki Profil Çerçevesini Monica'nın Sarı Çerçevesine Dönüştür
-  const guiAvatarWrapper = document.querySelector('.gui-avatar-wrapper');
-  const guiUsername = document.querySelector('#guiLblUsername');
-  const guiSession = document.querySelector('#guiLblSession');
-  const guiAvatar = document.querySelector('#guiUserAvatar');
-
-  if (guiAvatarWrapper) {
-    guiAvatarWrapper.classList.add('friends-monica-frame');
-    guiAvatarWrapper.title = 'Click to switch Friends character!';
+  // YouTube IFrame API'sini yükle
+  function loadYouTubeIframeApi() {
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    }
   }
 
-  const cycleCharacter = () => {
-    charIndex = (charIndex + 1) % FRIENDS_CHARACTERS.length;
-    const char = FRIENDS_CHARACTERS[charIndex];
+  function initPlayer() {
+    if (window.YT && window.YT.Player) {
+      ytPlayer = new window.YT.Player('friendsYoutubePlayer', {
+        height: '1',
+        width: '1',
+        // Embed izni açık olan doğrulanmış Friends Theme Song video ID'si
+        videoId: 'nwBfXsAOfFc',
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          disablekb: 1,
+          fs: 0,
+          rel: 0,
+          start: 0
+        },
+        events: {
+          onReady: (event) => {
+            event.target.setVolume(80);
+          },
+          onStateChange: (event) => {
+            const btn = document.getElementById('btnToggleFriendsMusic');
+            if (event.data === window.YT.PlayerState.PLAYING) {
+              isPlaying = true;
+              if (btn) btn.textContent = '⏸ PAUSE';
+            } else {
+              isPlaying = false;
+              if (btn) btn.textContent = '▶ PLAY';
+            }
+          }
+        }
+      });
+    } else {
+      setTimeout(initPlayer, 200);
+    }
+  }
 
-    if (guiAvatar) guiAvatar.src = char.avatar;
-    if (guiUsername) guiUsername.textContent = char.name;
-    if (guiSession) guiSession.textContent = `"${char.quote}"`;
+  loadYouTubeIframeApi();
+  initPlayer();
 
-    showFloatingFriendsNote(window.innerWidth * 0.15, window.innerHeight * 0.7, char.quote);
+  // İlk kullanıcı etkileşiminde başlat (Autoplay engeline karşı)
+  const tryAutoPlayOnFirstClick = () => {
+    if (ytPlayer && typeof ytPlayer.playVideo === 'function' && !isPlaying) {
+      ytPlayer.playVideo();
+    }
+    document.removeEventListener('click', tryAutoPlayOnFirstClick);
   };
+  document.addEventListener('click', tryAutoPlayOnFirstClick, { once: true });
 
-  if (guiAvatarWrapper) {
-    guiAvatarWrapper.addEventListener('click', cycleCharacter);
-  }
-
-  // 3. Sağ Taraf UI Katmanını Oluştur (Central Perk Cup + PIVOT Mini Game)
-  const friendsUI = document.createElement('div');
-  friendsUI.id = 'friendsGameLayer';
-  friendsUI.className = 'friends-ui-layer';
-  friendsUI.innerHTML = `
-    <!-- PIVOT Mini-Oyun Butonu -->
-    <button type="button" class="friends-pivot-toggle-btn" id="btnTogglePivot">
-      <span class="couch-emoji">🛋️</span>
-      <span>PIVOT! GAME</span>
-    </button>
-
-    <!-- Central Perk Kahve Kupası Widget'ı (Sağ Alt) -->
-    <div class="friends-coffee-widget" id="coffeeWidget" title="Click to brew Central Perk Coffee!">
-      <div class="steam-container">
-        <span class="steam s1">~</span>
-        <span class="steam s2">~</span>
-        <span class="steam s3">~</span>
-      </div>
-      <div class="coffee-mug">
-        <div class="coffee-fill" id="coffeeFillLevel" style="height: 30%;"></div>
-      </div>
-      <span class="coffee-badge">CENTRAL PERK ☕</span>
+  // 2. Sol Üst Kompakt Ses Kontrol HUD
+  const audioHud = document.createElement('div');
+  audioHud.className = 'friends-audio-hud';
+  audioHud.innerHTML = `
+    <div class="friends-audio-meta">
+      <span class="friends-audio-label">CENTRAL PERK JUKEBOX</span>
+      <span class="friends-audio-title">I'll Be There For You</span>
     </div>
+    <div class="friends-audio-controls">
+      <button type="button" class="friends-audio-btn" id="btnToggleFriendsMusic">▶ PLAY</button>
+      <button type="button" class="friends-audio-btn" id="btnTriggerRoss" title="Make Ross Walk & Shout">🗣️ ROSS</button>
+      <input type="range" class="friends-vol-slider" id="friendsVolSlider" min="0" max="100" value="80" />
+    </div>
+  `;
+  document.body.appendChild(audioHud);
 
-    <!-- PIVOT Merdiven Mini-Oyun Modalı -->
-    <div class="friends-pivot-modal" id="pivotModal" style="display: none;">
-      <div class="pivot-game-window">
-        <div class="pivot-header">
-          <span>STAIRCASE // HELP ROSS MOVE THE COUCH</span>
-          <button class="pivot-close" id="btnClosePivot">&times;</button>
-        </div>
-
-        <div class="pivot-stage" id="pivotStage">
-          <div class="staircase-wall left"></div>
-          <div class="staircase-wall right"></div>
-          <div class="staircase-corner-target">STAIRS TOP ⬆</div>
-          
-          <!-- Turuncu Koltuk -->
-          <div class="ross-couch" id="rossCouch">
-            <span>🛋️</span>
-          </div>
-
-          <div class="pivot-shout" id="pivotShout">PIVOT!!</div>
-        </div>
-
-        <div class="pivot-controls">
-          <button type="button" class="pivot-action-btn" id="btnMoveUp">MOVE UP [W]</button>
-          <button type="button" class="pivot-action-btn rotate" id="btnPivot">PIVOT! [SPACE]</button>
-        </div>
-        <div class="pivot-status-bar" id="pivotStatus">Couch is stuck! Rotate it to fit the corner!</div>
+  // 3. Yürüyen Ross & "WE WERE ON A BREAK!" Animasyonu
+  const rossWalker = document.createElement('div');
+  rossWalker.className = 'friends-ross-walker';
+  rossWalker.id = 'friendsRossWalker';
+  rossWalker.innerHTML = `
+    <div class="friends-ross-bubble" id="rossSpeechBubble">WE WERE ON A BREAK! 🦖</div>
+    <div class="friends-ross-sprite">
+      <div class="friends-ross-head">
+        <div class="friends-ross-hair"></div>
+      </div>
+      <div class="friends-ross-body"></div>
+      <div class="friends-ross-legs">
+        <div class="friends-ross-leg l1"></div>
+        <div class="friends-ross-leg l2"></div>
       </div>
     </div>
   `;
+  document.body.appendChild(rossWalker);
 
-  document.body.appendChild(friendsUI);
+  const startRossWalk = () => {
+    rossWalker.classList.remove('walking');
+    void rossWalker.offsetWidth;
+    rossWalker.classList.add('walking');
 
-  // 4. Central Perk Kahve Kupası Mekaniği
-  const coffeeWidget = friendsUI.querySelector('#coffeeWidget');
-  const coffeeFill = friendsUI.querySelector('#coffeeFillLevel');
-  let coffeeLevel = 30;
+    const bubble = document.getElementById('rossSpeechBubble');
+    setTimeout(() => {
+      if (bubble) bubble.classList.add('shout');
+    }, 2400);
 
-  coffeeWidget.addEventListener('click', (e) => {
-    coffeeLevel += 25;
-    if (coffeeLevel >= 100) {
-      coffeeLevel = 100;
-      coffeeFill.style.height = '100%';
-      showFloatingFriendsNote(e.clientX, e.clientY - 30, '+1 Central Perk Blend! Gunther approves ☕');
-      setTimeout(() => {
-        coffeeLevel = 20;
-        coffeeFill.style.height = '20%';
-      }, 2500);
-    } else {
-      coffeeFill.style.height = `${coffeeLevel}%`;
-      showFloatingFriendsNote(e.clientX, e.clientY - 20, 'Brewing... ☕');
+    setTimeout(() => {
+      if (bubble) bubble.classList.remove('shout');
+    }, 4800);
+  };
+
+  setTimeout(startRossWalk, 1200);
+
+  // 4. Central Perk Kahve Kupası
+  const coffeeWidget = document.createElement('div');
+  coffeeWidget.className = 'friends-coffee-widget';
+  coffeeWidget.innerHTML = `
+    <div class="steam-container">
+      <div class="steam s1">~</div>
+      <div class="steam s2">~</div>
+      <div class="steam s3">~</div>
+    </div>
+    <div class="coffee-mug">
+      <div class="coffee-fill" id="coffeeFill" style="height: 65%;"></div>
+    </div>
+    <span class="coffee-badge" id="coffeeCount">GUNTHER'S COFFEE</span>
+  `;
+  document.body.appendChild(coffeeWidget);
+
+  let coffeeLevel = 65;
+  coffeeWidget.addEventListener('click', () => {
+    coffeeLevel = coffeeLevel >= 95 ? 20 : coffeeLevel + 25;
+    const fill = document.getElementById('coffeeFill');
+    if (fill) fill.style.height = `${coffeeLevel}%`;
+  });
+
+  // Buton Event Listeners
+  audioHud.querySelector('#btnToggleFriendsMusic')?.addEventListener('click', () => {
+    if (ytPlayer && typeof ytPlayer.playVideo === 'function') {
+      if (isPlaying) {
+        ytPlayer.pauseVideo();
+      } else {
+        ytPlayer.playVideo();
+      }
     }
   });
 
-  // 5. PIVOT Mini-Oyun Motoru
-  const pivotModal = friendsUI.querySelector('#pivotModal');
-  const btnTogglePivot = friendsUI.querySelector('#btnTogglePivot');
-  const btnClosePivot = friendsUI.querySelector('#btnClosePivot');
-  const couch = friendsUI.querySelector('#rossCouch');
-  const shout = friendsUI.querySelector('#pivotShout');
-  const statusMsg = friendsUI.querySelector('#pivotStatus');
-  const btnMoveUp = friendsUI.querySelector('#btnMoveUp');
-  const btnPivot = friendsUI.querySelector('#btnPivot');
+  audioHud.querySelector('#btnTriggerRoss')?.addEventListener('click', startRossWalk);
 
-  let couchY = 0; // 0 (alt) -> 140 (üst / bitiş)
-  let couchAngle = 0; // 0deg, 45deg, 90deg
-
-  btnTogglePivot.addEventListener('click', () => {
-    pivotModal.style.display = pivotModal.style.display === 'none' ? 'flex' : 'none';
+  audioHud.querySelector('#friendsVolSlider')?.addEventListener('input', (e) => {
+    const val = parseInt(e.target.value, 10);
+    if (ytPlayer && typeof ytPlayer.setVolume === 'function') {
+      ytPlayer.setVolume(val);
+    }
   });
-
-  btnClosePivot.addEventListener('click', () => {
-    pivotModal.style.display = 'none';
-  });
-
-  const triggerPivotShout = () => {
-    couchAngle = (couchAngle + 45) % 180;
-    couch.style.transform = `translate(-50%, -${couchY}px) rotate(${couchAngle}deg)`;
-
-    shout.classList.remove('shouting');
-    void shout.offsetWidth; // Reflow
-    shout.classList.add('shouting');
-
-    if (couchY > 50 && couchAngle === 90) {
-      statusMsg.textContent = 'PERFECT ANGLE! Now move it up!';
-      statusMsg.style.color = '#50ef39';
-    } else {
-      statusMsg.textContent = 'PIVOT! PIVOT! PIVOOOT!';
-      statusMsg.style.color = '#f7d02c';
-    }
-  };
-
-  const moveCouchUp = () => {
-    // Eğer merdiven dar boğazındaysa ve açı 90 derece değilse sıkışır
-    if (couchY >= 50 && couchY < 120 && couchAngle !== 90) {
-      statusMsg.textContent = 'STUCK! It won\'t fit! PIVOT!';
-      statusMsg.style.color = '#ff4444';
-      couch.classList.add('shake');
-      setTimeout(() => couch.classList.remove('shake'), 300);
-      return;
-    }
-
-    couchY += 25;
-    if (couchY >= 140) {
-      couchY = 140;
-      statusMsg.textContent = '🎉 YOU MADE IT TO CHANDLER\'S APARTMENT!';
-      statusMsg.style.color = '#50ef39';
-      setTimeout(() => {
-        couchY = 0;
-        couchAngle = 0;
-        couch.style.transform = 'translate(-50%, 0) rotate(0deg)';
-        statusMsg.textContent = 'Great job! Play again?';
-      }, 3000);
-    }
-
-    couch.style.transform = `translate(-50%, -${couchY}px) rotate(${couchAngle}deg)`;
-  };
-
-  btnPivot.addEventListener('click', triggerPivotShout);
-  btnMoveUp.addEventListener('click', moveCouchUp);
-
-  const handleKeydown = (e) => {
-    if (pivotModal.style.display !== 'flex') return;
-    if (e.code === 'Space') {
-      e.preventDefault();
-      triggerPivotShout();
-    } else if (e.code === 'KeyW' || e.code === 'ArrowUp') {
-      e.preventDefault();
-      moveCouchUp();
-    }
-  };
-
-  window.addEventListener('keydown', handleKeydown);
-
-  function showFloatingFriendsNote(x, y, text) {
-    const floatEl = document.createElement('div');
-    floatEl.className = 'friends-floating-note';
-    floatEl.style.left = `${x}px`;
-    floatEl.style.top = `${y}px`;
-    floatEl.textContent = text;
-    document.body.appendChild(floatEl);
-    setTimeout(() => floatEl.remove(), 1800);
-  }
 
   return {
     destroy: () => {
-      if (guiAvatarWrapper) {
-        guiAvatarWrapper.classList.remove('friends-monica-frame');
-        guiAvatarWrapper.removeEventListener('click', cycleCharacter);
+      document.removeEventListener('click', tryAutoPlayOnFirstClick);
+      if (ytPlayer && typeof ytPlayer.destroy === 'function') {
+        ytPlayer.destroy();
       }
-      window.removeEventListener('keydown', handleKeydown);
-      friendsUI.remove();
+      hiddenYtContainer.remove();
+      audioHud.remove();
+      rossWalker.remove();
+      coffeeWidget.remove();
     }
   };
 }

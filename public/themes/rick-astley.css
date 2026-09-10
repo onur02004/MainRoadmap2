@@ -1,36 +1,245 @@
-@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
+/* themes/rick-astley.css */
+@import url('https://fonts.googleapis.com/css2?family=Righteous&family=Share+Tech+Mono&family=Press+Start+2P&display=swap');
 
 :root[data-theme="rick-astley"] {
-  --bg-image: linear-gradient(rgba(30, 10, 40, 0.82), rgba(15, 5, 20, 0.92)),
-              url('https://upload.wikimedia.org/wikipedia/it/f/f0/Screenshot_Videoclip_Never_Gonna_Give_You_Up.png?utm_source=it.wikipedia.org&utm_campaign=index&utm_content=original');
-  --bg-color: #1a0826;
-  --panel-bg: #2d1040;
-  --text-main: #f3d2f7;
-  --text-dim: #996eab;
-  --text-bright: #ffffff;
-  --border-color: #ff6b8b;
-  
-  --accent-action: #ff6b8b; /* 80s Neon Pink */
-  --accent-glow: rgba(255, 107, 139, 0.45);
-  --status-ok: #00f0ff;
-  --status-err: #ff0055;
+  --rick-pink: #ff6b8b;
+  --rick-pink-glow: rgba(255, 107, 139, 0.6);
+  --rick-cyan: #00f0ff;
+  --rick-cyan-glow: rgba(0, 240, 255, 0.5);
+  --rick-bg: #12051c;
+  --rick-panel: rgba(38, 12, 54, 0.92);
+  --rick-border: rgba(255, 107, 139, 0.4);
+  --rick-text: #fce4ff;
+  --rick-text-dim: #b388c2;
+
+  --bg-image: linear-gradient(rgba(26, 8, 38, 0.85), rgba(12, 3, 18, 0.95)),
+              url('https://upload.wikimedia.org/wikipedia/it/f/f0/Screenshot_Videoclip_Never_Gonna_Give_You_Up.png');
 }
 
 [data-theme="rick-astley"] body {
-  background: var(--bg-image) no-repeat center center fixed;
-  background-size: cover;
+  background: var(--bg-image) no-repeat center center fixed !important;
+  background-size: cover !important;
+  font-family: 'Righteous', cursive, sans-serif !important;
+  color: var(--rick-text);
+  overflow-x: hidden;
+  letter-spacing: 0.5px;
 }
 
-[data-theme="rick-astley"] .brand-text,
+/* Orijinal Sayfa Kartları (80s Synthwave Çerçeveleri) */
+[data-theme="rick-astley"] .service-block,
+[data-theme="rick-astley"] .telemetry-bar,
+[data-theme="rick-astley"] .gui-user-card-panel,
+[data-theme="rick-astley"] .theme-btn {
+  background: var(--rick-panel) !important;
+  border: 2px solid var(--rick-pink) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 20px rgba(255, 107, 139, 0.25), inset 0 0 15px rgba(255, 107, 139, 0.1) !important;
+  backdrop-filter: blur(12px) !important;
+  transition: all 0.25s ease !important;
+}
+
+[data-theme="rick-astley"] .service-block:hover {
+  border-color: var(--rick-cyan) !important;
+  box-shadow: 0 0 30px var(--rick-cyan-glow), inset 0 0 20px rgba(0, 240, 255, 0.2) !important;
+  transform: translateY(-4px);
+}
+
 [data-theme="rick-astley"] .service-block h3 {
-  font-family: 'Righteous', cursive;
+  font-family: 'Righteous', cursive !important;
+  font-size: 1.25rem !important;
+  color: var(--rick-pink) !important;
+  text-shadow: 0 0 10px var(--rick-pink-glow);
   letter-spacing: 1px;
 }
 
-[data-theme="rick-astley"] .service-block,
-[data-theme="rick-astley"] .telemetry-bar {
-  background: rgba(45, 16, 64, 0.85) !important;
-  border: 2px solid #ff6b8b !important;
-  border-radius: 12px !important;
-  box-shadow: 0 0 15px rgba(255, 107, 139, 0.25) !important;
+[data-theme="rick-astley"] .service-block p {
+  font-family: 'Share Tech Mono', monospace !important;
+  font-size: 0.78rem !important;
+  color: var(--rick-text-dim) !important;
+}
+
+/* --- RICKROLL SHOWCASE KONTEYNERİ --- */
+.rick-showcase-container {
+  max-width: 1200px;
+  margin: 0 auto 30px auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 2;
+  position: relative;
+}
+
+/* 1. DISCO / SYNTHWAVE HEADER */
+.rick-hero-header {
+  background: var(--rick-panel);
+  border: 2px solid var(--rick-pink);
+  border-top: 4px solid var(--rick-cyan);
+  border-radius: 12px;
+  padding: 20px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9);
+}
+
+.rick-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rick-main-title {
+  font-family: 'Righteous', cursive;
+  font-size: 2.4rem;
+  color: #ffffff;
+  letter-spacing: 2px;
+  text-shadow: 0 0 15px var(--rick-pink), 0 0 30px var(--rick-cyan);
+  line-height: 1;
+}
+
+.rick-sub-lyrics {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--rick-cyan);
+  letter-spacing: 1px;
+}
+
+/* 2. PLAYER & MÜZİK KONTROLLERİ */
+.rick-controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.rick-control-card {
+  background: var(--rick-panel);
+  border: 1.5px solid var(--rick-border);
+  border-radius: 10px;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.rick-player-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rick-neon-btn {
+  background: rgba(255, 107, 139, 0.15);
+  border: 1.5px solid var(--rick-pink);
+  color: #ffffff;
+  font-family: 'Righteous', cursive;
+  font-size: 0.82rem;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 0 15px rgba(255, 107, 139, 0.25);
+}
+
+.rick-neon-btn:hover {
+  background: var(--rick-pink);
+  color: #12051c;
+  box-shadow: 0 0 25px var(--rick-pink-glow);
+  transform: translateY(-2px);
+}
+
+.rick-neon-btn.active {
+  background: var(--rick-cyan);
+  border-color: var(--rick-cyan);
+  color: #12051c;
+  box-shadow: 0 0 25px var(--rick-cyan-glow);
+}
+
+.rick-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 95px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  outline: none;
+  border-radius: 3px;
+}
+
+.rick-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--rick-cyan);
+  box-shadow: 0 0 10px var(--rick-cyan);
+  cursor: pointer;
+}
+
+/* 3. SAĞ ALT GENİŞ RICKROLL HESAP BARI */
+.rick-wide-account-bar {
+  width: 100%;
+  background: var(--rick-panel);
+  border: 1.5px solid var(--rick-pink);
+  border-left: 5px solid var(--rick-cyan);
+  border-radius: 12px;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+  gap: 16px;
+}
+
+.rick-acc-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.rick-avatar-wrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 2px solid var(--rick-pink);
+  box-shadow: 0 0 15px var(--rick-pink-glow);
+  overflow: hidden;
+  background: #000;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.rick-avatar-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rick-acc-name {
+  font-family: 'Righteous', cursive;
+  font-size: 1.25rem;
+  color: #ffffff;
+}
+
+.rick-acc-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--rick-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rick-acc-sub strong {
+  color: var(--rick-cyan);
+}
+
+@media (max-width: 900px) {
+  .rick-controls-grid { grid-template-columns: 1fr; }
+  .rick-main-title { font-size: 1.8rem; }
 }

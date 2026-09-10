@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Patrick+Hand&family=Permanent+Marker&family=Cinzel:wght@700&display=swap');
+
 :root[data-theme="himym"] {
   --bg-image: linear-gradient(rgba(14, 16, 22, 0.88), rgba(8, 10, 14, 0.95)),
               url('https://images2.alphacoders.com/485/485320.jpg');
@@ -16,8 +18,11 @@
 }
 
 [data-theme="himym"] body {
-  background: var(--bg-image) no-repeat center center fixed;
-  background-size: cover;
+  background: var(--bg-image) no-repeat center center fixed !important;
+  background-size: cover !important;
+  font-family: 'Share Tech Mono', monospace !important;
+  color: var(--text-main);
+  overflow-x: hidden;
 }
 
 [data-theme="himym"] .service-block,
@@ -29,74 +34,150 @@
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
 }
 
-[data-theme="himym"] .service-block:hover {
-  border-color: #f7d02c !important;
-  box-shadow: 0 0 25px rgba(247, 208, 44, 0.35) !important;
+/* --- SOL ÜST BİRLEŞİK KONTROL BAR (JUKEBOX + ŞEMSİYE YAN YANA) --- */
+.himym-top-left-bar {
+  position: fixed;
+  top: 18px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1200;
 }
 
-/* --- YAĞMUR CANVAS --- */
-.himym-rain-canvas {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 997;
-}
-
-/* Sol Üst Sarı Şemsiye Butonu */
-.himym-umbrella-badge {
-  position: fixed;
-  top: 24px;
-  left: 200px;
-  background: rgba(22, 25, 34, 0.9);
+.himym-audio-hud {
+  background: rgba(18, 20, 28, 0.96);
   border: 2px solid #f7d02c;
+  border-left: 4px solid #00d2ff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+}
+
+.himym-audio-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.himym-audio-label {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.95rem;
   color: #f7d02c;
-  padding: 6px 14px;
-  border-radius: 20px;
-  cursor: pointer;
-  z-index: 100;
+  letter-spacing: 1px;
+}
+
+.himym-audio-title {
+  font-size: 0.85rem;
+  color: #ffffff;
+  max-width: 170px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.himym-audio-controls {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.7rem;
+}
+
+.himym-audio-btn {
+  background: #f7d02c;
+  border: 1px solid #ffffff;
+  color: #0c0e14;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
   font-weight: 700;
-  box-shadow: 0 4px 16px rgba(247, 208, 44, 0.25);
+  padding: 2px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.himym-audio-btn:hover {
+  background: #ffffff;
+  transform: scale(1.05);
+}
+
+.himym-audio-btn.blue {
+  background: #00d2ff;
+  color: #0c0e14;
+}
+
+.himym-vol-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 55px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  outline: none;
+  border-radius: 2px;
+}
+
+.himym-vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 14px;
+  background: #f7d02c;
+  cursor: pointer;
+}
+
+/* Sarı Şemsiye Butonu */
+.himym-umbrella-badge {
+  background: rgba(18, 20, 28, 0.96);
+  border: 2px solid #f7d02c;
+  color: #f7d02c;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
   transition: all 0.2s ease;
 }
 
 .himym-umbrella-badge:hover,
 .himym-umbrella-badge.active {
-  transform: scale(1.05);
   background: #f7d02c;
   color: #0c0e14;
+  transform: translateY(-2px);
 }
 
-/* --- EKRANIN ÜSTÜNDE AÇILAN DEV SARI ŞEMSİYE --- */
+/* --- DEV SARI ŞEMSİYE & ALINTI --- */
 .himym-big-umbrella-stage {
   position: fixed;
   top: 0;
   left: 50%;
-  transform: translateX(-50%) translateY(-110%);
-  z-index: 1100;
+  transform: translateX(-50%) translateY(-120%);
+  z-index: 3000;
   pointer-events: none;
   transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .himym-big-umbrella-stage.open {
-  transform: translateX(-50%) translateY(20px);
+  transform: translateX(-50%) translateY(30px);
 }
 
 .umbrella-canopy-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 25px rgba(247, 208, 44, 0.5));
+  filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 25px rgba(247, 208, 44, 0.6));
 }
 
 .giant-yellow-umbrella-svg {
-  width: 380px;
-  height: 210px;
+  width: 400px;
+  height: 220px;
   transform-origin: top center;
   animation: umbrellaGentleSway 3.5s ease-in-out infinite alternate;
 }
@@ -107,19 +188,216 @@
 }
 
 .umbrella-quote-bubble {
-  margin-top: -30px;
-  background: rgba(22, 25, 34, 0.95);
+  position: relative;
+  z-index: 3001;
+  margin-top: -20px;
+  background: rgba(18, 20, 28, 0.98);
   border: 2px solid #f7d02c;
   color: #f7d02c;
-  padding: 6px 16px;
+  padding: 8px 20px;
   border-radius: 20px;
-  font-size: 0.75rem;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.15rem;
   font-weight: 700;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8);
   letter-spacing: 0.5px;
 }
 
-/* Sağ Sidebar Araçları */
+/* --- SAĞ ALTTA ÇALIŞAN RASTGELE HIMYM SKETCH KUTUSU --- */
+.himym-alone-scene {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 340px;
+  height: 230px;
+  background: rgba(14, 16, 24, 0.96);
+  border: 2px solid #00d2ff;
+  border-radius: 12px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.85), 0 0 20px rgba(0, 210, 255, 0.25);
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(30px) scale(0.95);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.himym-alone-scene.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.alone-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed rgba(0, 210, 255, 0.3);
+  padding-bottom: 4px;
+}
+
+.alone-header-title {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1rem;
+  color: #00d2ff;
+}
+
+.alone-close-btn {
+  background: transparent;
+  border: none;
+  color: #6c7387;
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.alone-close-btn:hover {
+  color: #ff4444;
+}
+
+.alone-stage-wrap {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.alone-booth-table {
+  width: 90px;
+  height: 32px;
+  background: #4a2818;
+  border: 2px solid #24140e;
+  border-radius: 4px;
+  position: absolute;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.alone-booth-table::after {
+  content: '🍺';
+  font-size: 0.9rem;
+}
+
+.alone-char {
+  position: absolute;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 1;
+}
+
+.alone-char.ted {
+  left: 55px;
+  transform: translateX(-100px);
+  opacity: 0;
+}
+
+.alone-char.ted.seated {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.alone-char.barney {
+  right: 55px;
+  transform: translateX(100px);
+  opacity: 0;
+}
+
+.alone-char.barney.appeared {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.char-head {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ffd2a5;
+  border: 1.5px solid #000;
+  position: relative;
+}
+
+.char-head.ted-hair::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 2px;
+  right: 2px;
+  height: 10px;
+  background: #2b1d0c;
+  border-radius: 8px 8px 0 0;
+}
+
+.char-head.barney-hair::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 3px;
+  right: 3px;
+  height: 9px;
+  background: #d4af37;
+  border-radius: 6px 6px 0 0;
+}
+
+.char-suit {
+  width: 32px;
+  height: 38px;
+  background: #1c2630;
+  border: 1.5px solid #000;
+  border-radius: 4px;
+}
+
+.char-suit.barney-suit {
+  background: #111111;
+  border-top: 2px solid #ffffff;
+}
+
+.alone-bubble {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: rgba(22, 25, 34, 0.98);
+  border: 1.5px solid #00d2ff;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.05rem;
+  box-shadow: 0 0 15px rgba(0, 210, 255, 0.35);
+  opacity: 0;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+.alone-bubble.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* YAĞMUR CANVAS */
+.himym-rain-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 997;
+}
+
+/* SAĞ SIDEBAR ARAÇLARI */
 .himym-sidebar-tools {
   position: fixed;
   top: 90px;
@@ -154,7 +432,7 @@
 }
 
 .himym-tool-btn.playbook { border-color: #f7d02c; color: #f7d02c; }
-.himym-tool-btn.slap { border-color: #ff4444; color: #ff4444; }
+.himym-tool-btn.alone { border-color: #00d2ff; color: #00d2ff; }
 
 .himym-tool-btn:hover {
   transform: translateX(-4px);
@@ -167,13 +445,13 @@
   filter: drop-shadow(0 0 4px #00d2ff);
 }
 
-/* --- EKRANDA CANLANAN DEV MAVİ KORNO SAHNESİ --- */
+/* --- İLK KODDAKİ ANİMASYONLU MAVİ FRANSIZ KORNOSU SAHNESİ --- */
 .himym-horn-stage {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(8px);
-  z-index: 1500;
+  z-index: 2500;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -237,7 +515,8 @@
 
 .horn-romantic-quote {
   margin-top: 24px;
-  font-size: 1.1rem;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #00d2ff;
   text-shadow: 0 0 16px rgba(0, 210, 255, 0.7);
@@ -250,7 +529,7 @@
   color: #00d2ff;
   text-shadow: 0 0 12px #00d2ff;
   pointer-events: none;
-  z-index: 1600;
+  z-index: 2600;
   animation: noteFloatBurst 1.4s ease-out forwards;
 }
 
@@ -259,82 +538,13 @@
   100% { transform: translate(calc(-80px + 160px * var(--rand, 0.5)), -120px) scale(1.4) rotate(20deg); opacity: 0; }
 }
 
-/* --- MACLAREN'S PUB BİRA WIDGET (SAĞ ALT) --- */
-.himym-beer-widget {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  z-index: 90;
-  user-select: none;
-  transition: transform 0.15s ease;
-}
-
-.himym-beer-widget:hover {
-  transform: scale(1.08);
-}
-
-.beer-mug {
-  position: relative;
-  width: 38px;
-  height: 44px;
-  background: rgba(255, 255, 255, 0.2);
-  border: 3px solid #ffffff;
-  border-radius: 0 0 8px 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-}
-
-.beer-mug::after {
-  content: '';
-  position: absolute;
-  top: 8px;
-  right: -10px;
-  width: 10px;
-  height: 20px;
-  border: 3px solid #ffffff;
-  border-radius: 0 6px 6px 0;
-}
-
-.beer-foam {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 8px;
-  background: #ffffff;
-  z-index: 2;
-}
-
-.beer-fill {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: #f7a82c;
-  transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.beer-badge {
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: #f7d02c;
-  background: rgba(0, 0, 0, 0.8);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-/* --- THE PLAYBOOK MODAL --- */
+/* Playbook Modalı */
 .himym-modal {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(6px);
-  z-index: 1000;
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -347,7 +557,6 @@
   border: 3px solid #d4af37;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(0, 0, 0, 0.8);
 }
 
 .playbook-cover {
@@ -360,17 +569,10 @@
 }
 
 .book-title {
-  font-family: 'Cinzel', serif, Georgia;
+  font-family: 'Cinzel', serif;
   font-size: 1.1rem;
   font-weight: 900;
   color: #d4af37;
-  letter-spacing: 2px;
-}
-
-.book-author {
-  font-size: 0.65rem;
-  color: #8c7853;
-  font-style: italic;
 }
 
 .book-close {
@@ -387,31 +589,11 @@
   color: #241a15;
 }
 
-.playbook-page h4 {
-  font-size: 1.05rem;
-  color: #8b0000;
-  margin-bottom: 8px;
-}
-
-.playbook-page p {
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: #42352f;
-  margin-bottom: 16px;
-}
-
-.playbook-actions {
-  display: flex;
-  gap: 8px;
-}
-
 .book-btn {
-  flex: 1;
   background: #241a15;
   border: 2px solid #d4af37;
   color: #d4af37;
   padding: 8px 12px;
-  font-family: inherit;
   font-size: 0.72rem;
   font-weight: 700;
   border-radius: 4px;
@@ -422,63 +604,4 @@
   background: #8b0000;
   color: #ffffff;
   border-color: #8b0000;
-}
-
-/* --- TOKAT EFEKTİ (SLAP FX) --- */
-.himym-slap-fx {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 1500;
-  opacity: 0;
-  transform: scale(0.5);
-}
-
-.slap-hand {
-  font-size: 6rem;
-  filter: drop-shadow(0 0 30px #ff0000);
-}
-
-.slap-text {
-  font-size: 2.4rem;
-  font-weight: 900;
-  color: #ff2222;
-  text-shadow: 3px 3px 0 #000000;
-  letter-spacing: 2px;
-}
-
-.himym-slap-fx.slapping {
-  animation: slapBlast 0.8s ease-out forwards;
-}
-
-@keyframes slapBlast {
-  0% { opacity: 1; transform: scale(0.3) rotate(-30deg); }
-  40% { opacity: 1; transform: scale(1.4) rotate(10deg); }
-  70% { opacity: 1; transform: scale(1.1); }
-  100% { opacity: 0; transform: scale(1.3); }
-}
-
-/* Floating Note */
-.himym-floating-note {
-  position: fixed;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #0c0e14;
-  background: #f7d02c;
-  border: 2px solid #ffffff;
-  padding: 6px 14px;
-  border-radius: 20px;
-  pointer-events: none;
-  z-index: 1001;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-  animation: himymFloat 2s ease-out forwards;
-}
-
-@keyframes himymFloat {
-  0% { transform: translate(-50%, 0); opacity: 1; }
-  100% { transform: translate(-50%, -50px); opacity: 0; }
 }

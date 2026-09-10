@@ -1,44 +1,488 @@
-@import url('https://fonts.googleapis.com/css2?family=Pricedown&family=Chango&family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&family=Chakra+Petch:wght@600;700&family=Anton&family=VT323&display=swap');
+
+@font-face {
+  font-family: 'Pricedown';
+  src: url('./fonts/pricedown.ttf') format('truetype'),
+       url('/themes/fonts/pricedown.ttf') format('truetype'),
+       local('Pricedown Black'),
+       local('Pricedown');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Diploma';
+  src: url('./fonts/diploma.ttf') format('truetype'),
+       url('/themes/fonts/diploma.ttf') format('truetype'),
+       local('Diploma'),
+       local('Old English Text MT');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root[data-theme="gta-sa"] {
-  --bg-image: linear-gradient(rgba(18, 14, 10, 0.85), rgba(8, 6, 4, 0.94)),
-              url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80');
-  --bg-color: #0d0a08;
-  --panel-bg: #1c1510;
-  --text-main: #dfd2be;
-  --text-dim: #7a6e5a;
-  --text-bright: #ffffff;
-  --border-color: #594532;
+  --gta-green: #2d8a4e;
+  --gta-light-green: #55b768;
+  --gta-green-glow: rgba(45, 138, 78, 0.5);
+  --gta-money-green: #55b768;
+  --gta-gold: #f1c40f;
+  --gta-hud-red: #d63031;
+  --gta-hud-dark: rgba(14, 11, 8, 0.95);
+  --gta-border: #4d3a2b;
+  --gta-border-gold: #c59b27;
+  --gta-text-sub: #dfd2be;
   
-  --accent-action: #2d8a4e; /* Grove Street Green */
-  --accent-glow: rgba(45, 138, 78, 0.4);
-  --status-ok: #2d8a4e;
-  --status-err: #8a2424;
+  --bg-image: linear-gradient(rgba(18, 14, 10, 0.72), rgba(8, 6, 4, 0.92)),
+              url('https://wallpapercat.com/w/full/3/3/e/28-3840x2160-desktop-4k-grand-theft-auto-san-andreas-wallpaper.jpg');
 }
 
 [data-theme="gta-sa"] body {
-  background: var(--bg-image) no-repeat center center fixed;
-  background-size: cover;
-  font-family: 'Trebuchet MS', 'Arial Black', sans-serif;
+  background: var(--bg-image) no-repeat center center fixed !important;
+  background-size: cover !important;
+  font-family: 'Chakra Petch', 'Trebuchet MS', sans-serif !important;
+  color: #ffffff;
+  overflow-x: hidden;
 }
 
-[data-theme="gta-sa"] .brand-text,
-[data-theme="gta-sa"] .section-label {
-  font-family: 'Impact', 'Arial Black', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  color: #55b768 !important;
-  text-shadow: 3px 3px 0px #000000;
+/* Polis Çakar Işık Efekti */
+body.gta-cop-siren-active::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2900;
+  animation: copFlasher 0.3s infinite alternate;
 }
 
+@keyframes copFlasher {
+  0% { background: rgba(0, 100, 255, 0.15); }
+  100% { background: rgba(255, 0, 0, 0.15); }
+}
+
+/* Orijinal Sayfa Kartları */
 [data-theme="gta-sa"] .service-block,
-[data-theme="gta-sa"] .telemetry-bar {
-  background: rgba(28, 21, 16, 0.9) !important;
-  border: 2px solid #594532 !important;
+[data-theme="gta-sa"] .telemetry-bar,
+[data-theme="gta-sa"] .gui-user-card-panel,
+[data-theme="gta-sa"] .theme-btn {
+  background: var(--gta-hud-dark) !important;
+  border: 2px solid var(--gta-border) !important;
   border-radius: 0px !important;
   box-shadow: 4px 4px 0px #000000 !important;
 }
 
-[data-theme="gta-sa"] .service-block:hover {
-  border-color: #55b768 !important;
+[data-theme="gta-sa"] .service-block h3 {
+  font-family: 'Pricedown', 'Anton', 'Impact', sans-serif !important;
+  font-size: 1.35rem !important;
+  color: var(--gta-light-green) !important;
+  text-shadow: 2px 2px 0px #000000;
+  letter-spacing: 1.5px;
 }
+
+[data-theme="gta-sa"] .service-block p {
+  font-family: 'Chakra Petch', 'Trebuchet MS', sans-serif !important;
+  font-size: 0.76rem !important;
+  color: var(--gta-text-sub) !important;
+}
+
+/* SAĞ ÜST GTA SA HUD & YILDIZLAR */
+.gta-sa-hud {
+  position: fixed;
+  top: 18px;
+  right: 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.gta-hud-clock {
+  font-family: 'Pricedown', 'Anton', 'Impact', sans-serif;
+  font-size: 2.2rem;
+  color: #ffffff;
+  text-shadow: 3px 3px 0px #000000;
+  letter-spacing: 2px;
+}
+
+.gta-hud-weapon-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+
+.gta-hud-weapon-icon {
+  font-size: 2rem;
+  filter: drop-shadow(2px 2px 0px #000000);
+}
+
+.gta-hud-ammo {
+  font-family: 'Pricedown', 'Anton', sans-serif;
+  font-size: 1.1rem;
+  color: #ffffff;
+  text-shadow: 2px 2px 0px #000;
+}
+
+.gta-hud-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gta-hud-bar-fill {
+  width: 95px;
+  height: 9px;
+  background: #1a1a1a;
+  border: 2px solid #000000;
+  overflow: hidden;
+}
+
+.gta-hud-bar-fill.health .inner-bar { background: var(--gta-hud-red); width: 100%; height: 100%; transition: width 0.3s; }
+.gta-hud-bar-fill.armour .inner-bar { background: #ffffff; width: 85%; height: 100%; }
+
+.gta-hud-money {
+  font-family: 'Pricedown', 'Anton', 'Impact', sans-serif;
+  font-size: 2.5rem;
+  color: var(--gta-money-green);
+  text-shadow: 3px 3px 0px #000000;
+  letter-spacing: 2px;
+  margin-top: -2px;
+}
+
+/* Aranma Seviyesi Yıldızları */
+.gta-wanted-stars-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.gta-star {
+  font-size: 1.1rem;
+  color: #333333;
+  text-shadow: 1px 1px 0px #000;
+}
+
+.gta-star.active {
+  color: var(--gta-hud-red);
+  text-shadow: 0 0 8px rgba(231, 76, 60, 0.8), 2px 2px 0px #000;
+  animation: starBlink 0.6s infinite alternate;
+}
+
+@keyframes starBlink {
+  0% { opacity: 0.3; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1.1); }
+}
+
+/* SPRAY GRAFFITI OVERLAY */
+.gta-graffiti-tag {
+  position: absolute;
+  font-family: 'Pricedown', cursive;
+  font-size: 2.5rem;
+  color: #55b768;
+  text-shadow: 0 0 12px #2d8a4e, 3px 3px 0px #000000;
+  pointer-events: none;
+  z-index: 100;
+  transform: rotate(-6deg);
+  animation: graffitiPop 0.2s ease-out;
+}
+
+@keyframes graffitiPop {
+  0% { transform: rotate(-6deg) scale(0.5); opacity: 0; }
+  100% { transform: rotate(-6deg) scale(1); opacity: 1; }
+}
+
+/* LOKASYON GİRİŞ BANNERI */
+.gta-location-banner {
+  position: fixed;
+  bottom: 80px;
+  right: 40px;
+  font-family: 'Diploma', 'UnifrakturCook', cursive;
+  font-size: 2.8rem;
+  color: #cfd9e8;
+  text-shadow: 3px 3px 0px #000000, -2px -2px 0px #000000, 2px -2px 0px #000000, -2px 2px 0px #000000, 0 0 15px rgba(0, 0, 0, 0.9);
+  letter-spacing: 2px;
+  z-index: 1500;
+  opacity: 0;
+  transform: translateX(50px);
+  pointer-events: none;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gta-location-banner.active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* SUBTITLE ALTYAZI */
+.gta-subtitles-hud {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 8px 22px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 2px 2px 0px #000000;
+  z-index: 1200;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.gta-subtitles-hud .highlight-red { color: #ff3b30; }
+.gta-subtitles-hud .highlight-green { color: var(--gta-light-green); }
+.gta-subtitles-hud .highlight-gold { color: var(--gta-gold); }
+
+/* RADAR / MINIMAP */
+.gta-minimap-shell {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 4px solid #0a0c0e;
+  box-shadow: 0 0 0 3px #555555, 0 8px 30px rgba(0, 0, 0, 0.9);
+  background: #19272e;
+  overflow: hidden;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.gta-minimap-ocean {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, #254452 0%, #152730 100%);
+  position: relative;
+}
+
+.gta-minimap-road { position: absolute; background: #485e68; }
+.gta-minimap-road.r1 { top: 65px; left: 0; right: 0; height: 10px; transform: rotate(-15deg); }
+.gta-minimap-road.r2 { top: 0; bottom: 0; left: 60px; width: 10px; transform: rotate(25deg); }
+.gta-minimap-road.r3 { top: 25px; left: 15px; width: 100px; height: 8px; transform: rotate(65deg); }
+
+.gta-minimap-player {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 14px solid #ffffff;
+  filter: drop-shadow(0 0 4px #000000);
+}
+
+.gta-radar-blip {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid #000000;
+}
+.gta-radar-blip.cj { top: 35px; left: 90px; background: var(--gta-gold); }
+.gta-radar-blip.grove { top: 90px; left: 35px; background: var(--gta-light-green); }
+
+/* MISSION PASSED */
+.gta-mission-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.gta-mission-overlay.active { opacity: 1; }
+
+.gta-mission-banner {
+  background: rgba(0, 0, 0, 0.92);
+  border-top: 4px solid var(--gta-gold);
+  border-bottom: 4px solid var(--gta-gold);
+  width: 100%;
+  padding: 24px 20px;
+  text-align: center;
+  box-shadow: 0 0 50px rgba(0,0,0,0.95);
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gta-mission-overlay.active .gta-mission-banner { transform: scale(1); }
+
+.gta-mission-title {
+  font-family: 'Pricedown', 'Anton', 'Impact', sans-serif;
+  font-size: 3.8rem;
+  color: var(--gta-gold);
+  text-shadow: 4px 4px 0px #000000;
+  letter-spacing: 3px;
+  margin: 0;
+}
+
+.gta-respect-badge {
+  font-family: 'Pricedown', 'Anton', 'Impact', sans-serif;
+  font-size: 2rem;
+  color: var(--gta-light-green);
+  text-shadow: 3px 3px 0px #000000;
+  margin-top: 6px;
+  display: block;
+  letter-spacing: 2px;
+}
+
+/* Hile Popup */
+.gta-cheat-popup {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid var(--gta-light-green);
+  padding: 8px 16px;
+  font-family: 'Pricedown', 'Anton', sans-serif;
+  font-size: 1.4rem;
+  color: var(--gta-light-green);
+  text-shadow: 2px 2px 0px #000000;
+  box-shadow: 0 0 20px var(--gta-green-glow);
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 2800;
+}
+
+.gta-cheat-popup.active { opacity: 1; transform: translateY(0); }
+
+/* SHOWCASE VE İNTERAKTİF GTA PANELLERİ */
+.gta-showcase-container {
+  max-width: 1200px;
+  margin: 0 auto 30px auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 2;
+  position: relative;
+}
+
+.gta-interactive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.gta-action-panel {
+  background: var(--gta-hud-dark);
+  border: 2px solid var(--gta-border);
+  box-shadow: 4px 4px 0px #000000;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gta-panel-header-title {
+  font-family: 'Pricedown', sans-serif;
+  font-size: 1.25rem;
+  color: var(--gta-light-green);
+  text-shadow: 2px 2px 0px #000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gta-big-smoke-text {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--gta-text-sub);
+  font-style: italic;
+}
+
+.gta-hud-btn {
+  background: var(--gta-green);
+  color: #ffffff;
+  border: 2px solid #000000;
+  font-family: 'Pricedown', sans-serif;
+  font-size: 1rem;
+  padding: 6px 14px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px #000000;
+  transition: transform 0.1s ease;
+}
+
+.gta-hud-btn:hover {
+  background: var(--gta-light-green);
+  transform: translateY(-2px);
+}
+
+.gta-hud-btn.gold {
+  background: var(--gta-gold);
+  color: #000000;
+}
+
+/* SAĞ ALT GROVE STREET HESAP BARI */
+.gta-wide-grove-bar {
+  width: 100%;
+  background: var(--gta-hud-dark);
+  border: 2px solid var(--gta-green);
+  box-shadow: 5px 5px 0px #000000;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.gta-cj-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.gta-avatar-box {
+  width: 58px;
+  height: 58px;
+  border: 2px solid var(--gta-green);
+  box-shadow: 3px 3px 0px #000000;
+  background: #000;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.gta-avatar-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gta-cj-name {
+  font-family: 'Pricedown', 'Anton', sans-serif;
+  font-size: 1.6rem;
+  color: #ffffff;
+  text-shadow: 2px 2px 0px #000000;
+  letter-spacing: 1px;
+}
+
+.gta-grove-btn {
+  background: var(--gta-green);
+  color: #ffffff;
+  border: 2px solid #000000;
+  font-family: 'Pricedown', 'Anton', sans-serif;
+  font-size: 1.1rem;
+  padding: 8px 18px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.gta-grove-btn:hover { background: var(--gta-light-green); }
+.gta-grove-btn.danger { background: var(--gta-hud-red); }

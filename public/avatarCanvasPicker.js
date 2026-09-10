@@ -286,7 +286,13 @@ class InfiniteAvatarCanvas {
 
   async loadAvatarData() {
     try {
-      const res = await fetch('/api/avatars');
+      const token = localStorage.getItem('token');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch('/api/avatars', { headers });
       const json = await res.json();
       if (json.status === 'success') {
         this.rawAvatars = json.data.avatars;

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Share+Tech+Mono&family=Permanent+Marker&display=swap');
 
 :root[data-theme="friends"] {
   --bg-image: linear-gradient(rgba(26, 16, 12, 0.85), rgba(16, 10, 8, 0.94)),
@@ -15,20 +15,23 @@
   --accent-glow: rgba(212, 88, 47, 0.45);
   --status-ok: #5fa868;
   --status-err: #d9534f;
+  --friends-yellow: #f7d02c;
+  --friends-purple: #6b357d;
 }
 
 [data-theme="friends"] body {
-  font-family: 'Share Tech Mono', monospace;
-  background: var(--bg-image) no-repeat center center fixed;
-  background-size: cover;
+  font-family: 'Share Tech Mono', monospace !important;
+  background: var(--bg-image) no-repeat center center fixed !important;
+  background-size: cover !important;
   color: var(--text-main);
+  overflow-x: hidden;
 }
 
 [data-theme="friends"] .brand-text,
 [data-theme="friends"] .service-block h3,
 [data-theme="friends"] .section-label {
-  font-family: 'Patrick Hand', cursive;
-  font-size: 1.35rem;
+  font-family: 'Patrick Hand', cursive !important;
+  font-size: 1.35rem !important;
   letter-spacing: 1px;
 }
 
@@ -41,18 +44,205 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
 }
 
-[data-theme="friends"] .service-block:hover {
-  border-color: #d4582f !important;
+/* --- SOL ÜST: CENTRAL PERK INTRO MUSIC HUD --- */
+.friends-audio-hud {
+  position: fixed;
+  top: 18px;
+  left: 20px;
+  background: rgba(40, 20, 14, 0.95);
+  border: 2px solid var(--friends-yellow);
+  border-left: 4px solid var(--accent-action);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1200;
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
 }
 
-/* --- MONICA'NIN SARI KAPI GÖZETLEME ÇERÇEVESİ --- */
+.friends-audio-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.friends-audio-label {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.95rem;
+  color: var(--friends-yellow);
+  letter-spacing: 1px;
+}
+
+.friends-audio-title {
+  font-size: 0.85rem;
+  color: #ffffff;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friends-audio-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.friends-audio-btn {
+  background: var(--accent-action);
+  border: 1px solid #ffffff;
+  color: #ffffff;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.1rem;
+  padding: 2px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.friends-audio-btn:hover {
+  background: #e6673d;
+  transform: scale(1.05);
+}
+
+.friends-vol-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 60px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  outline: none;
+  border-radius: 2px;
+}
+
+.friends-vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 14px;
+  background: var(--friends-yellow);
+  cursor: pointer;
+}
+
+/* --- YÜRÜYEN ROSS & "WE WERE ON A BREAK" ANİMASYONU --- */
+.friends-ross-walker {
+  position: fixed;
+  bottom: 20px;
+  left: -200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2500;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.friends-ross-bubble {
+  background: #ffffff;
+  border: 3px solid #000000;
+  border-radius: 16px;
+  padding: 8px 16px;
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.3rem;
+  color: #d9534f;
+  text-shadow: 1px 1px 0px #000;
+  box-shadow: 4px 4px 0px #000000;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.friends-ross-bubble.shout {
+  opacity: 1;
+  transform: scale(1) rotate(-3deg);
+}
+
+.friends-ross-sprite {
+  width: 90px;
+  height: 120px;
+  position: relative;
+}
+
+.friends-ross-head {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #ffd2a5;
+  border: 2px solid #24140e;
+  margin: 0 auto;
+  position: relative;
+}
+
+.friends-ross-hair {
+  position: absolute;
+  top: -4px;
+  left: 2px;
+  right: 2px;
+  height: 16px;
+  background: #2b1d0c;
+  border-radius: 12px 12px 0 0;
+}
+
+.friends-ross-body {
+  width: 50px;
+  height: 45px;
+  background: #5b6978; /* Ross'un gri-mavi gömleği */
+  border: 2px solid #24140e;
+  border-radius: 6px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.friends-ross-legs {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.friends-ross-leg {
+  width: 12px;
+  height: 35px;
+  background: #1c2630;
+  border: 1.5px solid #000;
+}
+
+/* Yürüme Keyframe */
+@keyframes rossWalkAcross {
+  0% { transform: translateX(0); }
+  35% { transform: translateX(calc(50vw + 50px)); }
+  65% { transform: translateX(calc(50vw + 50px)); }
+  100% { transform: translateX(calc(100vw + 300px)); }
+}
+
+.friends-ross-walker.walking {
+  animation: rossWalkAcross 7s linear forwards;
+}
+
+.friends-ross-walker.walking .friends-ross-leg.l1 {
+  animation: legSwing 0.3s infinite alternate;
+}
+
+.friends-ross-walker.walking .friends-ross-leg.l2 {
+  animation: legSwing 0.3s infinite alternate-reverse;
+}
+
+@keyframes legSwing {
+  0% { transform: rotate(-20deg); }
+  100% { transform: rotate(20deg); }
+}
+
+/* --- MONICA ÇERÇEVESİ, KAHVE VE PIVOT MEKANİKLERİ --- */
 .friends-monica-frame {
   position: relative;
   cursor: pointer;
   padding: 6px;
-  background: #6b357d; /* İkonik Mor Kapı */
+  background: var(--friends-purple);
   border-radius: 8px;
-  border: 4px solid #f7d02c; /* İkonik Sarı Ahşap Çerçeve */
+  border: 4px solid var(--friends-yellow);
   box-shadow: 0 0 16px rgba(247, 208, 44, 0.4);
   transition: transform 0.2s ease;
 }
@@ -61,7 +251,6 @@
   transform: scale(1.06) rotate(-2deg);
 }
 
-/* --- CENTRAL PERK KAHVE KUPASI (SAĞ ALT) --- */
 .friends-coffee-widget {
   position: fixed;
   bottom: 24px;
@@ -125,206 +314,15 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  background: #5a2e16; /* Koyu Espresso */
+  background: #5a2e16;
   transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .coffee-badge {
   font-size: 0.6rem;
   font-weight: 700;
-  color: #f7d02c;
+  color: var(--friends-yellow);
   background: rgba(0, 0, 0, 0.7);
   padding: 2px 6px;
   border-radius: 4px;
-}
-
-/* --- PIVOT MINI-OYUN BUTONU (SAĞ KENAR) --- */
-.friends-pivot-toggle-btn {
-  position: fixed;
-  top: 90px;
-  right: 24px;
-  background: #d4582f;
-  border: 2px solid #ffffff;
-  color: #ffffff;
-  font-family: 'Patrick Hand', cursive;
-  font-size: 1.1rem;
-  font-weight: 700;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  z-index: 90;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-  transition: all 0.2s ease;
-}
-
-.friends-pivot-toggle-btn:hover {
-  transform: translateY(-2px);
-  background: #e6673d;
-}
-
-/* --- PIVOT OYUN MODALI & MERDİVEN SAHNESİ --- */
-.friends-pivot-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(6px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pivot-game-window {
-  width: 90%;
-  max-width: 440px;
-  background: #381e14;
-  border: 3px solid #6b3b22;
-  border-radius: 12px;
-  padding: 18px;
-  color: #ffffff;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
-}
-
-.pivot-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: #f7d02c;
-}
-
-.pivot-close {
-  background: transparent;
-  border: none;
-  color: #ffffff;
-  font-size: 1.4rem;
-  cursor: pointer;
-}
-
-/* Merdiven Sahnesi */
-.pivot-stage {
-  position: relative;
-  width: 100%;
-  height: 220px;
-  background: #24140e;
-  border: 2px dashed #6b3b22;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 14px;
-}
-
-.staircase-corner-target {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.65rem;
-  color: #50ef39;
-  font-weight: 700;
-}
-
-/* Ross'un Turuncu Koltuğu */
-.ross-couch {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translate(-50%, 0);
-  font-size: 3rem;
-  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.ross-couch.shake {
-  animation: couchShake 0.3s ease-in-out;
-}
-
-@keyframes couchShake {
-  0%, 100% { margin-left: 0; }
-  25% { margin-left: -6px; }
-  75% { margin-left: 6px; }
-}
-
-/* PIVOT Bağırış Efekti */
-.pivot-shout {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  font-family: 'Patrick Hand', cursive;
-  font-size: 3rem;
-  font-weight: 900;
-  color: #f7d02c;
-  text-shadow: 3px 3px 0 #d4582f;
-  pointer-events: none;
-  opacity: 0;
-}
-
-.pivot-shout.shouting {
-  animation: shoutPop 0.4s ease-out;
-}
-
-@keyframes shoutPop {
-  0% { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
-  50% { transform: translate(-50%, -50%) scale(1.3) rotate(-5deg); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
-}
-
-.pivot-controls {
-  display: flex;
-  gap: 8px;
-}
-
-.pivot-action-btn {
-  flex: 1;
-  background: #d4582f;
-  border: 2px solid #ffffff;
-  color: #ffffff;
-  padding: 10px;
-  font-family: inherit;
-  font-size: 0.72rem;
-  font-weight: 700;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.pivot-action-btn.rotate {
-  background: #f7d02c;
-  color: #24140e;
-}
-
-.pivot-action-btn:hover {
-  transform: translateY(-2px);
-}
-
-.pivot-status-bar {
-  margin-top: 10px;
-  font-size: 0.7rem;
-  text-align: center;
-  font-weight: 600;
-  color: #f5e6d3;
-}
-
-/* Floating Quote / Not Uçuşu */
-.friends-floating-note {
-  position: fixed;
-  font-family: 'Patrick Hand', cursive;
-  font-size: 1.2rem;
-  color: #f7d02c;
-  background: rgba(36, 20, 14, 0.95);
-  border: 2px solid #d4582f;
-  padding: 6px 14px;
-  border-radius: 20px;
-  pointer-events: none;
-  z-index: 1001;
-  animation: noteFloat 1.8s ease-out forwards;
-}
-
-@keyframes noteFloat {
-  0% { transform: translate(-50%, 0) scale(0.8); opacity: 1; }
-  100% { transform: translate(-50%, -60px) scale(1); opacity: 0; }
 }

@@ -1,35 +1,987 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Cinzel:wght@700&display=swap');
 
 :root[data-theme="weingarten"] {
-  --bg-image: linear-gradient(rgba(20, 17, 12, 0.85), rgba(12, 10, 7, 0.94)),
+  /* Arka plan karartması güçlendirildi: Alttaki yazılar artık net okunur */
+  --bg-image: linear-gradient(180deg, rgba(12, 10, 8, 0.88) 0%, rgba(10, 8, 6, 0.95) 40%, rgba(8, 7, 5, 0.99) 100%),
               url('./basilika.jpeg');
-  --bg-color: #120f0a;
-  --panel-bg: #211c14;
-  --text-main: #dfd5c4;
-  --text-dim: #7d7260;
-  --text-bright: #ffffff;
-  --border-color: #c59b27; /* Basilika Barok Altını */
-  
-  --accent-action: #c59b27;
-  --accent-glow: rgba(197, 155, 39, 0.4);
-  --status-ok: #5fa868;
-  --status-err: #a63a2a;
+  --wgt-gold: #e5b338;
+  --wgt-gold-glow: rgba(229, 179, 56, 0.35);
+  --wgt-blue: #0080ff;
+  --wgt-panel: rgba(20, 17, 13, 0.94);
+  --wgt-panel-card: rgba(28, 23, 17, 0.96);
+  --wgt-border: rgba(229, 179, 56, 0.35);
+  --wgt-border-subtle: rgba(255, 255, 255, 0.1);
+  --wgt-text: #f0e6d6;
+  --wgt-dim: #9e917d;
 }
 
 [data-theme="weingarten"] body {
-  background: var(--bg-image) no-repeat center center fixed;
-  background-size: cover;
+  font-family: 'JetBrains Mono', monospace !important;
+  background: var(--bg-image) no-repeat center center fixed !important;
+  background-size: cover !important;
+  color: var(--wgt-text);
 }
 
-[data-theme="weingarten"] .brand-text,
-[data-theme="weingarten"] .service-block h3,
-[data-theme="weingarten"] .section-label {
-  font-family: 'Cinzel', serif;
-}
-
+/* Orijinal Sayfa Servis Kartları & Telemetri Okunabilirlik Güçlendirmesi */
 [data-theme="weingarten"] .service-block,
-[data-theme="weingarten"] .telemetry-bar {
-  background: rgba(33, 28, 20, 0.9) !important;
-  border: 1px solid #c59b27 !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
+[data-theme="weingarten"] .telemetry-bar,
+[data-theme="weingarten"] .gui-user-card-panel {
+  background: var(--wgt-panel-card) !important;
+  border: 1px solid var(--wgt-border) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+[data-theme="weingarten"] .service-block h3,
+[data-theme="weingarten"] .telemetry-val {
+  color: #ffffff !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="weingarten"] .service-block p,
+[data-theme="weingarten"] .telemetry-lbl {
+  color: var(--wgt-text) !important;
+}
+
+/* KAMPÜS VİTRİNİ & MİNİ OYUN KONTEYNERİ */
+.wgt-campus-showcase {
+  max-width: 1200px;
+  margin: 0 auto 30px auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 2;
+  position: relative;
+}
+
+/* --- WEINGARTEN SIMULATOR MINI-GAME HUD --- */
+.wgt-game-container {
+  background: var(--wgt-panel);
+  border: 1.5px solid var(--wgt-gold);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8), 0 0 20px var(--wgt-gold-glow);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  backdrop-filter: blur(14px);
+}
+
+.wgt-game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--wgt-border);
+  padding-bottom: 12px;
+}
+
+.wgt-game-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wgt-game-badge {
+  background: var(--wgt-gold);
+  color: #000;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.wgt-game-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--wgt-gold);
+  letter-spacing: 0.5px;
+}
+
+/* Stat Barları */
+.wgt-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.wgt-stat-box {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--wgt-border-subtle);
+  padding: 8px 12px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wgt-stat-label {
+  font-size: 0.62rem;
+  color: var(--wgt-dim);
+  font-weight: 600;
+}
+
+.wgt-stat-val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Oyun Sahnesi & Diyalog Alanı */
+.wgt-scene-card {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px dashed var(--wgt-border);
+  border-radius: 6px;
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.wgt-character-avatar-slot {
+  width: 70px;
+  height: 70px;
+  border-radius: 6px;
+  border: 2px solid var(--wgt-gold);
+  background: #111;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.wgt-character-avatar-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wgt-dialogue-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wgt-dialogue-speaker {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--wgt-gold);
+}
+
+.wgt-dialogue-text {
+  font-size: 0.85rem;
+  color: #fff;
+  line-height: 1.4;
+}
+
+/* Aktivite Seçim Butonları Izgarası */
+.wgt-choices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.wgt-choice-btn {
+  background: rgba(229, 179, 56, 0.08);
+  border: 1px solid var(--wgt-border);
+  color: #f0e6d6;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+
+.wgt-choice-btn:hover {
+  background: var(--wgt-gold);
+  color: #000;
+  border-color: var(--wgt-gold);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px var(--wgt-gold-glow);
+}
+
+.wgt-choice-btn .choice-icon {
+  font-size: 1.2rem;
+}
+
+
+/* --- FLOATING CHARACTERS & SPEECH BUBBLES --- */
+.wgt-character-node {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  user-select: none;
+}
+
+.wgt-character-node:hover {
+  transform: scale(1.15) translateY(-4px);
+  z-index: 1050;
+}
+
+.wgt-character-head {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 2px solid var(--wgt-gold);
+  background: rgba(20, 17, 13, 0.9);
+  object-fit: cover;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 10px var(--wgt-gold-glow);
+}
+
+.wgt-character-name-tag {
+  background: rgba(14, 11, 8, 0.95);
+  border: 1px solid var(--wgt-border);
+  color: var(--wgt-gold);
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/* Konuşma Balonu (Speech Bubble) */
+.wgt-speech-bubble {
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.85);
+  background: rgba(255, 252, 245, 0.98);
+  color: #1a140e;
+  border: 1.5px solid var(--wgt-gold);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.wgt-speech-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #faf6ee transparent transparent transparent;
+}
+
+.wgt-speech-bubble.active {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* --- YÜRÜYEN KARAKTERLER & ANİMASYON DÜZENEĞİ --- */
+.wgt-character-node {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  transform-origin: bottom center;
+}
+
+/* Yürürken Adım Sekme (Wobble/Step) Animasyonu */
+.wgt-character-node.walking .wgt-character-head {
+  animation: charWalkBounce 0.35s infinite alternate ease-in-out;
+}
+
+.wgt-character-node.walking .wgt-char-shadow {
+  animation: charShadowPulse 0.35s infinite alternate ease-in-out;
+}
+
+/* Sağa ve Sola Dönme */
+.wgt-character-node.facing-left .wgt-character-head {
+  transform: scaleX(-1);
+}
+
+.wgt-character-head {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 2px solid var(--wgt-gold);
+  background: rgba(20, 17, 13, 0.95);
+  object-fit: cover;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7), 0 0 10px var(--wgt-gold-glow);
+  transition: transform 0.15s ease;
+}
+
+/* Karakterin Altındaki Zemin Gölgesi */
+.wgt-char-shadow {
+  width: 36px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  margin-top: -3px;
+  filter: blur(2px);
+  transition: all 0.2s ease;
+}
+
+.wgt-character-name-tag {
+  background: rgba(14, 11, 8, 0.95);
+  border: 1px solid var(--wgt-border);
+  color: var(--wgt-gold);
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+/* Konuşma Balonu */
+.wgt-speech-bubble {
+  position: absolute;
+  bottom: 115%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.85);
+  background: #fffdfa;
+  color: #1a140e;
+  border: 1.5px solid var(--wgt-gold);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.wgt-speech-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #fffdfa transparent transparent transparent;
+}
+
+.wgt-speech-bubble.active {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+@keyframes charWalkBounce {
+  0% {
+    transform: translateY(0px) rotate(-4deg) scaleY(1);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0deg) scaleY(1.05);
+  }
+  100% {
+    transform: translateY(0px) rotate(4deg) scaleY(0.96);
+  }
+}
+
+@keyframes charShadowPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(0.65);
+    opacity: 0.25;
+  }
+}
+
+/* --- 2D WEINGARTEN RPG FULLSCREEN ENGINE --- */
+.wgt-game-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 8, 6, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+.wgt-game-window {
+  width: 95vw;
+  max-width: 1200px;
+  height: 88vh;
+  max-height: 800px;
+  background: #0d0b09;
+  border: 2px solid var(--wgt-gold);
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px var(--wgt-gold-glow);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Oyun Üst HUD Barı */
+.wgt-game-top-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 18px;
+  background: rgba(20, 16, 12, 0.95);
+  border-bottom: 1px solid var(--wgt-border);
+  z-index: 10;
+}
+
+.wgt-game-hud-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--wgt-gold);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wgt-weather-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wgt-hud-select-btn {
+  background: rgba(229, 179, 56, 0.12);
+  border: 1px solid var(--wgt-border);
+  color: var(--wgt-text);
+  font-family: inherit;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wgt-hud-select-btn:hover,
+.wgt-hud-select-btn.active {
+  background: var(--wgt-gold);
+  color: #000;
+  border-color: var(--wgt-gold);
+}
+
+.wgt-game-close-btn {
+  background: transparent;
+  border: none;
+  color: #ff6b6b;
+  font-size: 1.4rem;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+/* Karakter Seçim Ekranı Overlay */
+.wgt-char-select-screen {
+  position: absolute;
+  inset: 50px 0 0 0;
+  background: rgba(14, 11, 8, 0.98);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 20;
+  gap: 18px;
+}
+
+.wgt-char-select-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  color: var(--wgt-gold);
+  text-align: center;
+}
+
+.wgt-char-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 860px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.wgt-char-card {
+  background: rgba(28, 22, 16, 0.9);
+  border: 1.5px solid var(--wgt-border);
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.wgt-char-card:hover {
+  transform: translateY(-4px) scale(1.05);
+  border-color: var(--wgt-gold);
+  background: rgba(229, 179, 56, 0.15);
+  box-shadow: 0 8px 20px var(--wgt-gold-glow);
+}
+
+.wgt-char-card.selected {
+  border-color: var(--wgt-gold);
+  box-shadow: 0 0 0 2px var(--wgt-gold), 0 0 20px var(--wgt-gold-glow);
+  background: rgba(229, 179, 56, 0.25);
+}
+
+.wgt-char-card-img {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 2px solid var(--wgt-gold);
+  object-fit: cover;
+  background: #000;
+}
+
+.wgt-char-card-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.wgt-char-card-role {
+  font-size: 0.58rem;
+  color: var(--wgt-gold);
+}
+
+.wgt-btn-start-game {
+  background: var(--wgt-gold);
+  color: #000;
+  border: none;
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 900;
+  padding: 10px 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 20px var(--wgt-gold-glow);
+  transition: all 0.2s ease;
+}
+
+.wgt-btn-start-game:hover {
+  background: #f7cb59;
+  transform: scale(1.05);
+}
+
+/* 2D Canvas Alanı */
+.wgt-canvas-viewport {
+  flex-grow: 1;
+  position: relative;
+  background: #181d19;
+  overflow: hidden;
+}
+
+#wgtRpgCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Oyun İçi Mini Alt Bilgi */
+.wgt-game-footer-hints {
+  position: absolute;
+  bottom: 12px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.68rem;
+  color: #f0e6d6;
+  background: rgba(14, 11, 8, 0.8);
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 1px solid var(--wgt-border-subtle);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.wgt-game-footer-hints strong {
+  color: var(--wgt-gold);
+}
+
+/* Açma Düğmesi (Showcase içinde) */
+.wgt-btn-launch-rpg {
+  background: linear-gradient(135deg, var(--wgt-gold) 0%, #b38617 100%);
+  color: #000;
+  font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  padding: 14px 24px;
+  border: 2px solid #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 6px 25px var(--wgt-gold-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.wgt-btn-launch-rpg:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 35px var(--wgt-gold-glow);
+  background: #f7cb59;
+}
+
+/* --- RETRO / UNDERTALE TARZI GÖVDELİ KARAKTER MOTORU --- */
+.wgt-character-node {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  transform-origin: bottom center;
+}
+
+/* Karakter Sprite Taşıyıcısı */
+.wgt-sprite-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.12s ease;
+}
+
+/* Yön Değişimi: Sola bakarken tüm gövdeyi ters çevir */
+.wgt-character-node.facing-left .wgt-sprite-wrapper {
+  transform: scaleX(-1);
+}
+
+/* Kafa Avatarı */
+.wgt-character-head {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--wgt-gold);
+  background: rgba(20, 17, 13, 0.95);
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+  z-index: 2;
+  position: relative;
+}
+
+/* Retro Karakter Gövdesi (Tişört / Ceket) */
+.wgt-char-body {
+  width: 24px;
+  height: 22px;
+  background: #2b261f;
+  border: 1.5px solid var(--wgt-border);
+  border-radius: 4px 4px 2px 2px;
+  margin-top: -4px;
+  position: relative;
+  z-index: 1;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Kollar */
+.wgt-char-arm {
+  position: absolute;
+  top: 2px;
+  width: 6px;
+  height: 16px;
+  background: var(--wgt-gold);
+  border-radius: 3px;
+  transform-origin: top center;
+}
+.wgt-char-arm.left { left: -7px; }
+.wgt-char-arm.right { right: -7px; }
+
+/* Bacaklar / Ayaklar */
+.wgt-char-legs {
+  display: flex;
+  gap: 4px;
+  margin-top: -1px;
+}
+
+.wgt-char-leg {
+  width: 6px;
+  height: 12px;
+  background: #111;
+  border-radius: 0 0 3px 3px;
+  border-bottom: 3px solid var(--wgt-gold);
+  transform-origin: top center;
+}
+
+/* Zemin Gölgesi */
+.wgt-char-shadow {
+  width: 38px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 50%;
+  margin-top: 2px;
+  filter: blur(2px);
+}
+
+/* YÜRÜME / KOŞMA ANİMASYONLARI (Undertale / Chibi Walk) */
+.wgt-character-node.walking .wgt-character-head {
+  animation: retroHeadBob 0.3s infinite alternate ease-in-out;
+}
+
+.wgt-character-node.walking .wgt-char-leg.left {
+  animation: retroLegWalkLeft 0.3s infinite alternate ease-in-out;
+}
+
+.wgt-character-node.walking .wgt-char-leg.right {
+  animation: retroLegWalkRight 0.3s infinite alternate ease-in-out;
+}
+
+.wgt-character-node.walking .wgt-char-arm.left {
+  animation: retroArmSwingLeft 0.3s infinite alternate ease-in-out;
+}
+
+.wgt-character-node.walking .wgt-char-arm.right {
+  animation: retroArmSwingRight 0.3s infinite alternate ease-in-out;
+}
+
+@keyframes retroHeadBob {
+  0% { transform: translateY(0) rotate(-3deg); }
+  100% { transform: translateY(-4px) rotate(3deg); }
+}
+
+@keyframes retroLegWalkLeft {
+  0% { transform: rotate(28deg); }
+  100% { transform: rotate(-28deg); }
+}
+
+@keyframes retroLegWalkRight {
+  0% { transform: rotate(-28deg); }
+  100% { transform: rotate(28deg); }
+}
+
+@keyframes retroArmSwingLeft {
+  0% { transform: rotate(-35deg); }
+  100% { transform: rotate(35deg); }
+}
+
+@keyframes retroArmSwingRight {
+  0% { transform: rotate(35deg); }
+  100% { transform: rotate(-35deg); }
+}
+
+/* --- ÜNSAL & BATU UYKU EFEKTİ (ZZZ FLOATING BUBBLES) --- */
+.wgt-sleep-bubble {
+  position: absolute;
+  top: -24px;
+  right: -14px;
+  font-family: 'Press Start 2P', monospace, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #74b9ff;
+  text-shadow: 0 0 6px rgba(116, 185, 255, 0.8), 1px 1px 2px #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.wgt-sleep-bubble.sleeping {
+  animation: floatSleepZzz 2.2s infinite ease-in-out;
+}
+
+@keyframes floatSleepZzz {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(6px, -10px) scale(0.9);
+  }
+  70% {
+    opacity: 0.9;
+    transform: translate(14px, -24px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(22px, -38px) scale(1.4);
+  }
+}
+
+/* İsim Etiketi */
+.wgt-character-name-tag {
+  background: rgba(14, 11, 8, 0.95);
+  border: 1px solid var(--wgt-border);
+  color: var(--wgt-gold);
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+/* Konuşma Balonu */
+.wgt-speech-bubble {
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.85);
+  background: #fffdfa;
+  color: #1a140e;
+  border: 1.5px solid var(--wgt-gold);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.wgt-speech-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #fffdfa transparent transparent transparent;
+}
+
+.wgt-speech-bubble.active {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* --- QUEST & INVENTORY HUD --- */
+.wgt-quest-tracker {
+  position: absolute;
+  top: 60px;
+  right: 18px;
+  background: rgba(14, 11, 8, 0.9);
+  border: 1px solid var(--wgt-border);
+  border-left: 3px solid var(--wgt-gold);
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 15;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  min-width: 220px;
+}
+
+.wgt-quest-header {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--wgt-gold);
+  border-bottom: 1px dashed var(--wgt-border-subtle);
+  padding-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.wgt-quest-item {
+  font-size: 0.68rem;
+  color: #dcd0bf;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wgt-quest-item.done {
+  color: #2ecc71;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Envanter Çantası HUD */
+.wgt-inventory-bar {
+  position: absolute;
+  top: 60px;
+  left: 18px;
+  background: rgba(14, 11, 8, 0.9);
+  border: 1px solid var(--wgt-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.wgt-inv-slot {
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px dashed var(--wgt-border);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.wgt-inv-slot.empty {
+  opacity: 0.3;
+}
+
+/* Hız Göstergesi (Araç Sürerken) */
+.wgt-speedo-hud {
+  position: absolute;
+  bottom: 50px;
+  right: 18px;
+  background: rgba(14, 11, 8, 0.9);
+  border: 1.5px solid var(--wgt-gold);
+  border-radius: 6px;
+  padding: 8px 14px;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  z-index: 15;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.wgt-speedo-hud.active {
+  display: flex;
+}
+
+.wgt-speedo-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.wgt-speedo-val span {
+  font-size: 0.7rem;
+  color: var(--wgt-gold);
 }

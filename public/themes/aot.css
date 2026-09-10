@@ -1,27 +1,586 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=MedievalSharp&family=Share+Tech+Mono&family=Rajdhani:wght@600;700;800&display=swap');
+
 :root[data-theme="aot"] {
-  --bg-image: linear-gradient(rgba(18, 24, 18, 0.85), rgba(10, 14, 10, 0.94)),
-              url('https://external-preview.redd.it/looking-for-an-awesome-aot-wallpaper-i-just-found-an-one-os-v0-e5rh7TFaXnOdyb_wpjZwbboo9U05BtCxm9s8RrBm69c.jpg?width=1080&crop=smart&auto=webp&s=b05a7ad66624e363fba2e8e7346c4af057fffac4');
-  --bg-color: #0e140f;
-  --panel-bg: #1b241c;
-  --text-main: #c4cebe;
-  --text-dim: #63705d;
-  --text-bright: #ffffff;
-  --border-color: #3b5e3f;
-  
-  --accent-action: #3b5e3f; /* Scout Cloak Green */
-  --accent-glow: rgba(59, 94, 63, 0.4);
-  --status-ok: #5fa868;
-  --status-err: #8b2500;
+  --aot-green: #2d5a36;
+  --aot-green-glow: rgba(45, 90, 54, 0.6);
+  --aot-gold: #c59b27;
+  --aot-parchment: #ede4d1;
+  --aot-dark-stone: #111712;
+  --aot-panel: rgba(20, 28, 22, 0.96);
+  --aot-border: #426348;
+  --aot-border-gold: #a88220;
+  --aot-leather: #5a3825;
+  --aot-titan-red: #a8241b;
+
+  --bg-image: radial-gradient(circle at center, rgba(20, 30, 22, 0.6) 0%, rgba(10, 14, 11, 0.95) 90%),
+              url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80');
 }
 
 [data-theme="aot"] body {
-  background: var(--bg-image) no-repeat center center fixed;
-  background-size: cover;
+  background: var(--bg-image) no-repeat center center fixed !important;
+  background-size: cover !important;
+  font-family: 'MedievalSharp', cursive, serif !important;
+  color: #e5ecd9;
+  overflow: hidden !important;
 }
 
-[data-theme="aot"] .service-block,
-[data-theme="aot"] .telemetry-bar {
-  background: rgba(27, 36, 28, 0.9) !important;
-  border: 2px solid #3b5e3f !important;
-  border-radius: 4px !important;
+/* Orijinal HUD bileşenlerini gizle */
+[data-theme="aot"] #servicesSection,
+[data-theme="aot"] .telemetry-bar,
+[data-theme="aot"] #guiUserPanel,
+[data-theme="aot"] #cliTerminalViewport,
+[data-theme="aot"] .fixed-background-grid-layer {
+  display: none !important;
+}
+
+/* --- FLARE GUN / SİNYAL FİŞEĞİ VİNYET KATMANI --- */
+.aot-flare-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2500;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.aot-flare-layer.green-flare {
+  background: radial-gradient(circle at center, rgba(50, 205, 50, 0.4) 0%, rgba(10, 30, 15, 0.9) 80%);
+  opacity: 1;
+}
+
+.aot-flare-layer.red-flare {
+  background: radial-gradient(circle at center, rgba(255, 30, 30, 0.45) 0%, rgba(40, 10, 10, 0.9) 80%);
+  opacity: 1;
+}
+
+/* --- 1. ÜST ASKERİ KARARGAH BARI --- */
+.aot-top-bar {
+  position: fixed;
+  top: 8px;
+  left: 14px;
+  right: 14px;
+  height: 40px;
+  background: rgba(17, 23, 18, 0.96);
+  border: 2px solid var(--aot-border-gold);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(197, 155, 39, 0.15);
+  pointer-events: auto;
+  z-index: 950;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+
+.aot-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.aot-crest-icon {
+  font-size: 1.2rem;
+  color: var(--aot-gold);
+}
+
+.aot-header-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: var(--aot-gold);
+  letter-spacing: 1.5px;
+}
+
+.aot-wall-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  color: #79d685;
+}
+
+.aot-wall-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4de961;
+  box-shadow: 0 0 8px #4de961;
+}
+
+.aot-top-chips {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aot-chip {
+  background: rgba(45, 90, 54, 0.25);
+  border: 1px solid var(--aot-border-gold);
+  padding: 2px 10px;
+  font-size: 0.68rem;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--aot-gold);
+}
+
+/* --- 2. ANA ASKERİ DÜZEN (GRID) --- */
+.aot-main-grid {
+  position: fixed;
+  top: 54px;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 14px;
+  pointer-events: auto;
+  z-index: 920;
+}
+
+/* Sol Sütun: Keşif Raporları + ODMG Telgraf Terminali */
+.aot-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+
+.aot-side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.aot-nav-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.62rem;
+  font-weight: 900;
+  color: var(--aot-gold);
+  letter-spacing: 1px;
+}
+
+.aot-nav-btn {
+  background: rgba(22, 30, 24, 0.94);
+  border: 1px solid var(--aot-border);
+  color: #c4cebe;
+  padding: 9px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 0.76rem;
+  font-weight: 700;
+  transition: all 0.15s ease;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+}
+
+.aot-nav-btn:hover,
+.aot-nav-btn.active {
+  background: var(--aot-green);
+  border-color: var(--aot-gold);
+  color: #ffffff;
+  box-shadow: 0 0 20px var(--aot-green-glow);
+  transform: translateX(4px);
+}
+
+.aot-nav-btn.active .aot-nav-idx { color: var(--aot-gold); }
+
+.aot-nav-idx {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  color: #7a9c80;
+}
+
+/* ODM Gear Askeri Telgraf / CLI */
+.aot-military-terminal {
+  flex-grow: 1;
+  background: rgba(13, 18, 14, 0.97);
+  border: 2px solid var(--aot-border);
+  border-top: 3px solid var(--aot-border-gold);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Share Tech Mono', monospace;
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+}
+
+.aot-term-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.6rem;
+  color: var(--aot-gold);
+  font-weight: 700;
+  border-bottom: 1px solid rgba(197, 155, 39, 0.3);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+.aot-gas-status {
+  color: #4de961;
+  font-size: 0.58rem;
+}
+
+.aot-term-logs {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  scrollbar-width: thin;
+  scrollbar-color: var(--aot-border) transparent;
+}
+
+.aot-log-row.dim { color: #5a755e; }
+.aot-log-row.ready { color: var(--aot-gold); font-weight: 700; }
+.aot-log-cmd { color: #ffffff; font-weight: 700; }
+
+.aot-term-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(45, 90, 54, 0.15);
+  border: 1px solid var(--aot-border);
+  border-left: 3px solid var(--aot-gold);
+  padding: 6px 10px;
+  margin-top: 6px;
+}
+
+.aot-prompt {
+  font-size: 0.72rem;
+  color: var(--aot-gold);
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.aot-term-input-row input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+}
+
+.aot-quick-chips {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  overflow-x: auto;
+}
+
+.aot-quick-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--aot-border);
+  color: #8fa892;
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.aot-quick-btn:hover {
+  border-color: var(--aot-gold);
+  color: var(--aot-gold);
+}
+
+/* Sağ Sütun: Üstte Karargah Servisleri, Altta Geniş Askeri Kart */
+.aot-right-column {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+}
+
+.aot-viewport-pane {
+  background: var(--aot-panel);
+  border: 2px solid var(--aot-border);
+  box-shadow: 0 0 35px rgba(0, 0, 0, 0.7);
+  padding: 18px 22px;
+  overflow-y: auto;
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+  scrollbar-width: thin;
+  scrollbar-color: var(--aot-border) transparent;
+}
+
+.aot-pane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--aot-border);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.aot-pane-header h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 1.15rem;
+  color: var(--aot-gold);
+  margin: 0;
+}
+
+.aot-pane-header span {
+  font-size: 0.7rem;
+  font-family: 'Share Tech Mono', monospace;
+  color: #79d685;
+  background: rgba(45, 90, 54, 0.25);
+  border: 1px solid var(--aot-border);
+  padding: 2px 8px;
+}
+
+/* Dinamik Servis Kartları */
+.aot-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.aot-service-card {
+  background: rgba(28, 38, 30, 0.95);
+  border: 1px solid var(--aot-border);
+  border-left: 4px solid var(--aot-gold);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  min-height: 140px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aot-service-card:hover {
+  border-color: var(--aot-gold);
+  background: rgba(38, 54, 42, 0.98);
+  box-shadow: 0 8px 25px var(--aot-green-glow);
+  transform: translateY(-3px);
+}
+
+.aot-card-tag {
+  font-family: 'Cinzel', serif;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--aot-gold);
+}
+
+.aot-card-icon {
+  font-size: 2rem;
+  margin: 6px 0;
+}
+
+.aot-card-info h4 {
+  font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
+  color: #ffffff;
+  margin: 0 0 4px 0;
+}
+
+.aot-card-info p {
+  font-family: 'MedievalSharp', serif;
+  font-size: 0.78rem;
+  color: #a2b49e;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.aot-card-action {
+  font-family: 'Cinzel', serif;
+  font-size: 0.68rem;
+  font-weight: 900;
+  color: var(--aot-gold);
+  margin-top: 10px;
+}
+
+/* --- SAĞ ALT: BOYDAN BOYA GENİŞ ASKERİ HESAP / KARARGAH BARI --- */
+.aot-wide-soldier-bar {
+  width: 100%;
+  background: rgba(18, 25, 20, 0.98);
+  border: 2px solid var(--aot-border);
+  border-top: 2px solid var(--aot-border-gold);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+  flex-shrink: 0;
+}
+
+.aot-soldier-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.aot-soldier-avatar-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.aot-soldier-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 2px solid var(--aot-border-gold);
+  border-radius: 4px;
+}
+
+.aot-soldier-status-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #111712;
+}
+
+.aot-soldier-status-dot.online { background: #4de961; box-shadow: 0 0 8px #4de961; }
+.aot-soldier-status-dot.offline { background: #a8241b; box-shadow: 0 0 8px #a8241b; }
+
+.aot-soldier-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.aot-soldier-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aot-soldier-name {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.aot-soldier-regiment {
+  font-family: 'Cinzel', serif;
+  font-size: 0.62rem;
+  padding: 2px 8px;
+  background: rgba(45, 90, 54, 0.35);
+  border: 1px solid var(--aot-border-gold);
+  color: var(--aot-gold);
+  font-weight: 900;
+}
+
+.aot-soldier-meta-sub {
+  font-size: 0.74rem;
+  color: #8da390;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.aot-soldier-meta-sub strong {
+  color: var(--aot-gold);
+}
+
+.aot-soldier-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aot-btn-action {
+  background: rgba(45, 90, 54, 0.25);
+  border: 1px solid var(--aot-border-gold);
+  color: #ffffff;
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
+}
+
+.aot-btn-action:hover {
+  background: var(--aot-green);
+  box-shadow: 0 0 15px var(--aot-green-glow);
+  transform: translateY(-1px);
+}
+
+.aot-btn-action.sasageyo {
+  border-color: #4de961;
+  color: #4de961;
+}
+
+.aot-btn-action.danger {
+  border-color: var(--aot-titan-red);
+  color: #ff7b72;
+}
+
+.aot-btn-action.danger:hover {
+  background: var(--aot-titan-red);
+  color: #ffffff;
+}
+
+/* --- EREN YEAGER QUOTE HUD & TITAN BARS --- */
+.aot-quote-banner {
+  background: rgba(18, 25, 20, 0.95);
+  border: 1px dashed var(--aot-border-gold);
+  border-left: 3px solid #ff3b30;
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.aot-quote-text {
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ede4d1;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.aot-quote-text span {
+  color: #ff3b30;
+  font-weight: 900;
+}
+
+.aot-quote-author {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--aot-gold);
+  white-space: nowrap;
+}
+
+/* Tatakae Scream Titreşimi */
+body.aot-tatakae-active {
+  animation: aotTitanRoarShake 0.1s infinite alternate;
+}
+
+@keyframes aotTitanRoarShake {
+  0% { transform: translate(-3px, 2px) scale(0.997); }
+  100% { transform: translate(3px, -2px) scale(1.003); }
+}
+
+/* Eren Roar Kırmızı Yıldırım Vinyeti */
+.aot-flare-layer.titan-lightning {
+  background: radial-gradient(circle at center, rgba(255, 60, 0, 0.5) 0%, rgba(50, 5, 0, 0.95) 85%);
+  opacity: 1;
 }

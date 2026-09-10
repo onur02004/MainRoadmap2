@@ -1,38 +1,535 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Indie+Flower&family=Special+Elite&family=Patrick+Hand&family=Kalam:wght@400;700&display=swap');
 
 :root[data-theme="life-is-strange"] {
-  --bg-image: linear-gradient(rgba(20, 28, 40, 0.75), rgba(45, 25, 30, 0.85)),
-              url('https://i.redd.it/nga7yl29ar041.jpg');
-  --bg-color: #141822;
-  --panel-bg: #f5eedc; /* Polaroid White */
-  --text-main: #332d29;
-  --text-dim: #7a7065;
-  --text-bright: #1c1815;
-  --border-color: #d1c4b2;
+  --lis-sepia: #f4eee1;
+  --lis-paper: #faf6ee;
+  --lis-ink: #2b1d16;
+  --lis-ink-faded: #634b3e;
+  --lis-pencil: #443228;
+  --lis-butterfly: #2ba5ff;
+  --lis-tape: rgba(255, 245, 200, 0.7);
+  --lis-amber: #ff9d42;
+  --lis-red: #d9534f;
   
-  --accent-action: #4fa3d1; /* Butterfly Blue */
-  --accent-glow: rgba(79, 163, 209, 0.4);
-  --status-ok: #5fa868;
-  --status-err: #d9534f;
+  --bg-image: radial-gradient(circle at center, rgba(60, 30, 15, 0.45) 0%, rgba(18, 8, 4, 0.88) 90%),
+              url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&auto=format&fit=crop&q=80');
 }
 
 [data-theme="life-is-strange"] body {
-  font-family: 'Share Tech Mono', monospace;
-  background: var(--bg-image) no-repeat center center fixed;
-  background-size: cover;
+  background: var(--bg-image) no-repeat center center fixed !important;
+  background-size: cover !important;
+  font-family: 'Special Elite', cursive, serif !important;
+  color: var(--lis-ink);
+  overflow: hidden !important;
 }
 
-[data-theme="life-is-strange"] .brand-text,
-[data-theme="life-is-strange"] .service-block h3 {
+/* Orijinal HUD bileşenlerini gizle */
+[data-theme="life-is-strange"] #servicesSection,
+[data-theme="life-is-strange"] .telemetry-bar,
+[data-theme="life-is-strange"] #guiUserPanel,
+[data-theme="life-is-strange"] #cliTerminalViewport,
+[data-theme="life-is-strange"] .fixed-background-grid-layer {
+  display: none !important;
+}
+
+/* --- VINTAGE GRAIN & GOLDEN HOUR LIGHT LEAK --- */
+.lis-ambient-light {
+  position: fixed;
+  top: -15%;
+  right: -10%;
+  width: 75vw;
+  height: 75vh;
+  background: radial-gradient(circle, rgba(255, 175, 75, 0.3) 0%, rgba(255, 130, 45, 0.1) 45%, transparent 75%);
+  pointer-events: none;
+  mix-blend-mode: screen;
+  z-index: 910;
+}
+
+/* --- TIME REWIND (ZAMANI GERİ SARMA) OVERLAY --- */
+.lis-rewind-vfx-layer {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(175, 100, 45, 0.45) 0%, rgba(35, 15, 5, 0.95) 100%);
+  backdrop-filter: sepia(90%) contrast(150%) blur(1px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 2500;
+}
+
+.lis-rewind-vfx-layer.active {
+  opacity: 1;
+}
+
+/* Oyunun İkonik Sarmal Saat Çizimi */
+.lis-rewind-spiral-clock {
+  width: 160px;
+  height: 160px;
+  border: 4px dashed #ffffff;
+  border-top-color: var(--lis-butterfly);
+  border-radius: 50%;
+  animation: lisRewindSpin 0.35s infinite linear reverse;
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.8), inset 0 0 25px rgba(43, 165, 255, 0.6);
+}
+
+@keyframes lisRewindSpin {
+  0% { transform: rotate(0deg) scale(0.95); }
+  50% { transform: rotate(180deg) scale(1.08); }
+  100% { transform: rotate(360deg) scale(0.95); }
+}
+
+.lis-rewind-status-box {
+  margin-top: 24px;
+  text-align: center;
+  color: #ffffff;
+  font-family: 'Special Elite', serif;
+}
+
+.lis-rewind-status-box strong {
+  font-size: 2rem;
+  letter-spacing: 3px;
+  text-shadow: 2px 2px 10px #000000;
+  display: block;
+}
+
+.lis-rewind-status-box span {
+  font-size: 0.85rem;
+  color: #ffd8b3;
+  letter-spacing: 1px;
+}
+
+body.lis-rewinding-shake {
+  animation: lisCameraShake 0.08s infinite alternate;
+}
+
+@keyframes lisCameraShake {
+  0% { transform: translate(-2px, 1px) scale(0.998); }
+  100% { transform: translate(2px, -1px) scale(1.002); }
+}
+
+/* --- KELEBEK ETKİSİ (CONSEQUENCES NOTIFICATION) --- */
+.lis-butterfly-hud {
+  position: fixed;
+  top: 18px;
+  left: 20px;
+  background: rgba(22, 14, 9, 0.95);
+  border: 2px solid var(--lis-butterfly);
+  padding: 8px 16px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 0 25px rgba(43, 165, 255, 0.6);
+  opacity: 0;
+  transform: translateY(-20px);
+  pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2000;
+}
+
+.lis-butterfly-hud.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lis-butterfly-svg {
+  font-size: 2rem;
+  filter: drop-shadow(0 0 6px var(--lis-butterfly));
+  animation: lisFlap 0.25s infinite alternate;
+}
+
+@keyframes lisFlap {
+  0% { transform: scaleX(1); }
+  100% { transform: scaleX(0.55) translateY(-2px); }
+}
+
+.lis-butterfly-meta strong {
+  font-family: 'Special Elite', serif;
+  font-size: 0.82rem;
+  color: var(--lis-butterfly);
+  display: block;
+  letter-spacing: 0.5px;
+}
+
+.lis-butterfly-meta small {
+  font-size: 0.65rem;
+  color: #e5f1fb;
+  font-family: 'Patrick Hand', cursive;
+}
+
+/* --- ANA JOURNAL DÜZENİ (MAX'S SKETCHBOOK LAYOUT) --- */
+.lis-journal-workspace {
+  position: fixed;
+  top: 60px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 20px;
+  z-index: 950;
+  pointer-events: auto;
+}
+
+/* Sol Defter Sayfası: Navigasyon, Kaset Çalar & Günlük Notu */
+.lis-left-page {
+  background: var(--lis-paper);
+  border: 2px solid #d4b59d;
+  box-shadow: 4px 8px 25px rgba(0, 0, 0, 0.5), inset 0 0 30px rgba(212, 181, 157, 0.25);
+  border-radius: 4px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+}
+
+/* Defter Bandı */
+.lis-tape-strip {
+  position: absolute;
+  top: -12px;
+  left: 35%;
+  width: 90px;
+  height: 24px;
+  background: var(--lis-tape);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  transform: rotate(-2deg);
+}
+
+.lis-journal-header {
+  border-bottom: 2px dashed #d4b59d;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.lis-journal-header h2 {
+  font-family: 'Caveat', cursive;
+  font-size: 1.8rem;
+  color: var(--lis-ink);
+  margin: 0;
+  line-height: 1;
+}
+
+.lis-journal-header span {
+  font-size: 0.68rem;
+  color: var(--lis-ink-faded);
+  letter-spacing: 0.5px;
+}
+
+/* Navigasyon Listesi */
+.lis-nav-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lis-nav-tab {
+  background: transparent;
+  border: 1px dashed #caa084;
+  color: var(--lis-ink);
+  padding: 8px 12px;
+  font-family: 'Special Elite', serif;
+  font-size: 0.76rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+}
+
+.lis-nav-tab:hover,
+.lis-nav-tab.active {
+  background: #fff;
+  border-color: var(--lis-butterfly);
+  color: #0b5891;
+  box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.15);
+  transform: translateX(4px);
+}
+
+.lis-nav-tab.active::after {
+  content: '✎';
+  font-size: 0.9rem;
+  color: var(--lis-butterfly);
+}
+
+/* Sol Alt: Walkman / Kaset Çalar */
+.lis-walkman-box {
+  background: #251610;
+  border: 2px solid #caa084;
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #f7ebe1;
+  margin-top: auto;
+}
+
+.lis-cassette-gears {
+  display: flex;
+  gap: 6px;
+  background: #120905;
+  padding: 4px 6px;
+  border-radius: 3px;
+}
+
+.lis-gear {
+  width: 14px;
+  height: 14px;
+  border: 2px dashed #fff;
+  border-radius: 50%;
+}
+
+.lis-gear.spin {
+  animation: lisReelSpin 2.5s infinite linear;
+}
+
+@keyframes lisReelSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.lis-track-info {
+  flex-grow: 1;
+}
+
+.lis-track-info strong {
+  font-size: 0.65rem;
+  color: #ffd8b3;
+  display: block;
+}
+
+.lis-track-info small {
+  font-size: 0.58rem;
+  color: #a48270;
+  font-family: 'Patrick Hand', cursive;
+}
+
+.lis-play-btn {
+  background: #caa084;
+  border: none;
+  color: #251610;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+/* Sağ Büyük Defter Sayfası: Dinamik Servisler + Altta Boydan Boya Polaroid Kullanıcı Kartı */
+.lis-right-page {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+
+.lis-content-canvas {
+  background: var(--lis-paper);
+  border: 2px solid #d4b59d;
+  box-shadow: 4px 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(212, 181, 157, 0.25);
+  border-radius: 4px;
+  padding: 20px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #caa084 transparent;
+  position: relative;
+}
+
+.lis-canvas-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px dashed #d4b59d;
+  padding-bottom: 8px;
+  margin-bottom: 18px;
+}
+
+.lis-canvas-title-row h3 {
+  font-family: 'Caveat', cursive;
+  font-size: 2rem;
+  color: var(--lis-ink);
+  margin: 0;
+}
+
+.lis-canvas-title-row span {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.9rem;
+  color: #0b5891;
+  background: rgba(43, 165, 255, 0.12);
+  padding: 2px 8px;
+  border: 1px dashed var(--lis-butterfly);
+  border-radius: 3px;
+}
+
+/* Dinamik Polaroid Servis Kartları */
+.lis-polaroid-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.lis-service-polaroid {
+  background: #ffffff;
+  border: 1px solid #dcd1c4;
+  padding: 10px 10px 18px 10px;
+  box-shadow: 2px 6px 16px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.lis-service-polaroid:hover {
+  transform: translateY(-4px) rotate(1deg);
+  box-shadow: 4px 12px 25px rgba(0, 0, 0, 0.25);
+  border-color: var(--lis-butterfly);
+}
+
+.lis-tape-corner {
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  width: 50px;
+  height: 16px;
+  background: var(--lis-tape);
+  transform: rotate(4deg);
+}
+
+.lis-polaroid-photo {
+  height: 90px;
+  background: #efe7da;
+  border: 1px solid #e0d5c5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+}
+
+.lis-polaroid-caption h4 {
   font-family: 'Caveat', cursive;
   font-size: 1.4rem;
-  color: #1c1815 !important;
+  color: var(--lis-ink);
+  margin: 0 0 4px 0;
+  line-height: 1.1;
 }
 
-[data-theme="life-is-strange"] .service-block,
-[data-theme="life-is-strange"] .telemetry-bar {
-  background: #fdfbf7 !important;
-  border: 1px solid #dcd3c4 !important;
-  border-radius: 2px !important;
-  box-shadow: 3px 4px 15px rgba(0, 0, 0, 0.35) !important;
+.lis-polaroid-caption p {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.85rem;
+  color: var(--lis-ink-faded);
+  line-height: 1.25;
+  margin: 0;
+}
+
+.lis-polaroid-tag {
+  font-family: 'Special Elite', serif;
+  font-size: 0.62rem;
+  color: #0b5891;
+  margin-top: 8px;
+  display: inline-block;
+  font-weight: 700;
+}
+
+/* --- SAĞ ALT: BOYDAN BOYA GENİŞ POLAROID HESAP KARTI --- */
+.lis-wide-account-panel {
+  background: var(--lis-paper);
+  border: 2px solid #d4b59d;
+  box-shadow: 4px 6px 20px rgba(0, 0, 0, 0.4), inset 0 0 30px rgba(212, 181, 157, 0.2);
+  border-radius: 4px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.lis-acc-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Polaroid Tarzı Profil Fotoğrafı */
+.lis-polaroid-avatar-frame {
+  background: #ffffff;
+  padding: 4px 4px 10px 4px;
+  border: 1px solid #d4b59d;
+  box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
+  transform: rotate(-2deg);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.lis-polaroid-avatar-frame img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+}
+
+.lis-acc-meta h4 {
+  font-family: 'Caveat', cursive;
+  font-size: 1.5rem;
+  color: var(--lis-ink);
+  margin: 0;
+  line-height: 1;
+}
+
+.lis-acc-sub {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.85rem;
+  color: var(--lis-ink-faded);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lis-acc-sub strong {
+  color: #0b5891;
+}
+
+.lis-acc-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lis-action-btn {
+  background: #ffffff;
+  border: 1.5px solid #caa084;
+  color: var(--lis-ink);
+  font-family: 'Special Elite', serif;
+  font-size: 0.74rem;
+  padding: 6px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+  transition: all 0.15s ease;
+}
+
+.lis-action-btn:hover {
+  background: #faf6ee;
+  border-color: var(--lis-butterfly);
+  color: #0b5891;
+  transform: translateY(-1px);
+}
+
+.lis-action-btn.rewind-trigger {
+  border-color: var(--lis-butterfly);
+  color: #0b5891;
+}
+
+.lis-action-btn.danger:hover {
+  border-color: var(--lis-red);
+  color: var(--lis-red);
 }

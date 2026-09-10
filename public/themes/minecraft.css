@@ -8,18 +8,8 @@
   --text-bright: #ffffff;
   --border-color: #4a3e31;
   --border-subtle: #362c22;
-  
   --accent-action: #5b8731;
   --accent-glow: rgba(91, 135, 49, 0.4);
-  --status-ok: #5b8731;
-  --status-err: #a82e2e;
-
-  --grid-line: rgba(74, 62, 49, 0.4);
-  --box-bg-start: #3b3127;
-  --box-bg-end: #1f1913;
-  --box-border: #000000;
-  --box-glow: rgba(0, 0, 0, 0.6);
-  --box-glow-hover: rgba(91, 135, 49, 0.4);
   --cell-size: 125px;
 }
 
@@ -28,167 +18,523 @@
   font-size: 10px !important;
   line-height: 1.8;
   image-rendering: pixelated;
+  user-select: none;
 }
 
-/* Izgara Katmanı Tıklanabilirliği */
+/* Izgara Katmanı */
 [data-theme="minecraft"] .fixed-background-grid-layer,
-[data-theme="minecraft"] .render-corner-grid {
+[data-theme="minecraft"] #bgGridLayer {
   pointer-events: auto !important;
-  opacity: 1 !important;
+  z-index: 10 !important;
 }
 
-/* --- PNG DOKULU VOXEL MADEN BLOKLARI --- */
+[data-theme="minecraft"] .render-corner-grid,
+[data-theme="minecraft"] #cornerGrid {
+  pointer-events: auto !important;
+}
+
+/* Screen Shake */
+.mc-screen-shake {
+  animation: mcShake 0.05s ease-in-out;
+}
+@keyframes mcShake {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(-2px, 2px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* --- VOXEL BLOKLARI --- */
 .mc-voxel-block {
-  position: relative;
+  position: relative !important;
   border: 4px solid #000000 !important;
   cursor: grab !important;
+  pointer-events: auto !important;
   user-select: none;
-  overflow: hidden;
+  overflow: visible !important;
   border-radius: 0px !important;
-  box-shadow: inset 3px 3px 0px rgba(255, 255, 255, 0.2), inset -3px -3px 0px rgba(0, 0, 0, 0.5) !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  image-rendering: pixelated !important;
+  box-shadow: inset 3px 3px 0px rgba(255, 255, 255, 0.15), inset -3px -3px 0px rgba(0, 0, 0, 0.6) !important;
   display: flex !important;
-  align-items: flex-end !important;
-  justify-content: flex-start !important;
-  padding: 6px;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #2c251e;
+  z-index: 15 !important;
 }
 
-/* themes/ klasöründeki PNG görselleri (Fallback renkli) */
-.mc-oak {
-  background-color: #85542b !important;
-  background-image: url('./modules/oak.png') !important;
-}
-.mc-stone {
-  background-color: #686868 !important;
-  background-image: url('./modules/stone.png') !important;
-}
-.mc-coal {
-  background-color: #333333 !important;
-  background-image: url('./modules/coal.png') !important;
-}
-.mc-iron {
-  background-color: #888888 !important;
-  background-image: url('./modules/iron.png') !important;
-}
-.mc-diamond {
-  background-color: #4a9999 !important;
-  background-image: url('./modules/diamond.png') !important;
-  box-shadow: inset 0 0 16px #00ffff !important;
+.mc-oak     { background-color: #4a3018 !important; }
+.mc-stone   { background-color: #484848 !important; }
+.mc-coal    { background-color: #1c1c1c !important; }
+.mc-iron    { background-color: #5c5954 !important; }
+.mc-diamond { background-color: #184444 !important; box-shadow: inset 0 0 16px rgba(0, 255, 255, 0.35) !important; }
+
+.mc-item-icon-wrapper {
+  position: absolute;
+  inset: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 2;
+  pointer-events: none;
 }
 
-/* Maden Kazılırken Sallantı (Hit Vibration) */
+.mc-block-item-icon {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.7));
+  transition: transform 0.15s ease;
+}
+
+.mc-voxel-block:hover .mc-block-item-icon {
+  transform: scale(1.15);
+}
+
+.mc-block-label {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  font-size: 0.52rem;
+  color: #ffffff;
+  text-shadow: 2px 2px 0px #000000;
+  pointer-events: none;
+  z-index: 4;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2px 5px;
+}
+
 .mc-voxel-block.mc-mining-active {
   cursor: grabbing !important;
-  animation: mcBlockVibrate 0.1s infinite alternate;
+  animation: mcBlockVibrate 0.08s infinite alternate;
 }
 
 @keyframes mcBlockVibrate {
   0% { transform: scale(0.96) translate(0px, 0px); }
-  50% { transform: scale(0.96) translate(-1.5px, 1.5px); }
-  100% { transform: scale(0.96) translate(1.5px, -1px); }
+  50% { transform: scale(0.96) translate(-2px, 2px); }
+  100% { transform: scale(0.96) translate(2px, -1px); }
 }
 
-.mc-block-label {
-  font-size: 0.5rem;
-  color: #ffffff;
-  text-shadow: 2px 2px 0px #000000;
-  pointer-events: none;
-  z-index: 2;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 1px 4px;
-}
-
-/* Çatlak Katmanı (Mine Cracking Overlay) */
 .mc-crack-layer {
   position: absolute;
   inset: 0;
   background-image: 
-    repeating-linear-gradient(45deg, #000000, #000000 4px, transparent 4px, transparent 8px),
-    repeating-linear-gradient(-45deg, #000000, #000000 4px, transparent 4px, transparent 8px);
+    repeating-linear-gradient(45deg, rgba(0,0,0,0.85), rgba(0,0,0,0.85) 4px, transparent 4px, transparent 8px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,0.85), rgba(0,0,0,0.85) 4px, transparent 4px, transparent 8px);
   opacity: 0;
   pointer-events: none;
-  z-index: 1;
+  z-index: 3;
 }
 
 .mc-voxel-block.mc-broken-state {
-  opacity: 0.1;
-  transform: scale(0.6) rotate(15deg);
-  pointer-events: none;
+  opacity: 0.05;
+  transform: scale(0.4) rotate(25deg);
+  pointer-events: auto !important; /* Sağ tıkla tekrar blok koyulabilmesi için */
   transition: all 0.2s ease-out;
 }
 
-/* --- CRAFTING BUTONU & HOTBAR --- */
-.mc-crafting-btn {
+/* --- ORİJİNAL 3D STEVE MESH --- */
+.mc-steve-3d-scene {
   position: fixed;
-  top: 90px;
-  right: 24px;
-  background: #737373;
-  border: 4px solid #000000;
-  border-top-color: #b8b8b8;
-  border-left-color: #b8b8b8;
-  border-right-color: #383838;
-  border-bottom-color: #383838;
-  color: #ffffff;
-  padding: 10px 16px;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 0.65rem;
-  cursor: pointer;
-  z-index: 120;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 3px 3px 0px #000000;
+  z-index: 9999;
+  width: 60px;
+  height: 110px;
+  perspective: 700px;
+  pointer-events: none;
+  transition: left 0.55s cubic-bezier(0.25, 0.1, 0.25, 1), top 0.55s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.4s ease;
 }
 
-.mc-crafting-btn:hover {
-  background: #8b8b8b;
-  transform: translateY(-2px);
+.mc-steve-3d-scene.idle-camp {
+  top: 140px;
+  right: calc(var(--cell-size) * 3.5 + 40px);
+  transform: scale(1.1) rotateY(-25deg) rotateX(4deg);
+}
+
+.mc-steve-3d-scene.walking-mode {
+  transform: scale(1.0) rotateY(-35deg) rotateX(6deg);
+  animation: steveBobbingStep 0.4s infinite alternate ease-in-out; /* Adımlama & Zıplama Fiziği */
+}
+
+@keyframes steveBobbingStep {
+  0% { transform: scale(1.0) rotateY(-35deg) rotateX(6deg) translateY(0px); }
+  50% { transform: scale(1.0) rotateY(-35deg) rotateX(6deg) translateY(-8px); }
+  100% { transform: scale(1.0) rotateY(-35deg) rotateX(6deg) translateY(0px); }
+}
+
+.mc-steve-3d-scene.mining-mode {
+  transform: scale(0.95) rotateY(-45deg) rotateX(10deg);
+}
+
+.steve-rig-3d {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.cube {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+
+.cube .face {
+  position: absolute;
+  border: 1px solid #111111;
+  box-sizing: border-box;
+  image-rendering: pixelated;
+}
+
+.face-skin { background: #b87b50; }
+.face-hair { background: #3b2210; }
+.face-hair-side { background: linear-gradient(to bottom, #3b2210 45%, #b87b50 45%); }
+.face-shirt { background: #009393; }
+.face-arm { background: linear-gradient(to bottom, #009393 30%, #b87b50 30%); }
+.face-pants { background: #1c2b66; }
+.face-shoes { background: #404040; }
+
+/* Kafa */
+.steve-head-cube {
+  top: 0;
+  left: 18px;
+  width: 24px;
+  height: 24px;
+}
+.steve-head-cube .face { width: 24px; height: 24px; }
+.steve-head-cube .face.front  { transform: translateZ(12px); }
+.steve-head-cube .face.back   { transform: rotateY(180deg) translateZ(12px); }
+.steve-head-cube .face.left   { transform: rotateY(-90deg) translateZ(12px); }
+.steve-head-cube .face.right  { transform: rotateY(90deg) translateZ(12px); }
+.steve-head-cube .face.top    { transform: rotateX(90deg) translateZ(12px); }
+.steve-head-cube .face.bottom { transform: rotateX(-90deg) translateZ(12px); }
+
+.steve-hair-fringe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 6px;
+  background: #3b2210;
+  box-shadow: 0 2px 0 #3b2210;
+}
+.steve-eyes-row {
+  position: absolute;
+  top: 9px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 3px;
+}
+.steve-eye {
+  width: 5px;
+  height: 3px;
+  background: #ffffff;
+  position: relative;
+}
+.steve-eye::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 3px;
+  height: 3px;
+  background: #2b45a2;
+}
+.steve-nose {
+  position: absolute;
+  top: 13px;
+  left: 10px;
+  width: 4px;
+  height: 3px;
+  background: #9c633a;
+}
+.steve-beard-mouth {
+  position: absolute;
+  bottom: 2px;
+  left: 6px;
+  width: 12px;
+  height: 5px;
+  background: #543319;
+  border-top: 1px solid #7c4826;
+}
+
+/* Gövde */
+.steve-torso-cube {
+  top: 24px;
+  left: 18px;
+  width: 24px;
+  height: 36px;
+}
+.steve-torso-cube .face.front  { width: 24px; height: 36px; transform: translateZ(6px); }
+.steve-torso-cube .face.back   { width: 24px; height: 36px; transform: rotateY(180deg) translateZ(6px); }
+.steve-torso-cube .face.left   { width: 12px; height: 36px; transform: rotateY(-90deg) translateZ(6px); left: 6px; }
+.steve-torso-cube .face.right  { width: 12px; height: 36px; transform: rotateY(90deg) translateZ(18px); left: 6px; }
+.steve-torso-cube .face.top    { width: 24px; height: 12px; transform: rotateX(90deg) translateZ(6px); }
+.steve-torso-cube .face.bottom { width: 24px; height: 12px; transform: rotateX(-90deg) translateZ(30px); }
+
+.steve-neck-v {
+  position: absolute;
+  top: 0;
+  left: 8px;
+  width: 8px;
+  height: 4px;
+  background: #b87b50;
+}
+
+/* Kollar */
+.steve-arm-anchor {
+  position: absolute;
+  top: 24px;
+  width: 12px;
+  height: 36px;
+  transform-style: preserve-3d;
+  transform-origin: top center;
+}
+.steve-arm-anchor.arm-l { left: 6px; }
+.steve-arm-anchor.arm-r { left: 42px; }
+
+.steve-arm-cube { width: 12px; height: 36px; }
+.steve-arm-cube .face.front  { width: 12px; height: 36px; transform: translateZ(6px); }
+.steve-arm-cube .face.back   { width: 12px; height: 36px; transform: rotateY(180deg) translateZ(6px); }
+.steve-arm-cube .face.left   { width: 12px; height: 36px; transform: rotateY(-90deg) translateZ(6px); }
+.steve-arm-cube .face.right  { width: 12px; height: 36px; transform: rotateY(90deg) translateZ(6px); }
+.steve-arm-cube .face.top    { width: 12px; height: 12px; transform: rotateX(90deg) translateZ(6px); }
+.steve-arm-cube .face.bottom { width: 12px; height: 12px; transform: rotateX(-90deg) translateZ(30px); }
+
+.steve-held-pickaxe {
+  position: absolute;
+  bottom: -10px;
+  right: -16px;
+  font-size: 1.6rem;
+  transform: rotate(35deg) translateZ(12px);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+}
+
+/* Bacaklar */
+.steve-leg-anchor {
+  position: absolute;
+  top: 60px;
+  width: 12px;
+  height: 36px;
+  transform-style: preserve-3d;
+  transform-origin: top center;
+}
+.steve-leg-anchor.leg-l { left: 18px; }
+.steve-leg-anchor.leg-r { left: 30px; }
+
+.steve-leg-cube { width: 12px; height: 36px; }
+.steve-leg-cube .face.front  { width: 12px; height: 36px; transform: translateZ(6px); }
+.steve-leg-cube .face.back   { width: 12px; height: 36px; transform: rotateY(180deg) translateZ(6px); }
+.steve-leg-cube .face.left   { width: 12px; height: 36px; transform: rotateY(-90deg) translateZ(6px); }
+.steve-leg-cube .face.right  { width: 12px; height: 36px; transform: rotateY(90deg) translateZ(6px); }
+.steve-leg-cube .face.top    { width: 12px; height: 12px; transform: rotateX(90deg) translateZ(6px); }
+.steve-leg-cube .face.bottom { width: 12px; height: 12px; transform: rotateX(-90deg) translateZ(30px); }
+
+.steve-boot-cuff {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: #404040;
+}
+
+/* Animasyonlar */
+.mc-steve-3d-scene.idle-camp .steve-head-cube { animation: steveHeadBob 3s infinite ease-in-out; }
+.mc-steve-3d-scene.idle-camp .arm-l { animation: steveArmBreathe 3s infinite ease-in-out; }
+.mc-steve-3d-scene.idle-camp .arm-r { animation: steveArmBreathe 3s infinite ease-in-out reverse; }
+
+@keyframes steveHeadBob { 0%, 100% { transform: rotateY(0deg); } 50% { transform: rotateY(-8deg); } }
+@keyframes steveArmBreathe { 0%, 100% { transform: rotateX(0deg); } 50% { transform: rotateX(6deg); } }
+
+.mc-steve-3d-scene.walking-mode .arm-l { animation: steveWalkArm 0.4s infinite alternate ease-in-out; }
+.mc-steve-3d-scene.walking-mode .arm-r { animation: steveWalkArm 0.4s infinite alternate-reverse ease-in-out; }
+.mc-steve-3d-scene.walking-mode .leg-l { animation: steveWalkLeg 0.4s infinite alternate ease-in-out; }
+.mc-steve-3d-scene.walking-mode .leg-r { animation: steveWalkLeg 0.4s infinite alternate-reverse ease-in-out; }
+
+@keyframes steveWalkArm { 0% { transform: rotateX(-30deg); } 100% { transform: rotateX(30deg); } }
+@keyframes steveWalkLeg { 0% { transform: rotateX(32deg); } 100% { transform: rotateX(-32deg); } }
+
+.mc-steve-3d-scene.mining-mode .arm-r { animation: steveMineSwing 0.12s infinite alternate; }
+@keyframes steveMineSwing { 0% { transform: rotateX(-20deg) rotateY(10deg); } 100% { transform: rotateX(80deg) rotateY(15deg); } }
+
+/* --- 3D DÖNEN YERE DÜŞEN İTEM ENTİTY'Sİ --- */
+.mc-3d-dropped-item {
+  position: fixed;
+  width: 32px;
+  height: 32px;
+  z-index: 9995;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: mcItemFloatSpin 1.6s infinite ease-in-out;
+  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.mc-spin-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+}
+
+@keyframes mcItemFloatSpin {
+  0% { transform: translate(-50%, -50%) translateY(0px) rotateY(0deg); }
+  50% { transform: translate(-50%, -50%) translateY(-12px) rotateY(180deg); }
+  100% { transform: translate(-50%, -50%) translateY(0px) rotateY(360deg); }
+}
+
+/* Partikül Patlaması */
+.mc-pixel-particle {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border: 1px solid #000;
+  pointer-events: none;
+  z-index: 9998;
+  animation: mcParticleBurst 0.55s ease-out forwards;
+}
+
+@keyframes mcParticleBurst {
+  0% { transform: translate(0, 0) scale(1.2); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+
+/* --- MINECRAFT ALT HUD & DURABILITY BAR --- */
+.mc-bottom-hud {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 120;
+}
+
+.mc-status-bars-row {
+  display: flex;
+  justify-content: space-between;
+  width: 440px;
+  font-size: 0.8rem;
+  letter-spacing: -2px;
+}
+
+.mc-exp-bar-container {
+  position: relative;
+  width: 440px;
+  height: 10px;
+  background: #000000;
+  border: 2px solid #373737;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mc-exp-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: #80ff20;
+  box-shadow: 0 0 6px #80ff20;
+}
+
+.mc-exp-level-text {
+  position: relative;
+  font-size: 0.65rem;
+  color: #80ff20;
+  text-shadow: 1px 1px 0px #000000;
+  font-weight: bold;
 }
 
 .mc-inventory-hotbar {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
   display: flex;
-  gap: 5px;
-  background: #2b241e;
+  gap: 2px;
+  background: #8f8f8f;
   border: 4px solid #000000;
-  padding: 6px;
-  z-index: 120;
+  border-top-color: #dbdbdb;
+  border-left-color: #dbdbdb;
+  border-right-color: #5b5b5b;
+  border-bottom-color: #5b5b5b;
+  padding: 3px;
 }
 
 .mc-hotbar-slot {
   position: relative;
-  width: 46px;
-  height: 46px;
-  background: #3b3127;
-  border: 3px solid #1a1510;
-  border-right-color: #574839;
-  border-bottom-color: #574839;
+  width: 44px;
+  height: 44px;
+  background: #8b8b8b;
+  border: 2px solid #373737;
+  border-right-color: #ffffff;
+  border-bottom-color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
+}
+
+.mc-hotbar-slot.active {
+  border: 3px solid #ffffff !important;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.6);
+  transform: scale(1.05);
+}
+
+/* Durability Bar */
+.mc-durability-bar {
+  position: absolute;
+  bottom: 2px;
+  left: 4px;
+  right: 4px;
+  height: 3px;
+  background: #000000;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.mc-durability-fill {
+  height: 100%;
+  width: 100%;
+  background: #55ff55;
+  transition: width 0.15s ease, background-color 0.15s ease;
+}
+
+.mc-hotbar-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
 }
 
 .mc-slot-badge {
   position: absolute;
   bottom: 2px;
-  right: 4px;
-  font-size: 0.55rem;
+  right: 3px;
+  font-size: 0.52rem;
   color: #ffffff;
   text-shadow: 1px 1px 0px #000000;
+}
+
+/* Crafting Butonu & Modal */
+.mc-crafting-btn {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  background: #737373;
+  border: 4px solid #000;
+  border-top-color: #b8b8b8;
+  border-left-color: #b8b8b8;
+  color: #fff;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 0.62rem;
+  cursor: pointer;
+  z-index: 120;
 }
 
 .mc-craft-popup {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(4px);
-  z-index: 1000;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -196,86 +542,43 @@
 
 .mc-craft-window {
   width: 90%;
-  max-width: 440px;
+  max-width: 500px;
   background: #c6c6c6;
-  border: 4px solid #000000;
-  border-top-color: #ffffff;
-  border-left-color: #ffffff;
-  border-right-color: #555555;
-  border-bottom-color: #555555;
+  border: 4px solid #000;
+  border-top-color: #fff;
+  border-left-color: #fff;
   padding: 16px;
-  color: #383838;
+  color: #222;
 }
 
 .mc-craft-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   font-size: 0.72rem;
 }
 
 .mc-modal-x {
-  background: transparent;
+  background: none;
   border: none;
   font-size: 1.4rem;
   cursor: pointer;
 }
 
-.mc-craft-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.mc-grid-3x3 {
-  display: grid;
-  grid-template-columns: repeat(3, 42px);
-  gap: 3px;
-}
-
-.mc-cell-slot {
-  width: 42px;
-  height: 42px;
-  background: #8b8b8b;
-  border: 2px solid #373737;
-  border-right-color: #ffffff;
-  border-bottom-color: #ffffff;
-}
-
-.mc-result-slot {
-  width: 54px;
-  height: 54px;
-  background: #8b8b8b;
-  border: 3px solid #373737;
-  border-right-color: #ffffff;
-  border-bottom-color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-}
-
-.mc-craft-arrow {
-  font-size: 1.4rem;
-}
-
 .mc-recipe-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .mc-recipe-action {
   background: #8b8b8b;
-  border: 2px solid #000000;
-  border-top-color: #ffffff;
-  border-left-color: #ffffff;
-  color: #ffffff;
-  padding: 8px 10px;
-  font-family: 'Press Start 2P', monospace;
+  border: 2px solid #000;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  color: #fff;
+  padding: 10px;
+  font-family: inherit;
   font-size: 0.58rem;
   cursor: pointer;
   text-align: left;
@@ -287,12 +590,11 @@
 
 .mc-float-text {
   position: fixed;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: #55ff55;
   text-shadow: 2px 2px 0px #000000;
   pointer-events: none;
-  z-index: 1001;
+  z-index: 10001;
   animation: mcFloatAnim 1s ease-out forwards;
 }
 

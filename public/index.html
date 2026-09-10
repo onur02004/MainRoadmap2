@@ -288,6 +288,15 @@
 
     <div class="right-hero-spacer"></div>
 
+    <!-- AŞAĞI KAYDIRMA YÖNLENDİRME GÖSTERGESİ -->
+    <div class="scroll-down-hint" id="scrollDownHint" style="display: none;">
+      <span class="scroll-hint-text">EXPLORE TELEMETRY &amp; SERVICES</span>
+      <div class="scroll-arrow-anim">
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+
   </main>
 
   <!-- SUPABASE TELEMETRY & SERVICES SECTION -->
@@ -342,43 +351,8 @@
       <p class="section-desc">Managed database tables, node managers and compute workers.</p>
     </div>
 
-    <div class="service-grid" id="coreServices">
-      <div class="service-block" onclick="window.location.href='/remote-control'">
-        <div class="block-header">
-          <span class="tag">DEVICE_MGR</span>
-          <span class="dot online"></span>
-        </div>
-        <h3>Remote Control</h3>
-        <p>Telemetry stream, ESP32 and Matrix panel hardware configuration.</p>
-      </div>
-
-      <div class="service-block" onclick="window.location.href='/song-share'">
-        <div class="block-header">
-          <span class="tag">STREAM_HUB</span>
-          <span class="dot online"></span>
-        </div>
-        <h3>Song Share</h3>
-        <p>Synchronized audio stream socket and group queue management.</p>
-      </div>
-
-      <div class="service-block" onclick="window.location.href='/file-storage'">
-        <div class="block-header">
-          <span class="tag">STORAGE_BLOB</span>
-          <span class="dot online"></span>
-        </div>
-        <h3>File Storage</h3>
-        <p>Binary dumps, local database archives, and asset sync.</p>
-      </div>
-
-      <div class="service-block locked">
-        <div class="block-header">
-          <span class="tag">PIPELINE</span>
-          <span class="dot offline"></span>
-        </div>
-        <h3>Automation Lab</h3>
-        <p>FFmpeg processing queues and scraping routines [STAGING].</p>
-      </div>
-    </div>
+    <!-- JavaScript ile Dinamik Render Edilen Alan -->
+    <div class="service-grid" id="coreServices"></div>
 
     <div class="section-header privileged-header">
       <span class="section-label">&gt; PRIVILEGED // SCOPED_MODULES</span>

@@ -540,3 +540,461 @@
 body.cp-overclocked {
   filter: hue-rotate(180deg) contrast(140%);
 }
+
+/* --- ALT ORTA SABİT HESAP DOCK'U (USER HUD) --- */
+.cp-bottom-user-dock {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(14, 3, 6, 0.94);
+  border: 1px solid #ff003c;
+  padding: 6px 16px;
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.35), inset 0 0 10px rgba(255, 0, 60, 0.15);
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  z-index: 960;
+  pointer-events: auto;
+  backdrop-filter: blur(8px);
+}
+
+.cp-dock-avatar-wrap {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.cp-dock-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 1px solid #ff003c;
+  border-radius: 2px;
+}
+
+.cp-dock-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid #080204;
+}
+
+.cp-dock-dot.online { background: #00ffcc; box-shadow: 0 0 6px #00ffcc; }
+.cp-dock-dot.offline { background: #ff003c; box-shadow: 0 0 6px #ff003c; }
+
+.cp-dock-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.cp-dock-username {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #ffee00;
+  line-height: 1.1;
+}
+
+.cp-dock-sub {
+  font-size: 0.65rem;
+  color: #d1a0ac;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cp-dock-badge {
+  font-size: 0.55rem;
+  padding: 1px 4px;
+  background: rgba(255, 0, 60, 0.2);
+  border: 1px solid #ff003c;
+  color: #00ffcc;
+  font-weight: 700;
+}
+
+.cp-dock-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  border-left: 1px solid rgba(255, 0, 60, 0.3);
+  padding-left: 10px;
+}
+
+.cp-dock-btn {
+  background: rgba(255, 0, 60, 0.15);
+  border: 1px solid #ff003c;
+  color: #ffffff;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cp-dock-btn:hover {
+  background: #ff003c;
+  color: #ffffff;
+  box-shadow: 0 0 10px #ff003c;
+}
+
+.cp-dock-btn.danger {
+  border-color: #ffee00;
+  color: #ffee00;
+}
+
+.cp-dock-btn.danger:hover {
+  background: #ffee00;
+  color: #000;
+}
+
+/* --- YAZMASI KOLAYLAŞTIRILMIŞ GENİŞ CLI --- */
+.cp-mini-terminal {
+  flex-grow: 1;
+  background: rgba(10, 2, 4, 0.96);
+  border: 1px solid #ff003c;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  font-family: 'Share Tech Mono', monospace;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+}
+
+.cp-term-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 0, 60, 0.08);
+  border: 1px solid rgba(255, 0, 60, 0.4);
+  border-left: 3px solid #ffee00;
+  padding: 5px 8px;
+  margin-top: 6px;
+}
+
+.cp-prompt {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #ffee00;
+  white-space: nowrap;
+}
+
+.cp-term-input-row input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.5px;
+}
+
+/* Hızlı komut butonları */
+.cp-term-quick-bar {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  overflow-x: auto;
+}
+
+.cp-quick-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 0, 60, 0.25);
+  color: #a45363;
+  font-size: 0.58rem;
+  padding: 2px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+}
+
+.cp-quick-chip:hover {
+  border-color: #ffee00;
+  color: #ffee00;
+}
+
+/* --- 2. ANA CYBERPUNK SEÇİM DÜZENİ --- */
+.cp-main-grid {
+  position: fixed;
+  top: 52px;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 14px;
+  pointer-events: auto;
+  z-index: 920;
+}
+
+/* Sol Sütun: Navigasyon Menüsü + Boydan Boya Uzanan Ferah CLI */
+.cp-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+
+.cp-side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Sol Taraftaki Genişletilmiş ve Kolay CLI Terminali */
+.cp-mini-terminal {
+  flex-grow: 1;
+  background: rgba(10, 2, 4, 0.96);
+  border: 1px solid #ff003c;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  font-family: 'Share Tech Mono', monospace;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+}
+
+.cp-term-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.62rem;
+  color: #ff003c;
+  font-weight: 800;
+  border-bottom: 1px solid rgba(255, 0, 60, 0.3);
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.cp-term-logs {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 0, 60, 0.3) transparent;
+}
+
+.cp-term-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 0, 60, 0.08);
+  border: 1px solid rgba(255, 0, 60, 0.4);
+  border-left: 3px solid #ffee00;
+  padding: 6px 10px;
+  margin-top: 8px;
+}
+
+.cp-prompt {
+  font-size: 0.72rem;
+  color: #ffee00;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.cp-term-input-row input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.76rem;
+}
+
+.cp-term-quick-bar {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.cp-quick-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 0, 60, 0.3);
+  color: #d1a0ac;
+  font-size: 0.6rem;
+  padding: 3px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.cp-quick-chip:hover {
+  border-color: #ffee00;
+  color: #ffee00;
+  background: rgba(255, 238, 0, 0.1);
+}
+
+/* Sağ Sütun: Üstte Servisler / Görünüm Paneli, Altta Geniş Hesap Barı */
+.cp-right-column {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 12px;
+  height: 100%;
+  min-height: 0; /* Overflow taşma koruması */
+}
+
+.cp-viewport-pane {
+  background: rgba(14, 3, 5, 0.95);
+  border: 2px solid #ff003c;
+  padding: 16px 20px;
+  box-shadow: 0 0 35px rgba(255, 0, 60, 0.25);
+  overflow-y: auto;
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+  scrollbar-width: thin;
+  scrollbar-color: #ff003c transparent;
+}
+
+/* --- SAĞ PENCERENİN ALTINI FULL KAPLAYAN GENİŞ HESAP PANELİ --- */
+.cp-wide-account-bar {
+  width: 100%;
+  background: rgba(18, 4, 8, 0.97);
+  border: 2px solid #ff003c;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.3);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+  flex-shrink: 0;
+}
+
+.cp-account-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cp-account-avatar-frame {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.cp-account-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 2px solid #ff003c;
+  border-radius: 4px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.cp-account-avatar-frame:hover .cp-account-avatar {
+  border-color: #00ffcc;
+  transform: scale(1.05);
+}
+
+.cp-account-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #120408;
+}
+
+.cp-account-dot.online { background: #00ffcc; box-shadow: 0 0 8px #00ffcc; }
+.cp-account-dot.offline { background: #ff003c; box-shadow: 0 0 8px #ff003c; }
+
+.cp-account-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cp-account-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cp-account-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.cp-account-role {
+  font-size: 0.62rem;
+  padding: 2px 8px;
+  background: rgba(255, 0, 60, 0.2);
+  border: 1px solid #ff003c;
+  color: #00ffcc;
+  font-weight: 800;
+  border-radius: 2px;
+}
+
+.cp-account-sub-info {
+  font-size: 0.7rem;
+  color: #bb8894;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cp-account-sub-info strong {
+  color: #ffee00;
+}
+
+.cp-account-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cp-btn-large {
+  background: rgba(255, 0, 60, 0.15);
+  border: 1px solid #ff003c;
+  color: #ffffff;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
+}
+
+.cp-btn-large:hover {
+  background: #ff003c;
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(255, 0, 60, 0.6);
+  transform: translateY(-1px);
+}
+
+.cp-btn-large.danger {
+  border-color: #ffee00;
+  color: #ffee00;
+}
+
+.cp-btn-large.danger:hover {
+  background: #ffee00;
+  color: #000000;
+  box-shadow: 0 0 15px #ffee00;
+}

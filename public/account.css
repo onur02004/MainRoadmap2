@@ -236,3 +236,25 @@
     display: none;
   }
 }
+
+
+.account-card-header-tag {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.account-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--accent-action, #3ecf8e);
+  letter-spacing: 1.5px;
+}
+.account-main-title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--text-bright, #fff);
+  margin: 0;
+  text-transform: uppercase;
+}

@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="supabase-dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Song Share // Social Feed</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/songShare/songshare.css" />
+</head>
+
+<body class="songshare-body">
+
+  <div class="songshare-shell">
+
+    <!-- 1. SOL MENÜ -->
+    <aside class="glass-panel nav-sidebar">
+      <div class="sidebar-top">
+        <div class="brand-badge">
+          <span class="brand-glow-dot"></span>
+          <h1 class="brand-title">Song Share</h1>
+        </div>
+
+        <nav class="nav-menu-list">
+          <a href="#home" class="nav-link active">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span class="nav-label">Home</span>
+          </a>
+          <a href="#share" class="nav-link">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            <span class="nav-label">Share Track</span>
+          </a>
+          <a href="#discover" class="nav-link">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span class="nav-label">Discover</span>
+          </a>
+          <a href="#activity" class="nav-link">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span class="nav-label">Friends</span>
+            <span class="nav-pill" id="friendsNavPill">2 live</span>
+          </a>
+          <a href="#search" class="nav-link">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span class="nav-label">Search</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="spotify-account-card">
+        <div class="spotify-card-content">
+          <div class="spotify-logo-bubble">
+            <svg class="spotify-svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.494 17.306c-.215.353-.674.464-1.027.249-2.812-1.718-6.353-2.106-10.523-1.153-.404.093-.808-.163-.901-.567-.093-.404.163-.808.567-.901 4.568-1.044 8.497-.6 11.635 1.345.353.215.464.674.249 1.027zm1.465-3.256c-.271.442-.851.583-1.293.312-3.22-1.979-8.127-2.551-11.936-1.394-.499.151-1.031-.132-1.183-.631-.151-.499.132-1.031.631-1.183 4.356-1.321 9.773-.68 13.469 1.59.442.271.583.851.312 1.306zm.126-3.393c-3.861-2.293-10.231-2.505-13.916-1.386-.593.18-1.22-.162-1.4-.755-.18-.593.162-1.22.755-1.4 4.237-1.286 11.272-1.041 15.704 1.591.533.316.707 1.009.391 1.542-.316.533-1.009.708-1.534.408z" />
+            </svg>
+          </div>
+          <div class="spotify-text-meta">
+            <span class="meta-status">SPOTIFY SYNC</span>
+            <strong class="meta-label">Connect Spotify</strong>
+          </div>
+        </div>
+        <button type="button" class="btn-spotify-connect" id="btnConnectSpotify">CONNECT</button>
+      </div>
+    </aside>
+
+    <!-- 2. MERKEZİ PANEL -->
+    <section class="main-content-layout" id="mainContentLayout">
+
+      <!-- ARKADAŞ DİNLEME BANDI -->
+      <div class="friends-listening-strip" id="friendsListeningStrip">
+        <div class="strip-header">
+          <div class="title-with-pulse">
+            <span class="pulse-live"></span>
+            <span class="strip-title">FRIEND ACTIVITY</span>
+          </div>
+          <span class="counter-badge" id="onlineFriendsCount">2 LISTENING</span>
+        </div>
+
+        <div class="friends-strip-scroll" id="friendsListContainer">
+          
+          <div class="ios-friend-card state-live" onclick="playToDock('Rebel Yell', 'Billy Idol', 'https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352', 'rebel')">
+            <img src="https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352" alt="Rebel Yell" class="card-bg-art" />
+            <div class="card-backdrop-overlay"></div>
+            <div class="card-top-bar">
+              <div class="user-chip">
+                <div class="avatar-ring-wrap">
+                  <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120" class="chip-avatar" alt="Onur" />
+                  <span class="live-dot-indicator"></span>
+                </div>
+                <div class="chip-names">
+                  <span class="chip-fullname">Onur Dönmez</span>
+                  <span class="chip-status-text">Listening Now</span>
+                </div>
+              </div>
+              <div class="sound-wave-bars"><span></span><span></span><span></span><span></span></div>
+            </div>
+            <div class="card-bottom-meta">
+              <span class="song-name">Rebel Yell</span>
+              <span class="artist-name">Billy Idol</span>
+              <div class="track-mini-progress"><div class="mini-progress-fill" style="width: 52%;"></div></div>
+            </div>
+          </div>
+
+          <div class="ios-friend-card state-live" onclick="playToDock('Maraton', 'Ati242', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s', 'maraton')">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s" alt="Maraton" class="card-bg-art" />
+            <div class="card-backdrop-overlay"></div>
+            <div class="card-top-bar">
+              <div class="user-chip">
+                <div class="avatar-ring-wrap">
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120" class="chip-avatar" alt="Alex" />
+                  <span class="live-dot-indicator"></span>
+                </div>
+                <div class="chip-names">
+                  <span class="chip-fullname">Alex V.</span>
+                  <span class="chip-status-text">Listening Now</span>
+                </div>
+              </div>
+              <div class="sound-wave-bars"><span></span><span></span><span></span><span></span></div>
+            </div>
+            <div class="card-bottom-meta">
+              <span class="song-name">Maraton</span>
+              <span class="artist-name">Ati242</span>
+              <div class="track-mini-progress"><div class="mini-progress-fill" style="width: 32%;"></div></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- FEED AKIŞI -->
+      <div class="feed-scroll-container" id="feedScrollContainer">
+
+        <!-- SPOTLIGHT 3D COVERFLOW -->
+        <div class="spotlight-coverflow-panel" id="spotlightPanel">
+          <div class="spotlight-dynamic-bg" id="spotlightDynamicBg" style="background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s');"></div>
+          <div class="spotlight-overlay-shade"></div>
+
+          <button class="btn-hide-spotlight" id="btnHideSpotlight" title="Paneli Gizle">&times; Gizle</button>
+          
+          <div class="coverflow-stage-3d">
+            <div class="coverflow-item" style="--offset: -4;" onclick="slideToOffset(-4)" data-img="https://i.scdn.co/image/ab67616d0000b2733d6413c7dc24318bdbd5b366" data-title="Hot" data-artist="Inna">
+              <img src="https://i.scdn.co/image/ab67616d00001e023d6413c7dc24318bdbd5b366" alt="Track" />
+              <div class="coverflow-caption"><strong>Hot</strong><span>Inna</span></div>
+            </div>
+            <div class="coverflow-item" style="--offset: -3;" onclick="slideToOffset(-3)" data-img="https://i.scdn.co/image/ab67616d0000b273960635da26f6fbccbeb36b2d" data-title="Aklımda Biri Var" data-artist="Artis">
+              <img src="https://i.scdn.co/image/ab67616d0000b273960635da26f6fbccbeb36b2d" alt="Track" />
+              <div class="coverflow-caption"><strong>Aklımda Biri Var</strong><span>Artis</span></div>
+            </div>
+            <div class="coverflow-item" style="--offset: -2;" onclick="slideToOffset(-2)" data-img="https://i.scdn.co/image/ab67616d00001e028ff7c3580d429c8212b9a3b6" data-title="A Sky Full of Stars" data-artist="Coldplay">
+              <img src="https://i.scdn.co/image/ab67616d00001e028ff7c3580d429c8212b9a3b6" alt="Track" />
+              <div class="coverflow-caption"><strong>A Sky Full of Stars</strong><span>Coldplay</span></div>
+            </div>
+            <div class="coverflow-item" style="--offset: -1;" onclick="slideToOffset(-1)" data-img="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpAp5NlImEisne6bbOOYVnPRHVm5B1gT4YQfF1Vi5dDQ&s=10" data-title="Self Aware" data-artist="Alternative">
+              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpAp5NlImEisne6bbOOYVnPRHVm5B1gT4YQfF1Vi5dDQ&s=10" alt="Track" />
+              <div class="coverflow-caption"><strong>Self Aware</strong><span>Alternative</span></div>
+            </div>
+            <div class="coverflow-item active" style="--offset: 0;" onclick="slideToOffset(0)" data-img="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s" data-title="Maraton" data-artist="Ati242">
+              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s" alt="Track" />
+              <div class="coverflow-caption"><strong>Maraton</strong><span>Ati242</span></div>
+            </div>
+            <div class="coverflow-item" style="--offset: 1;" onclick="slideToOffset(1)" data-img="https://i.scdn.co/image/ab67616d0000b273a8cfc41719dc2c2028e0aad5" data-title="Join Me" data-artist="HIM">
+              <img src="https://i.scdn.co/image/ab67616d0000b273a8cfc41719dc2c2028e0aad5" alt="Track" />
+              <div class="coverflow-caption"><strong>Join Me</strong><span>HIM</span></div>
+            </div>
+            <div class="coverflow-item" style="--offset: 2;" onclick="slideToOffset(2)" data-img="https://i.scdn.co/image/ab67616d0000b2736054a3d4d3fadf0173dbdf07" data-title="Denize Bıraksam" data-artist="Turkish Rock">
+              <img src="https://i.scdn.co/image/ab67616d0000b2736054a3d4d3fadf0173dbdf07" alt="Track" />
+              <div class="coverflow-caption"><strong>Denize Bıraksam</strong><span>Turkish Rock</span></div>
+            </div>
+            <div class="coverflow-item" style="--offset: 3;" onclick="slideToOffset(3)" data-img="https://i1.sndcdn.com/artworks-ixY9Sl5eXz1mPMyZ-Sq9u8Q-t500x500.jpg" data-title="Bi Tik" data-artist="Pop Mix">
+              <img src="https://i1.sndcdn.com/artworks-ixY9Sl5eXz1mPMyZ-Sq9u8Q-t500x500.jpg" alt="Track" />
+              <div class="coverflow-caption"><strong>Bi Tik</strong><span>Pop Mix</span></div>
+            </div>
+          </div>
+
+          <p class="spotlight-quote-text">Günün Öne Çıkan Seçkileri ve Keşifler</p>
+
+          <div class="spotlight-bottom-control-bar">
+            <div class="ctrl-cluster-left">
+              <button class="icon-btn-plain" onclick="moveCoverflow(-1)" title="Önceki"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg></button>
+              <button class="icon-btn-plain" onclick="togglePauseState()" id="btnSpotPause"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg></button>
+              <button class="icon-btn-plain" onclick="moveCoverflow(1)" title="Sonraki"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg></button>
+            </div>
+
+            <div class="mini-player-island">
+              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s" alt="Art" id="spotIslandImg" />
+              <div class="island-meta">
+                <strong id="spotIslandTitle">Maraton</strong>
+                <span id="spotIslandArtist">Ati242</span>
+              </div>
+              <div class="island-right-actions">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="1.5"></circle><circle cx="6" cy="12" r="1.5"></circle><circle cx="18" cy="12" r="1.5"></circle></svg>
+              </div>
+            </div>
+
+            <div class="ctrl-cluster-right">
+              <button class="btn-browse-action">Gozat</button>
+              <button class="icon-btn-plain"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg></button>
+              <button class="icon-btn-plain"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg></button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- KART 1: REBEL YELL -->
+        <article class="feed-card glass-panel" id="feedCard-1">
+          <div class="feed-card-ambient-bg" style="background-image: url('https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352');"></div>
+
+          <!-- FÜTÜRİSTİK 3D HOLOGRAPHIC REPOST POD -->
+          <div class="repost-holographic-pod" id="repostWing-1">
+            <div class="pod-ring-header">
+              <svg class="pod-pulse-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+              <span class="pod-title-tag">REPOST</span>
+            </div>
+            <div class="pod-avatars-grid" id="rfwList-1">
+              <div class="pod-orbit-bubble">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80" alt="Alex V." />
+                <span class="pod-holo-tooltip">Alex V. • Repostladı</span>
+              </div>
+              <div class="pod-orbit-bubble">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80" alt="Sarah K." />
+                <span class="pod-holo-tooltip">Sarah K. • Repostladı</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feed-card-header">
+            <div class="user-meta">
+              <div class="avatar-holder">
+                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120" class="user-avatar" alt="Onur" />
+                <span class="user-dot-badge"></span>
+              </div>
+              <div class="user-text-details">
+                <span class="user-name">Onur Dönmez</span>
+                <span class="post-time">12m ago</span>
+              </div>
+            </div>
+
+            <div class="header-right-cluster">
+              <div class="taste-match-badge" data-match="94" onmouseenter="showMatchTooltip(this)" onmouseleave="hideMatchTooltip(this)">
+                <span class="match-text"><strong>94%</strong> Tonal Uyum</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feed-card-main-content">
+            <div class="cover-stage">
+              <img src="https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352" alt="Rebel Yell" class="album-cover-main" />
+              <button class="cover-play-cta" onclick="playToDock('Rebel Yell', 'Billy Idol', 'https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352', 'rebel')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              </button>
+            </div>
+
+            <div class="track-details-col">
+              <div>
+                <h2 class="feed-track-title">Rebel Yell</h2>
+                <h3 class="feed-track-artist">Billy Idol &bull; <span>Rebel Yell (1983)</span></h3>
+              </div>
+
+              <div class="sharer-comment-quote">
+                <div class="quote-bar"></div>
+                <div class="quote-text">
+                  <p>"Steve Stevens elektro gitar solosu tam 2:24'te başlıyor, sesi fulleyin!"</p>
+                  <button class="btn-highlight-time" data-start="144">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>Highlight at 2:24</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="compact-rating-badge" onclick="openRatingModal('Rebel Yell', '93', '4')">
+                <span class="cr-score">93</span>
+                <span class="cr-sep">&bull;</span>
+                <span class="cr-label">Genel Puan (4 Oy)</span>
+              </div>
+
+              <div class="card-action-triggers">
+                <button class="btn-rate-trigger" onclick="event.stopPropagation(); toggleRateMiniPopup(1, event);">
+                  Puan Ver
+                </button>
+                <div class="rate-mini-popup" id="ratePopup-1">
+                  <span class="mini-popup-title">Parçayı Puanla</span>
+                  <div class="mini-slider-wrap">
+                    <input type="range" min="0" max="100" value="93" class="mini-range-slider" id="rangeInput-1" oninput="updateMiniScore(1, this.value)" />
+                    <span class="mini-range-val" id="rangeVal-1">93</span>
+                  </div>
+                  <button class="btn-submit-mini" onclick="submitRate(1)">Gönder</button>
+                </div>
+
+                <button class="btn-secondary-action" onclick="toggleRepost(1)">
+                  Repostla (<span id="repostCount-1">2</span>)
+                </button>
+                <a href="https://open.spotify.com/track/4TIJ7zSBNejNuQIYKjKXNE" target="_blank" rel="noopener noreferrer" class="btn-primary-action">Spotify</a>
+                <button class="btn-secondary-action" onclick="openFullscreenCompanion('rebel')">Immersive</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="feed-comments-section">
+            <div class="comments-scroll-list" id="commentList-1">
+              <div class="comment-bubble">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80" class="c-avatar" alt="Alex" />
+                <div class="c-content"><div class="c-top"><strong>Alex V.</strong> <span class="c-time">8m ago</span></div><p>Solosu cidden tüyleri diken diken ediyor!</p></div>
+              </div>
+              <div class="comment-bubble">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80" class="c-avatar" alt="Sarah" />
+                <div class="c-content"><div class="c-top"><strong>Sarah K.</strong> <span class="c-time">25m ago</span></div><p>Favori 80ler rock parçalarından biri.</p></div>
+              </div>
+              <div class="comment-bubble">
+                <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80" class="c-avatar" alt="Ege" />
+                <div class="c-content"><div class="c-top"><strong>Ege S.</strong> <span class="c-time">1h ago</span></div><p>Ses seviyesini sona dayayıp dinlemelik.</p></div>
+              </div>
+              <div class="comment-bubble">
+                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80" class="c-avatar" alt="Onur" />
+                <div class="c-content"><div class="c-top"><strong>Onur D.</strong> <span class="c-time">2h ago</span></div><p>Kesinlikle katılıyorum.</p></div>
+              </div>
+              <div class="comment-bubble extra-comment hidden-comment">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80" class="c-avatar" alt="Bora" />
+                <div class="c-content"><div class="c-top"><strong>Bora T.</strong> <span class="c-time">3h ago</span></div><p>Yolculukta harika gidiyor.</p></div>
+              </div>
+              <div class="comment-bubble extra-comment hidden-comment">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80" class="c-avatar" alt="Maja" />
+                <div class="c-content"><div class="c-top"><strong>Maja S.</strong> <span class="c-time">4h ago</span></div><p>Tek kelimeyle şaheser.</p></div>
+              </div>
+            </div>
+
+            <div class="comment-action-toolbar">
+              <button class="btn-text-action" onclick="toggleExtraComments(1)" id="btnMoreComments-1">Daha Fazla Yorum Göster (+2)</button>
+              <button class="btn-write-comment-trigger" onclick="toggleCommentInput(1)">Yorum Yap</button>
+            </div>
+
+            <div class="comment-input-collapsible" id="commentInputBox-1">
+              <div class="comment-input-row">
+                <input type="text" class="comment-input-field" id="commentInput-1" placeholder="Düşüncelerini paylaş..." onkeypress="handleCommentKey(event, 1)" />
+                <button class="btn-send-comment" onclick="submitComment(1)">Gönder</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- KART 2: EVERLONG -->
+        <article class="feed-card glass-panel" id="feedCard-2">
+          <div class="feed-card-ambient-bg" style="background-image: url('https://i1.sndcdn.com/artworks-000079984264-e8xxju-t500x500.jpg');"></div>
+
+          <div class="repost-holographic-pod" id="repostWing-2" style="display: none;">
+            <div class="pod-ring-header">
+              <svg class="pod-pulse-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+              <span class="pod-title-tag">REPOST</span>
+            </div>
+            <div class="pod-avatars-grid" id="rfwList-2"></div>
+          </div>
+
+          <div class="feed-card-header">
+            <div class="user-meta">
+              <div class="avatar-holder">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120" class="user-avatar" alt="Sarah" />
+                <span class="user-dot-badge"></span>
+              </div>
+              <div class="user-text-details">
+                <span class="user-name">Sarah K.</span>
+                <span class="post-time">2 hours ago</span>
+              </div>
+            </div>
+
+            <div class="header-right-cluster">
+              <div class="taste-match-badge" data-match="96" onmouseenter="showMatchTooltip(this)" onmouseleave="hideMatchTooltip(this)">
+                <span class="match-text"><strong>96%</strong> Tonal Uyum</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feed-card-main-content">
+            <div class="cover-stage">
+              <img src="https://i1.sndcdn.com/artworks-000079984264-e8xxju-t500x500.jpg" alt="Everlong" class="album-cover-main" />
+              <button class="cover-play-cta" onclick="playToDock('Everlong', 'Foo Fighters', 'https://i1.sndcdn.com/artworks-000079984264-e8xxju-t500x500.jpg', 'everlong')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              </button>
+            </div>
+
+            <div class="track-details-col">
+              <div>
+                <h2 class="feed-track-title">Everlong</h2>
+                <h3 class="feed-track-artist">Foo Fighters &bull; <span>The Colour and the Shape</span></h3>
+              </div>
+
+              <div class="highlight-only-pill-wrap">
+                <button class="btn-highlight-time" data-start="110">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <span>Chorus at 1:50</span>
+                </button>
+              </div>
+
+              <div class="compact-rating-badge" onclick="openRatingModal('Everlong', '97', '12')">
+                <span class="cr-score">97</span>
+                <span class="cr-sep">&bull;</span>
+                <span class="cr-label">Genel Puan (12 Oy)</span>
+              </div>
+
+              <div class="card-action-triggers">
+                <button class="btn-rate-trigger" onclick="event.stopPropagation(); toggleRateMiniPopup(2, event);">
+                  Puan Ver
+                </button>
+                <div class="rate-mini-popup" id="ratePopup-2">
+                  <span class="mini-popup-title">Parçayı Puanla</span>
+                  <div class="mini-slider-wrap">
+                    <input type="range" min="0" max="100" value="95" class="mini-range-slider" id="rangeInput-2" oninput="updateMiniScore(2, this.value)" />
+                    <span class="mini-range-val" id="rangeVal-2">95</span>
+                  </div>
+                  <button class="btn-submit-mini" onclick="submitRate(2)">Gönder</button>
+                </div>
+
+                <button class="btn-secondary-action" onclick="toggleRepost(2)">
+                  Repostla (<span id="repostCount-2">0</span>)
+                </button>
+                <a href="https://open.spotify.com/search/Foo%20Fighters%20Everlong" target="_blank" rel="noopener noreferrer" class="btn-primary-action">Spotify</a>
+                <button class="btn-secondary-action" onclick="openFullscreenCompanion('everlong')">Immersive</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="feed-comments-section">
+            <div class="comments-scroll-list" id="commentList-2">
+              <div class="comment-bubble"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80" class="c-avatar" alt="Alex" /><div class="c-content"><div class="c-top"><strong>Alex V.</strong> <span class="c-time">4h ago</span></div><p>Tüm zamanların en iyi alternatifi.</p></div></div>
+              <div class="comment-bubble"><img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80" class="c-avatar" alt="Onur" /><div class="c-content"><div class="c-top"><strong>Onur D.</strong> <span class="c-time">5h ago</span></div><p>Gitar riffleri inanılmaz.</p></div></div>
+              <div class="comment-bubble"><img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80" class="c-avatar" alt="Ege" /><div class="c-content"><div class="c-top"><strong>Ege S.</strong> <span class="c-time">6h ago</span></div><p>Klipi de şarkı kadar efsanedir.</p></div></div>
+              <div class="comment-bubble"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80" class="c-avatar" alt="Maja" /><div class="c-content"><div class="c-top"><strong>Maja S.</strong> <span class="c-time">7h ago</span></div><p>Ruh halim ne olursa olsun dinlerim.</p></div></div>
+            </div>
+
+            <div class="comment-action-toolbar">
+              <button class="btn-text-action" style="display:none;" id="btnMoreComments-2"></button>
+              <button class="btn-write-comment-trigger" onclick="toggleCommentInput(2)">Yorum Yap</button>
+            </div>
+
+            <div class="comment-input-collapsible" id="commentInputBox-2">
+              <div class="comment-input-row">
+                <input type="text" class="comment-input-field" id="commentInput-2" placeholder="Düşüncelerini paylaş..." onkeypress="handleCommentKey(event, 2)" />
+                <button class="btn-send-comment" onclick="submitComment(2)">Gönder</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- KART 3: AKLIMDA BİRİ VAR -->
+        <article class="feed-card glass-panel" id="feedCard-3">
+          <div class="feed-card-ambient-bg" style="background-image: url('https://i.scdn.co/image/ab67616d0000b273960635da26f6fbccbeb36b2d');"></div>
+
+          <div class="repost-holographic-pod" id="repostWing-3" style="display: none;">
+            <div class="pod-ring-header">
+              <svg class="pod-pulse-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+              <span class="pod-title-tag">REPOST</span>
+            </div>
+            <div class="pod-avatars-grid" id="rfwList-3"></div>
+          </div>
+
+          <div class="feed-card-header">
+            <div class="user-meta">
+              <div class="avatar-holder">
+                <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120" class="user-avatar" alt="Ege" />
+                <span class="user-dot-badge"></span>
+              </div>
+              <div class="user-text-details">
+                <span class="user-name">Ege S.</span>
+                <span class="post-time">3 hours ago</span>
+              </div>
+            </div>
+
+            <div class="header-right-cluster">
+              <div class="taste-match-badge" data-match="88" onmouseenter="showMatchTooltip(this)" onmouseleave="hideMatchTooltip(this)">
+                <span class="match-text"><strong>88%</strong> Tonal Uyum</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feed-card-main-content">
+            <div class="cover-stage">
+              <img src="https://i.scdn.co/image/ab67616d0000b273960635da26f6fbccbeb36b2d" alt="Aklımda Biri Var" class="album-cover-main" />
+              <button class="cover-play-cta" onclick="playToDock('Aklımda Biri Var', 'Artis', 'https://i.scdn.co/image/ab67616d0000b273960635da26f6fbccbeb36b2d', 'aklimda')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              </button>
+            </div>
+
+            <div class="track-details-col">
+              <div>
+                <h2 class="feed-track-title">Aklımda Biri Var</h2>
+                <h3 class="feed-track-artist">Artis &bull; <span>Single</span></h3>
+              </div>
+
+              <div class="highlight-only-pill-wrap">
+                <button class="btn-highlight-time" data-start="45">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <span>Nakarat 0:45</span>
+                </button>
+              </div>
+
+              <div class="compact-rating-badge unrated" onclick="openRatingModal('Aklımda Biri Var', '--', '0')">
+                <span class="cr-score">--</span>
+                <span class="cr-sep">&bull;</span>
+                <span class="cr-label">Yetersiz Puanlama</span>
+              </div>
+
+              <div class="card-action-triggers">
+                <button class="btn-rate-trigger" onclick="event.stopPropagation(); toggleRateMiniPopup(3, event);">
+                  Puan Ver
+                </button>
+                <div class="rate-mini-popup" id="ratePopup-3">
+                  <span class="mini-popup-title">Parçayı Puanla</span>
+                  <div class="mini-slider-wrap">
+                    <input type="range" min="0" max="100" value="75" class="mini-range-slider" id="rangeInput-3" oninput="updateMiniScore(3, this.value)" />
+                    <span class="mini-range-val" id="rangeVal-3">75</span>
+                  </div>
+                  <button class="btn-submit-mini" onclick="submitRate(3)">Gönder</button>
+                </div>
+
+                <button class="btn-secondary-action" onclick="toggleRepost(3)">
+                  Repostla (<span id="repostCount-3">0</span>)
+                </button>
+                <a href="https://open.spotify.com/search/Artis%20Akl%C4%B1mda%20Biri%20Var" target="_blank" rel="noopener noreferrer" class="btn-primary-action">Spotify</a>
+                <button class="btn-secondary-action" onclick="openFullscreenCompanion('aklimda')">Immersive</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="feed-comments-section">
+            <div class="comments-scroll-list" id="commentList-3">
+              <div class="comment-bubble"><img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80" class="c-avatar" alt="Onur" /><div class="c-content"><div class="c-top"><strong>Onur D.</strong> <span class="c-time">3h ago</span></div><p>Akustik tonlar çok tatlı.</p></div></div>
+            </div>
+
+            <div class="comment-action-toolbar">
+              <button class="btn-text-action" style="display:none;" id="btnMoreComments-3"></button>
+              <button class="btn-write-comment-trigger" onclick="toggleCommentInput(3)">Yorum Yap</button>
+            </div>
+
+            <div class="comment-input-collapsible" id="commentInputBox-3">
+              <div class="comment-input-row">
+                <input type="text" class="comment-input-field" id="commentInput-3" placeholder="Düşüncelerini paylaş..." onkeypress="handleCommentKey(event, 3)" />
+                <button class="btn-send-comment" onclick="submitComment(3)">Gönder</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- 3. SAĞ PANEL: TRACK COMPANION DOCK -->
+    <aside class="right-stack-aside" id="rightAsideContainer">
+      <div class="dock-slot-friends-anchor" id="dockSlotFriends"></div>
+
+      <div class="glass-panel track-companion-dock" id="mainPlayerDock">
+        <img src="https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352" alt="Now Playing" class="dock-bg-art" id="playerCoverImg" />
+        <div class="dock-backdrop-overlay" id="dockBackdrop"></div>
+
+        <div class="companion-top-header">
+          <div class="dock-live-pill">
+            <span class="live-dot-indicator"></span>
+            <span id="nowPlayingIndicator">COMPANION</span>
+          </div>
+
+          <div class="companion-nav-tabs">
+            <button class="tab-btn active" data-tab="player" title="Player">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8" fill="#000"></polygon></svg>
+            </button>
+            <button class="tab-btn" data-tab="lyrics" title="Lyrics">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            </button>
+            <button class="tab-btn" data-tab="trivia" title="Fun Fact">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </button>
+            <button class="tab-btn" data-tab="dna" title="Audio DNA">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            </button>
+          </div>
+
+          <div class="companion-window-actions">
+            <button class="btn-window-action" id="btnToggleExpand" title="Büyüt / Küçült">
+              <svg class="icon-expand" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+              <svg class="icon-shrink" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/></svg>
+            </button>
+            <button class="btn-window-action" id="btnToggleFullscreen" title="Tam Ekran Dinleme Modu">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="companion-body">
+          <div class="companion-pane pane-player active" id="pane-player">
+            <div class="track-hero-text">
+              <span class="dock-song" id="playerTrackTitle">Rebel Yell</span>
+              <span class="dock-artist" id="playerTrackArtist">Billy Idol</span>
+            </div>
+            <div class="mutual-listener-bubble">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              <span>Ege and Alex rated this 🔥</span>
+            </div>
+          </div>
+
+          <div class="companion-pane pane-lyrics" id="pane-lyrics">
+            <div class="lyrics-stream" id="lyricsStreamBox">
+              <p class="lyric-line passed" data-time="90">Last night a little dancer came dancing to my door</p>
+              <p class="lyric-line active-line" data-time="144">In the midnight hour, she cried "more, more, more!"</p>
+              <p class="lyric-line upcoming" data-time="155">With a rebel yell she cried "more, more, more!"</p>
+              <p class="lyric-line upcoming" data-time="170">In the midnight hour, babe, more, more, more...</p>
+            </div>
+          </div>
+
+          <div class="companion-pane pane-trivia" id="pane-trivia">
+            <div class="trivia-card">
+              <div class="trivia-badge">DID YOU KNOW?</div>
+              <p class="trivia-text" id="triviaTextBox">
+                Billy Idol bu parçanın adını The Rolling Stones ile katıldığı bir partide keşfetti. Keith Richards ve Mick Jagger doğrudan "Rebel Yell" adlı burbon viskisini şişeden içiyordu.
+              </p>
+              <span class="trivia-source">&bull; Verified Rock Trivia</span>
+            </div>
+          </div>
+
+          <div class="companion-pane pane-dna" id="pane-dna">
+            <div class="audio-dna-grid">
+              <div class="dna-item">
+                <span class="dna-label">TEMPO</span>
+                <strong class="dna-val" id="dnaTempo">166 BPM</strong>
+              </div>
+              <div class="dna-item">
+                <span class="dna-label">KEY</span>
+                <strong class="dna-val" id="dnaKey">B Minor</strong>
+              </div>
+              <div class="dna-item">
+                <span class="dna-label">ENERGY</span>
+                <strong class="dna-val" id="dnaEnergy">92%</strong>
+              </div>
+              <div class="dna-item">
+                <span class="dna-label">VIBE</span>
+                <strong class="dna-val" id="dnaVibe">Synth Rock</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="companion-bottom-bar-clean">
+          <span class="clean-dock-hint">Song Share Companion &bull; Live Session</span>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- 4. TAM EKRAN MODAL -->
+  <div class="fullscreen-player-modal" id="fullscreenPlayerModal">
+    <div class="fullscreen-dynamic-blur" id="fullscreenDynamicBlur"></div>
+    <div class="fullscreen-mesh-glow"></div>
+
+    <div class="fullscreen-container">
+      <div class="fullscreen-top-nav">
+        <div class="fs-brand">
+          <span class="live-dot-indicator"></span>
+          <span>SONG SHARE IMMERSIVE</span>
+        </div>
+        <button class="btn-close-fullscreen" id="btnCloseFullscreen" title="Tam Ekrandan Çık (ESC)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <span>Exit Fullscreen</span>
+        </button>
+      </div>
+
+      <div class="fullscreen-content-grid">
+        <div class="fs-art-column">
+          <div class="fs-cover-stage">
+            <img src="https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352" alt="Cover Art" class="fs-cover-img" id="fsCoverImg" />
+          </div>
+
+          <div class="fs-track-identity">
+            <h1 class="fs-title" id="fsTrackTitle">Rebel Yell</h1>
+            <h2 class="fs-artist" id="fsTrackArtist">Billy Idol</h2>
+          </div>
+
+          <div class="fs-trivia-card">
+            <span class="fs-trivia-tag">SONG FACT</span>
+            <p id="fsTriviaText">Billy Idol bu parçanın adını The Rolling Stones ile katıldığı bir partide keşfetti.</p>
+          </div>
+        </div>
+
+        <div class="fs-lyrics-column">
+          <div class="fs-lyrics-container" id="fsLyricsContainer"></div>
+        </div>
+      </div>
+
+      <div class="fullscreen-bottom-dock">
+        <div class="fs-scrubber-wrapper" id="fsInteractiveScrubber">
+          <div class="fs-scrubber-track">
+            <div class="fs-scrubber-fill" id="fsScrubberFill" style="width: 50%;"></div>
+          </div>
+          <div class="fs-time-row">
+            <span id="fsCurrentTime">2:24</span>
+            <span id="fsTotalTime">-2:23</span>
+          </div>
+        </div>
+
+        <div class="fs-controls-cluster">
+          <button class="fs-ctrl-btn" id="btnFsPrev"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2.5"></line></svg></button>
+          <button class="fs-ctrl-play" id="btnFsPlayPause"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 18 12 6 20 6 4"></polygon></svg></button>
+          <button class="fs-ctrl-btn" id="btnFsNext"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5"></line></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. RATING MODAL -->
+  <div class="rating-modal-backdrop" id="ratingModalBackdrop">
+    <div class="rating-modal-card glass-panel">
+      <div class="modal-header-row">
+        <div class="modal-title-wrap">
+          <h3 id="modalSongTitle">Track Rating</h3>
+          <span id="modalSongMeta">Friends Reviews & Breakdown</span>
+        </div>
+        <button class="btn-close-modal" id="btnCloseRatingModal">&times;</button>
+      </div>
+
+      <div class="modal-score-banner">
+        <div class="big-score" id="modalBigScore">93</div>
+        <div class="big-score-meta">
+          <strong>Overall Rating</strong>
+          <span id="modalTotalVotes">Based on 4 friend ratings</span>
+        </div>
+      </div>
+
+      <div class="modal-reviews-list" id="modalReviewsList">
+        <div class="review-row">
+          <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80" alt="Onur" />
+          <div class="rev-info">
+            <span class="rev-name">Onur Dönmez</span>
+            <span class="rev-tag">🔥 Masterpiece</span>
+          </div>
+          <span class="rev-score">98</span>
+        </div>
+        <div class="review-row">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80" alt="Alex" />
+          <div class="rev-info">
+            <span class="rev-name">Alex V.</span>
+            <span class="rev-tag">⚡ Enerjik</span>
+          </div>
+          <span class="rev-score">90</span>
+        </div>
+        <div class="review-row">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80" alt="Sarah" />
+          <div class="rev-info">
+            <span class="rev-name">Sarah K.</span>
+            <span class="rev-tag">🌊 Fena Değil</span>
+          </div>
+          <span class="rev-score">75</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/songShare/songshare.js"></script>
+</body>
+</html>

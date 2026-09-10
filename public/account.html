@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="supabase-dark" data-protected>
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,12 +8,15 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Orbitron:wght@600;800&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Orbitron:wght@600;800&family=Press+Start+2P&family=VT323&display=swap"
+    rel="stylesheet">
 
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="account.css" />
   <link rel="stylesheet" href="avatar-canvas.css" />
 </head>
+
 <body>
 
   <!-- FIXED BACKGROUND GRID LAYER -->
@@ -35,7 +39,8 @@
     <div class="theme-modal-window" role="dialog" aria-modal="true">
       <div class="modal-search-header">
         <span class="modal-search-icon">&#128269;</span>
-        <input type="text" id="themeSearchInput" class="modal-search-field" placeholder="Search themes... (e.g. GTA, FNAF, Minecraft, Cyberpunk)" spellcheck="false" autocomplete="off" />
+        <input type="text" id="themeSearchInput" class="modal-search-field"
+          placeholder="Search themes... (e.g. GTA, FNAF, Minecraft, Cyberpunk)" spellcheck="false" autocomplete="off" />
         <button id="themeModalCloseBtn" class="modal-close-btn" type="button">&times;</button>
       </div>
 
@@ -57,24 +62,32 @@
 
   <!-- ================= HERO VIEWPORT (İLK AÇILIŞ: FERAH & SOL ALTA ANKRAJLI) ================= -->
   <main class="viewport-hero account-hero-viewport">
-    
+
     <div class="left-pane account-hero-left">
       <!-- Breadcrumb -->
       <div class="brand-header">
         <svg class="supabase-bolt" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M21.362 9.354H12V.362a.362.362 0 0 0-.618-.256L.106 11.344a.362.362 0 0 0 .256.618H9.72v9.014a.362.362 0 0 0 .618.256l11.278-11.26a.362.362 0 0 0-.254-.618z"/>
+          <path
+            d="M21.362 9.354H12V.362a.362.362 0 0 0-.618-.256L.106 11.344a.362.362 0 0 0 .256.618H9.72v9.014a.362.362 0 0 0 .618.256l11.278-11.26a.362.362 0 0 0-.254-.618z" />
         </svg>
         <span class="brand-text">sys-cluster</span>
         <span class="breadcrumb-slash">/</span>
         <span class="project-tag">account-console</span>
       </div>
 
+      <div class="account-card-header-tag">
+        <span class="account-badge">● USER ACCOUNT</span>
+        <h1 class="account-main-title">ACCOUNT_PROFILE</h1>
+      </div>
+
       <!-- SOL ALT: MODERN KULLANICI BİLGİ KARTI -->
       <div class="gui-user-card-panel account-profile-hero-card">
+
         <div class="gui-card-body">
           <div class="avatar-change-wrapper" id="btnOpenAvatarVault" title="Click to Open 2D Avatar Vault">
             <div class="gui-avatar-wrapper">
-              <img id="userAvatar" class="gui-avatar-large profile-avatar-main" src="https://api.dicebear.com/7.x/bottts/svg?seed=user" alt="Avatar" />
+              <img id="userAvatar" class="gui-avatar-large profile-avatar-main"
+                src="https://api.dicebear.com/7.x/bottts/svg?seed=user" alt="Avatar" />
               <span class="gui-status-indicator online" id="userStatusDot"></span>
             </div>
             <div class="avatar-edit-overlay">CHANGE_IMG 🕸️</div>
@@ -113,7 +126,7 @@
 
   <!-- ================= KAYDIRINCA ÇIKAN OPSİYONLAR & TELEMETRİ SECTION ================= -->
   <section id="accountSettingsSection" class="services-container account-content-section">
-    
+
     <!-- ACCOUNT TELEMETRY BAR -->
     <div class="telemetry-bar">
       <div class="telemetry-item">
@@ -150,7 +163,8 @@
         <div class="telemetry-val-row">
           <strong class="telemetry-val highlight-green">LIVE</strong>
           <svg class="sparkline" viewBox="0 0 60 18">
-            <path d="M0,12 L10,10 L20,14 L30,4 L40,11 L50,6 L60,8" fill="none" stroke="var(--accent-action)" stroke-width="1.8"/>
+            <path d="M0,12 L10,10 L20,14 L30,4 L40,11 L50,6 L60,8" fill="none" stroke="var(--accent-action)"
+              stroke-width="1.8" />
           </svg>
         </div>
         <div class="telemetry-sub">channel: <code>#user-profile-sync</code></div>
@@ -164,7 +178,7 @@
     </div>
 
     <div class="account-settings-grid">
-      
+
       <!-- 1. Bilgi Düzenleme Kartı -->
       <div class="service-block account-panel-block">
         <div class="block-header">
@@ -173,7 +187,7 @@
         </div>
         <h3>Identity Metadata</h3>
         <p>Update your display name and view system network identifiers.</p>
-        
+
         <form id="profileForm" class="settings-form-layout" onsubmit="return false;">
           <div class="field-row">
             <label>DISPLAY USERNAME</label>
@@ -332,4 +346,5 @@
 
   <script type="module" src="account.js"></script>
 </body>
+
 </html>

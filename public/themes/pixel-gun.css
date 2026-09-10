@@ -1,43 +1,273 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap');
 
 :root[data-theme="pixel-gun"] {
-  --bg-color: #14161d;
-  --panel-bg: #222633;
-  --text-main: #e2e8f0;
-  --text-dim: #717d96;
-  --text-bright: #ffffff;
-  --border-color: #3b4259;
-  
-  --accent-action: #f39c12; /* Armory Gold */
-  --accent-glow: rgba(243, 156, 18, 0.5);
+  --pg-bg: #12141c;
+  --pg-panel: #1e2230;
+  --pg-panel-card: #282e42;
+  --pg-gold: #f1c40f;
+  --pg-gold-glow: rgba(241, 196, 15, 0.4);
+  --pg-gem: #2ecc71;
+  --pg-border-dark: #000000;
+  --pg-border-bevel-light: #485375;
+  --pg-border-bevel-dark: #10121a;
+  --pg-red: #e74c3c;
+  --pg-blue: #3498db;
+
+  --accent-action: #f1c40f;
   --status-ok: #2ecc71;
   --status-err: #e74c3c;
-
-  --grid-line: rgba(243, 156, 18, 0.15);
-  --box-bg-start: #353b4f;
-  --box-bg-end: #1a1d26;
-  --box-border: #f39c12;
-  --box-glow: rgba(0, 0, 0, 0.8);
-  --box-glow-hover: rgba(243, 156, 18, 0.4);
 }
 
 [data-theme="pixel-gun"] body {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 9px;
-  line-height: 1.8;
-  image-rendering: pixelated;
-  background: #14161d;
+  background: #12141c !important;
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 8px !important;
+  line-height: 1.8 !important;
+  image-rendering: pixelated !important;
+  color: #ffffff;
+  overflow-x: hidden;
 }
 
+/* Orijinal HUD & Servisleri Piksel Kutu Stiline Dönüştür */
 [data-theme="pixel-gun"] .service-block,
 [data-theme="pixel-gun"] .telemetry-bar,
-[data-theme="pixel-gun"] .theme-btn {
+[data-theme="pixel-gun"] .gui-user-card-panel,
+[data-theme="pixel-gun"] .theme-btn,
+[data-theme="pixel-gun"] .terminal-scroll-viewport {
   border-radius: 0px !important;
-  background: #222633 !important;
+  background: var(--pg-panel) !important;
   border: 3px solid #000000 !important;
-  box-shadow: inset 3px 3px 0px #424b66, inset -3px -3px 0px #12141c, 4px 4px 0px #000000 !important;
+  box-shadow: inset 3px 3px 0px var(--pg-border-bevel-light),
+              inset -3px -3px 0px var(--pg-border-bevel-dark),
+              4px 4px 0px #000000 !important;
 }
 
-[data-theme="pixel-gun"] .service-block:hover {
-  border-color: #f39c12 !important;
+[data-theme="pixel-gun"] .service-block h3 {
+  font-size: 10px !important;
+  color: var(--pg-gold) !important;
+  text-shadow: 2px 2px 0px #000000;
+}
+
+[data-theme="pixel-gun"] .service-block p {
+  font-size: 7px !important;
+  line-height: 1.6;
+  color: #9aa8c7 !important;
+}
+
+/* --- PIXEL GUN 3D ARMORY & LOBBY HUD --- */
+.pg-showcase-container {
+  max-width: 1200px;
+  margin: 0 auto 30px auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 2;
+  position: relative;
+}
+
+/* 1. ÜST CURRENCY BAR (COINS, GEMS, LEVEL 65) */
+.pg-top-lobby-bar {
+  background: var(--pg-panel);
+  border: 3px solid #000000;
+  box-shadow: inset 3px 3px 0px var(--pg-border-bevel-light), inset -3px -3px 0px var(--pg-border-bevel-dark), 4px 4px 0px #000000;
+  padding: 12px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pg-lobby-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pg-level-badge {
+  background: var(--pg-blue);
+  border: 2px solid #000000;
+  padding: 4px 8px;
+  color: #ffffff;
+  box-shadow: inset 2px 2px 0px rgba(255,255,255,0.4), 2px 2px 0px #000000;
+  font-size: 9px;
+}
+
+.pg-currencies-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pg-currency-pill {
+  background: #11131a;
+  border: 2px solid #000000;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8px;
+}
+
+.pg-currency-pill.coins { color: var(--pg-gold); border-color: var(--pg-gold); }
+.pg-currency-pill.gems { color: var(--pg-gem); border-color: var(--pg-gem); }
+
+/* 2. ARMORY SILAH SEÇİM KUTULARI (PRIMARY, BACKUP, MELEE, SPECIAL, SNIPER, HEAVY) */
+.pg-armory-section {
+  background: var(--pg-panel);
+  border: 3px solid #000000;
+  box-shadow: inset 3px 3px 0px var(--pg-border-bevel-light), inset -3px -3px 0px var(--pg-border-bevel-dark), 4px 4px 0px #000000;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pg-section-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 8px;
+}
+
+.pg-section-title {
+  font-size: 10px;
+  color: var(--pg-gold);
+}
+
+.pg-weapons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.pg-weapon-slot {
+  background: #181b24;
+  border: 2px solid #000000;
+  box-shadow: inset 2px 2px 0px #323a52, inset -2px -2px 0px #0d0e14;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.pg-weapon-slot:hover,
+.pg-weapon-slot.active {
+  border-color: var(--pg-gold);
+  background: #252b3b;
+  transform: scale(1.03);
+}
+
+.pg-slot-type {
+  font-size: 6px;
+  color: var(--pg-gold);
+  align-self: flex-start;
+}
+
+.pg-weapon-icon {
+  font-size: 2.2rem;
+  margin: 4px 0;
+  filter: drop-shadow(2px 2px 0px #000000);
+}
+
+.pg-weapon-name {
+  font-size: 8px;
+  color: #ffffff;
+  text-align: center;
+}
+
+.pg-weapon-grade {
+  font-size: 6px;
+  padding: 2px 4px;
+  background: #e67e22;
+  color: #000;
+  font-weight: 800;
+}
+
+/* 3. SAĞ ALT BOYDAN BOYA GENİŞ HESAP & LOBİ BARI */
+.pg-wide-account-bar {
+  width: 100%;
+  background: var(--pg-panel);
+  border: 3px solid #000000;
+  box-shadow: inset 3px 3px 0px var(--pg-border-bevel-light), inset -3px -3px 0px var(--pg-border-bevel-dark), 4px 4px 0px #000000;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pg-acc-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pg-acc-avatar-box {
+  width: 52px;
+  height: 52px;
+  border: 3px solid #000000;
+  box-shadow: 2px 2px 0px var(--pg-gold);
+  background: #000;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.pg-acc-avatar-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.pg-acc-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pg-acc-name {
+  font-size: 11px;
+  color: var(--pg-gold);
+}
+
+.pg-acc-sub {
+  font-size: 7px;
+  color: #9aa8c7;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pg-acc-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pg-pixel-btn {
+  background: var(--pg-gold);
+  color: #000000;
+  border: 2px solid #000000;
+  box-shadow: inset 2px 2px 0px rgba(255, 255, 255, 0.5), inset -2px -2px 0px rgba(0, 0, 0, 0.4), 2px 2px 0px #000000;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.pg-pixel-btn:hover {
+  transform: translateY(-2px);
+  background: #f39c12;
+}
+
+.pg-pixel-btn.danger {
+  background: var(--pg-red);
+  color: #ffffff;
 }

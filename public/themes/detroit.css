@@ -1,55 +1,441 @@
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Orbitron:wght@600;800;900&display=swap');
 
 :root[data-theme="detroit"] {
-  --bg-image: linear-gradient(rgba(10, 16, 24, 0.88), rgba(4, 8, 14, 0.96)),
-              url('https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=1600&auto=format&fit=crop&q=80');
-  --bg-color: #04080e;
-  --panel-bg: #09131f;
-  --text-main: #b4cce8;
-  --text-dim: #436285;
-  --text-bright: #ffffff;
-  --border-color: #00aaff;
-  
-  --accent-action: #00aaff; /* CyberLife LED Blue */
-  --accent-glow: rgba(0, 170, 255, 0.5);
-  --status-ok: #00aaff;
-  --status-err: #ff3300; /* Deviant Red */
+  --dbh-blue: #00aaff;
+  --dbh-blue-glow: rgba(0, 170, 255, 0.55);
+  --dbh-yellow: #f1c40f;
+  --dbh-red: #ff3300;
+  --dbh-red-glow: rgba(255, 51, 0, 0.6);
+  --dbh-bg: #03070d;
+  --dbh-panel: rgba(6, 14, 24, 0.88);
+  --dbh-glass: rgba(10, 24, 40, 0.7);
+  --dbh-border: rgba(0, 170, 255, 0.35);
+  --dbh-text: #d8e8f8;
+  --dbh-text-dim: #50749c;
 
-  --grid-line: rgba(0, 170, 255, 0.12);
-  --box-bg-start: #0f243a;
-  --box-bg-end: #050e18;
-  --box-border: #00aaff;
-  --box-glow: rgba(0, 170, 255, 0.2);
-  --box-glow-hover: rgba(255, 51, 0, 0.6);
+  --bg-image: linear-gradient(rgba(3, 7, 13, 0.75), rgba(2, 5, 10, 0.94)),
+              url('https://images.steamusercontent.com/ugc/919179616961462392/36CEF2FD97258709AB790DB4932E7CE5527C4B03/?imw=637&imh=358&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=true');
 }
 
 [data-theme="detroit"] body {
-  font-family: 'Rajdhani', sans-serif;
-  background: var(--bg-image) no-repeat center center fixed;
-  background-size: cover;
+  background: var(--bg-image) no-repeat center center fixed !important;
+  background-size: cover !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  color: var(--dbh-text);
+  overflow-x: hidden;
   letter-spacing: 0.5px;
 }
 
-[data-theme="detroit"] .brand-text,
-[data-theme="detroit"] .service-block h3,
-[data-theme="detroit"] .section-label {
-  font-family: 'Rajdhani', sans-serif;
-  text-transform: uppercase;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-}
-
+/* Orijinal Sayfa Kartları (CyberLife UI) */
 [data-theme="detroit"] .service-block,
-[data-theme="detroit"] .telemetry-bar {
-  background: rgba(9, 19, 31, 0.9) !important;
-  border: 1px solid #00aaff !important;
-  border-left: 4px solid #00aaff !important;
-  border-radius: 0px 8px 0px 8px !important;
-  box-shadow: 0 0 15px rgba(0, 170, 255, 0.15) !important;
+[data-theme="detroit"] .telemetry-bar,
+[data-theme="detroit"] .gui-user-card-panel,
+[data-theme="detroit"] .theme-btn {
+  background: var(--dbh-panel) !important;
+  border: 1px solid var(--dbh-border) !important;
+  border-left: 4px solid var(--dbh-blue) !important;
+  border-radius: 0px 10px 0px 10px !important;
+  box-shadow: 0 0 20px rgba(0, 170, 255, 0.18) !important;
+  backdrop-filter: blur(12px) !important;
+  position: relative;
 }
 
 [data-theme="detroit"] .service-block:hover {
-  border-color: #ff3300 !important;
-  border-left-color: #ff3300 !important;
-  box-shadow: 0 0 25px rgba(255, 51, 0, 0.4) !important;
+  border-color: var(--dbh-red) !important;
+  border-left-color: var(--dbh-red) !important;
+  box-shadow: 0 0 30px var(--dbh-red-glow) !important;
+}
+
+[data-theme="detroit"] .service-block h3 {
+  font-family: 'Orbitron', sans-serif !important;
+  font-size: 1.15rem !important;
+  color: #ffffff !important;
+  letter-spacing: 1.5px;
+}
+
+[data-theme="detroit"] .service-block p {
+  font-family: 'Share Tech Mono', monospace !important;
+  font-size: 0.75rem !important;
+  color: var(--dbh-text-dim) !important;
+}
+
+/* --- DETROIT SHOWCASE ANA KONTEYNERİ --- */
+.dbh-showcase-container {
+  max-width: 1200px;
+  margin: 0 auto 30px auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 2;
+  position: relative;
+}
+
+/* 1. CHLOE HOST & CYBERLIFE ÜST HEADER */
+.dbh-chloe-header {
+  background: var(--dbh-panel);
+  border: 1.5px solid var(--dbh-border);
+  border-top: 3px solid var(--dbh-blue);
+  border-radius: 4px;
+  padding: 16px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+
+.dbh-chloe-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dbh-led-ring {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--dbh-blue);
+  box-shadow: 0 0 15px var(--dbh-blue), 0 0 30px var(--dbh-blue);
+  animation: ledPulse 1.8s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+.dbh-led-ring.yellow {
+  background: var(--dbh-yellow);
+  box-shadow: 0 0 15px var(--dbh-yellow), 0 0 30px var(--dbh-yellow);
+}
+
+.dbh-led-ring.red {
+  background: var(--dbh-red);
+  box-shadow: 0 0 15px var(--dbh-red), 0 0 30px var(--dbh-red);
+}
+
+@keyframes ledPulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.75; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+.dbh-chloe-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 1.5px;
+}
+
+.dbh-chloe-dialogue {
+  font-size: 0.85rem;
+  color: var(--dbh-blue);
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.dbh-cyberlife-logo-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: var(--dbh-text-dim);
+  letter-spacing: 3px;
+  text-align: right;
+}
+
+/* 2. KARAKTER SEÇİMİ (CONNOR, MARKUS, KARA) */
+.dbh-character-select-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.dbh-char-card {
+  background: var(--dbh-panel);
+  border: 1.5px solid var(--dbh-border);
+  border-radius: 4px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dbh-char-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--dbh-blue);
+  transition: all 0.25s ease;
+}
+
+.dbh-char-card:hover,
+.dbh-char-card.active {
+  transform: translateY(-5px);
+  border-color: var(--dbh-blue);
+  box-shadow: 0 12px 30px var(--dbh-blue-glow);
+  background: rgba(10, 24, 40, 0.95);
+}
+
+.dbh-char-card.active::before {
+  background: #ffffff;
+  box-shadow: 0 0 10px #ffffff;
+}
+
+.dbh-char-avatar-slot {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid var(--dbh-blue);
+  box-shadow: 0 0 15px var(--dbh-blue-glow);
+  overflow: hidden;
+  background: #000;
+}
+
+.dbh-char-avatar-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dbh-char-info {
+  text-align: center;
+}
+
+.dbh-char-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 1.5px;
+}
+
+.dbh-char-model {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--dbh-blue);
+}
+
+.dbh-char-stats {
+  width: 100%;
+  border-top: 1px solid rgba(0, 170, 255, 0.2);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dbh-stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.dbh-stat-bar-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.dbh-stat-bar-fill {
+  height: 100%;
+  background: var(--dbh-blue);
+  box-shadow: 0 0 8px var(--dbh-blue);
+  transition: width 0.4s ease;
+}
+
+/* 3. DECISION ENGINE (MIND PALACE SECIM ÇARKI) */
+.dbh-mind-palace-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 12, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.dbh-mind-palace-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.dbh-decision-wheel {
+  position: relative;
+  width: 440px;
+  height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dbh-wheel-center {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 2px solid var(--dbh-blue);
+  background: rgba(0, 170, 255, 0.15);
+  box-shadow: 0 0 30px var(--dbh-blue-glow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #ffffff;
+  text-align: center;
+}
+
+.dbh-choice-node {
+  position: absolute;
+  background: rgba(6, 18, 30, 0.95);
+  border: 1.5px solid var(--dbh-blue);
+  box-shadow: 0 0 20px rgba(0, 170, 255, 0.3);
+  padding: 10px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dbh-choice-node:hover {
+  background: var(--dbh-blue);
+  color: #000000;
+  box-shadow: 0 0 30px var(--dbh-blue-glow);
+  transform: scale(1.08);
+}
+
+.dbh-choice-node.top { top: 10px; }
+.dbh-choice-node.bottom { bottom: 10px; }
+.dbh-choice-node.left { left: 0; }
+.dbh-choice-node.right { right: 0; }
+
+.dbh-choice-key {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid #ffffff;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 0.7rem;
+}
+
+/* 4. SAĞ ALT GENİŞ CYBERLIFE HESAP BARI */
+.dbh-wide-account-bar {
+  width: 100%;
+  background: var(--dbh-panel);
+  border: 1.5px solid var(--dbh-border);
+  border-left: 4px solid var(--dbh-blue);
+  border-radius: 4px;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+  gap: 16px;
+}
+
+.dbh-acc-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dbh-avatar-wrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 2px solid var(--dbh-blue);
+  box-shadow: 0 0 15px var(--dbh-blue-glow);
+  overflow: hidden;
+  background: #000;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dbh-avatar-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dbh-acc-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dbh-acc-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 1px;
+}
+
+.dbh-acc-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--dbh-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dbh-acc-sub strong {
+  color: var(--dbh-blue);
+}
+
+.dbh-pixel-btn {
+  background: rgba(0, 170, 255, 0.15);
+  border: 1.5px solid var(--dbh-blue);
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(0, 170, 255, 0.25);
+  transition: all 0.2s ease;
+}
+
+.dbh-pixel-btn:hover {
+  background: var(--dbh-blue);
+  color: #000000;
+  box-shadow: 0 0 25px var(--dbh-blue-glow);
+  transform: translateY(-2px);
+}
+
+.dbh-pixel-btn.danger {
+  border-color: var(--dbh-red);
+  background: rgba(255, 51, 0, 0.15);
+  color: #ff6b6b;
+}
+
+.dbh-pixel-btn.danger:hover {
+  background: var(--dbh-red);
+  color: #ffffff;
+  box-shadow: 0 0 25px var(--dbh-red-glow);
+}
+
+@media (max-width: 900px) {
+  .dbh-character-select-grid { grid-template-columns: 1fr; }
 }

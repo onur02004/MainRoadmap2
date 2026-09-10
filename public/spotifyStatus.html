@@ -1,168 +1,537 @@
-/*DEBUG HER 5 SANIYEDE SPOTIFY NE DINLENIYO DINLER */
-
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spotify Entegrasyonu</title>
+  <title>Spotify Dashboard // Sys-Cluster</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
+  
   <style>
+    :root {
+      --bg-main: #0e0e10;
+      --bg-panel: #18181b;
+      --bg-card: #202024;
+      --bg-card-hover: #27272a;
+      --border-color: #2e2e32;
+      --spotify-green: #1db954;
+      --spotify-green-hover: #1ed760;
+      --text-main: #ffffff;
+      --text-muted: #a1a1aa;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #121212;
-      color: #FFFFFF;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
+      padding: 40px 20px;
     }
 
-    .container {
-      background: #181818;
-      border: 1px solid #282828;
+    .dashboard-container {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* TOP HEADER */
+    .top-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 24px;
-      width: 360px;
-      text-align: center;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      padding: 16px 24px;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-title svg {
+      width: 28px;
+      height: 28px;
+      fill: var(--spotify-green);
     }
 
     .btn-spotify {
-      background-color: #1DB954;
+      background-color: var(--spotify-green);
       color: #000000;
       font-weight: 700;
-      font-size: 14px;
-      border: none;
+      font-size: 13px;
+      font-family: var(--font-mono);
+      border: 1px solid transparent;
       border-radius: 50px;
-      padding: 12px 28px;
+      padding: 10px 20px;
       cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      margin-bottom: 20px;
-      transition: transform 0.2s, background-color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s, background-color 0.2s, border-color 0.2s;
     }
 
     .btn-spotify:hover {
-      background-color: #1ed760;
-      transform: scale(1.04);
+      transform: scale(1.03);
     }
 
-    .card {
-      margin-top: 15px;
-      background: #242424;
+    /* SECTION CARD */
+    .section-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .pulse-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--spotify-green);
+      text-transform: uppercase;
+    }
+
+    .dot-pulse {
+      width: 8px;
+      height: 8px;
+      background-color: var(--spotify-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--spotify-green);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.7; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.7; }
+    }
+
+    /* NOW PLAYING */
+    .now-playing-box {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .album-art-wrap {
+      width: 100px;
+      height: 100px;
       border-radius: 8px;
-      padding: 16px;
-      display: none;
+      overflow: hidden;
+      background-color: var(--bg-card);
+      flex-shrink: 0;
+      border: 1px solid var(--border-color);
     }
 
     .album-art {
-      width: 140px;
-      height: 140px;
-      border-radius: 8px;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
-      margin-bottom: 12px;
+    }
+
+    .track-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
     }
 
     .track-title {
-      font-size: 16px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-decoration: none;
+    }
+
+    .track-title:hover {
+      text-decoration: underline;
+    }
+
+    .track-artist {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .track-album {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: #71717a;
+    }
+
+    .inactive-box {
+      display: none;
+      padding: 20px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* TOP TRACKS TABS */
+    .tabs-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active, .tab-btn:hover {
+      background: #2e2e32;
+      color: #ffffff;
+      border-color: var(--spotify-green);
+    }
+
+    /* TOP TRACKS LIST */
+    .tracks-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .track-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg-card);
+      border: 1px solid transparent;
+      padding: 10px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: inherit;
+      transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+    }
+
+    .track-row:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-color);
+      transform: translateX(4px);
+    }
+
+    .track-rank {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--spotify-green);
+      width: 24px;
+      text-align: center;
+    }
+
+    .track-row-art {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      object-fit: cover;
+    }
+
+    .track-row-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .track-row-title {
+      font-size: 14px;
       font-weight: 600;
-      margin: 0 0 6px 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .track-artist {
-      font-size: 14px;
-      color: #B3B3B3;
-      margin: 0;
+    .track-row-artist {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .status-badge {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      color: #1DB954;
-      text-transform: uppercase;
-      margin-bottom: 10px;
+    .spotify-external-icon {
+      color: #71717a;
+      font-size: 16px;
+      padding-right: 4px;
     }
 
-    .inactive-text {
-      color: #B3B3B3;
-      font-size: 14px;
-      margin: 10px 0;
+    .track-row:hover .spotify-external-icon {
+      color: var(--spotify-green);
+    }
+
+    .loader {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 20px;
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h2>Müzik Durumu</h2>
-    
-    <!-- 1. Giriş Yapma Butonu -->
-    <a href="/api/spotify/login" class="btn-spotify">
-      Spotify ile Bağlan
-    </a>
+  <div class="dashboard-container">
 
-    <!-- 2. Şarkı Bilgisi Kartı -->
-    <div id="player-card" class="card">
-      <span class="status-badge" id="status-text">ŞU AN ÇALIYOR</span>
-      <br>
-      <img id="album-art" class="album-art" src="" alt="Album Art">
-      <p id="track-title" class="track-title">-</p>
-      <p id="track-artist" class="track-artist">-</p>
-    </div>
+    <!-- TOP HEADER -->
+    <header class="top-header">
+      <div class="brand-title">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.495 17.307c-.217.355-.677.469-1.032.253-2.827-1.728-6.386-2.119-10.58-1.161-.403.092-.806-.16-.898-.564-.092-.404.16-.807.564-.899 4.606-1.053 8.547-.604 11.693 1.339.355.216.469.676.253 1.032zm1.468-3.261c-.273.443-.855.586-1.298.313-3.236-1.99-8.169-2.564-11.995-1.401-.497.152-1.026-.135-1.178-.632-.152-.497.135-1.026.632-1.178 4.377-1.328 9.816-.688 13.526 1.599.444.273.587.856.313 1.299zm.135-3.394C15.22 8.358 8.828 8.148 5.138 9.269c-.6.182-1.236-.164-1.418-.764-.182-.6.164-1.236.764-1.418 4.237-1.286 11.298-1.042 15.754 1.605.54.321.716 1.025.396 1.565-.321.54-1.024.717-1.536.395z"/>
+        </svg>
+        <span>SPOTIFY_NODE // TELEMETRY</span>
+      </div>
 
-    <p id="empty-state" class="inactive-text">Bağlandıktan sonra çalan şarkı burada gözükecektir.</p>
+      <button id="btnConnect" class="btn-spotify" onclick="handleConnect()">
+        <span id="btnConnectText">Kontrol Ediliyor...</span>
+      </button>
+    </header>
+
+    <!-- NOW PLAYING CARD -->
+    <section class="section-card">
+      <div class="section-header">
+        <span>&gt; CURRENT_STREAM_STATUS</span>
+        <div class="pulse-badge" id="liveBadge" style="display: none;">
+          <span class="dot-pulse"></span> CANLI
+        </div>
+      </div>
+
+      <!-- Çalan Şarkı -->
+      <div class="now-playing-box" id="nowPlayingBox" style="display: none;">
+        <div class="album-art-wrap">
+          <img id="nowAlbumArt" class="album-art" src="" alt="Album Art">
+        </div>
+        <div class="track-info">
+          <a id="nowTrackTitle" class="track-title" href="#" target="_blank">-</a>
+          <p id="nowTrackArtist" class="track-artist">-</p>
+          <p id="nowTrackAlbum" class="track-album">-</p>
+        </div>
+      </div>
+
+      <!-- Çalmadığında Gösterilecek Kutu -->
+      <div id="nowPlayingEmpty" class="inactive-box" style="display: block;">
+        Şu anda Spotify üzerinde çalan bir şarkı yok veya hesap bağlı değil.
+      </div>
+    </section>
+
+    <!-- TOP TRACKS CARD -->
+    <section class="section-card">
+      <div class="section-header">
+        <span>&gt; USER_TOP_TRACKS</span>
+        <span id="topTracksCount" style="color: var(--spotify-green);">TOP 10</span>
+      </div>
+
+      <!-- Zaman Filtresi Sekmeleri -->
+      <div class="tabs-row">
+        <button class="tab-btn active" onclick="changeTimeRange('short_term', this)">Son 4 Hafta</button>
+        <button class="tab-btn" onclick="changeTimeRange('medium_term', this)">Son 6 Ay</button>
+        <button class="tab-btn" onclick="changeTimeRange('long_term', this)">Tüm Zamanlar</button>
+      </div>
+
+      <!-- Liste -->
+      <div class="tracks-grid" id="topTracksList">
+        <div class="loader">Dinleme geçmişi yükleniyor...</div>
+      </div>
+    </section>
+
   </div>
 
   <script>
-    const playerCard = document.getElementById('player-card');
-    const emptyState = document.getElementById('empty-state');
-    const albumArt = document.getElementById('album-art');
-    const trackTitle = document.getElementById('track-title');
-    const trackArtist = document.getElementById('track-artist');
+    let activeTimeRange = 'short_term';
 
-    async function fetchNowPlaying() {
+    function getToken() {
+      return localStorage.getItem('token');
+    }
+
+    // 1. Spotify Bağlantı Durumu Kontrolü
+    async function checkSpotifyConnection() {
+      const token = getToken();
+      const btnText = document.getElementById('btnConnectText');
+      const btn = document.getElementById('btnConnect');
+
+      if (!token) {
+        btnText.innerText = 'Giriş Yap';
+        return;
+      }
+
       try {
-        const response = await fetch('/api/spotify/now-playing');
-        
-        // Henüz giriş yapılmamışsa veya hata varsa
-        if (!response.ok) {
-          playerCard.style.display = 'none';
-          emptyState.style.display = 'block';
-          emptyState.innerText = 'Lütfen önce yukarıdaki butondan Spotify hesabınızı bağlayın.';
-          return;
-        }
+        const res = await fetch('/api/spotify/status', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
 
-        const data = await response.json();
-
-        if (data.isPlaying) {
-          albumArt.src = data.albumArt || '';
-          trackTitle.innerText = data.title;
-          trackArtist.innerText = data.artist;
-
-          playerCard.style.display = 'block';
-          emptyState.style.display = 'none';
+        if (res.ok && data.connected) {
+          btnText.innerText = `● Bağlı (${data.account?.displayName || 'Spotify'})`;
+          btn.style.backgroundColor = '#27272a';
+          btn.style.color = '#1db954';
+          btn.style.borderColor = '#1db954';
         } else {
-          playerCard.style.display = 'none';
-          emptyState.style.display = 'block';
-          emptyState.innerText = 'Şu anda Spotify üzerinde çalan bir şarkı yok.';
+          btnText.innerText = 'Spotify ile Bağlan';
+          btn.style.backgroundColor = 'var(--spotify-green)';
+          btn.style.color = '#000000';
+          btn.style.borderColor = 'transparent';
         }
       } catch (err) {
-        console.error('Veri çekilemedi:', err);
+        btnText.innerText = 'Spotify ile Bağlan';
       }
     }
 
-    // Sayfa açıldığında ilk kontrolü yap
-    fetchNowPlaying();
+    // 2. Spotify OAuth Linki Al ve Yönlendir
+    async function handleConnect() {
+      const token = getToken();
+      if (!token) {
+        alert('Lütfen önce sisteme giriş yapın.');
+        window.location.href = '/';
+        return;
+      }
 
-    // Her 5 saniyede bir otomatik olarak şarkıyı güncelle (Polling)
-    setInterval(fetchNowPlaying, 5000);
+      try {
+        const res = await fetch('/api/spotify/login-url', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (res.ok && data.url) {
+          window.location.href = data.url;
+        } else {
+          alert(data.message || 'Spotify yetkilendirme linki alınamadı.');
+        }
+      } catch (err) {
+        console.error('Spotify login hatası:', err);
+      }
+    }
+
+    // 3. Anlık Çalan Şarkı Bilgisini Çek
+    async function fetchNowPlaying() {
+      const token = getToken();
+      if (!token) return;
+
+      try {
+        const res = await fetch('/api/spotify/now-playing', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await res.json();
+        const box = document.getElementById('nowPlayingBox');
+        const empty = document.getElementById('nowPlayingEmpty');
+        const badge = document.getElementById('liveBadge');
+
+        if (res.ok && data.isPlaying) {
+          document.getElementById('nowAlbumArt').src = data.albumArt || '';
+          const titleEl = document.getElementById('nowTrackTitle');
+          titleEl.innerText = data.title;
+          titleEl.href = data.songUrl || '#';
+          document.getElementById('nowTrackArtist').innerText = data.artist;
+          document.getElementById('nowTrackAlbum').innerText = data.album ? `ALBÜM: ${data.album}` : '';
+
+          box.style.display = 'flex';
+          empty.style.display = 'none';
+          badge.style.display = 'inline-flex';
+        } else {
+          box.style.display = 'none';
+          empty.style.display = 'block';
+          badge.style.display = 'none';
+        }
+      } catch (err) {
+        console.error('Now playing hatası:', err);
+      }
+    }
+
+    // 4. En Çok Dinlenen Şarkıları Çek
+    async function fetchTopTracks() {
+      const token = getToken();
+      if (!token) return;
+
+      const container = document.getElementById('topTracksList');
+
+      try {
+        const res = await fetch(`/api/spotify/top-tracks?time_range=${activeTimeRange}&limit=10`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.topTracks && data.topTracks.length > 0) {
+          container.innerHTML = data.topTracks.map(track => `
+            <a href="${track.url}" target="_blank" class="track-row">
+              <span class="track-rank">${track.rank}</span>
+              <img class="track-row-art" src="${track.albumArt}" alt="${track.title}" />
+              <div class="track-row-details">
+                <div class="track-row-title">${track.title}</div>
+                <div class="track-row-artist">${track.artist}</div>
+              </div>
+              <span class="spotify-external-icon">&#8599;</span>
+            </a>
+          `).join('');
+        } else {
+          container.innerHTML = `<div class="loader">Bu periyot için dinleme geçmişi bulunamadı.</div>`;
+        }
+      } catch (err) {
+        container.innerHTML = `<div class="loader">Veriler yüklenirken bir hata oluştu.</div>`;
+        console.error('Top tracks hatası:', err);
+      }
+    }
+
+    // Tab Filtresi Değiştirme
+    function changeTimeRange(range, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeTimeRange = range;
+      document.getElementById('topTracksList').innerHTML = `<div class="loader">Yükleniyor...</div>`;
+      fetchTopTracks();
+    }
+
+    // Başlangıç Yüklemeleri
+    document.addEventListener('DOMContentLoaded', () => {
+      checkSpotifyConnection();
+      fetchNowPlaying();
+      fetchTopTracks();
+
+      // Çalan şarkıyı her 5 saniyede bir güncelle (polling)
+      setInterval(fetchNowPlaying, 5000);
+    });
   </script>
 </body>
 </html>

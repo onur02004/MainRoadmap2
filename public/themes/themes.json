@@ -38,13 +38,14 @@
     "module": "fnaf-glitch.js"
   },
   "life-is-strange": {
-    "name": "LIFE IS STRANGE",
+    "name": "LIFE IS STRANGE (ARCADIA BAY)",
     "category": "retro",
-    "hasCli": false,
+    "hasCli": true,
     "showGrid": false,
-    "dotColor": "#4fa3d1",
-    "statusText": "THIS ACTION WILL HAVE CONSEQUENCES",
-    "stylesheet": "themes/life-is-strange.css"
+    "dotColor": "#2ba5ff",
+    "statusText": "ARCADIA BAY // REWIND TIME ACTIVE [R]",
+    "stylesheet": "themes/life-is-strange.css",
+    "module": "life-is-strange.js"
   },
   "friends": {
     "name": "FRIENDS (CENTRAL PERK)",
@@ -69,11 +70,12 @@
   "rick-astley": {
     "name": ":)",
     "category": "retro",
-    "hasCli": false,
-    "showGrid": false,
+    "hasCli": true,
+    "showGrid": true,
     "dotColor": "#ff6b8b",
     "statusText": "NEVER GONNA LET YOU DOWN",
-    "stylesheet": "themes/rick-astley.css"
+    "stylesheet": "themes/rick-astley.css",
+    "module": "rick-astley-stream.js"
   },
   "undertale": {
     "name": "UNDERTALE (DETERMINATION)",
@@ -117,20 +119,22 @@
   "aot": {
     "name": "ATTACK ON TITAN (SCOUT)",
     "category": "retro",
-    "hasCli": false,
+    "hasCli": true,
     "showGrid": false,
-    "dotColor": "#2f5233",
+    "dotColor": "#3b5e3f",
     "statusText": "WALL ROSE // SHINZOU WO SASAGEYO",
-    "stylesheet": "themes/aot.css"
+    "stylesheet": "themes/aot.css",
+    "module": "aot-regiment.js"
   },
   "weingarten": {
-    "name": "WEINGARTEN (BASILIKA)",
+    "name": "WEINGARTEN (RWU & BASILIKA)",
     "category": "retro",
-    "hasCli": false,
+    "hasCli": true,
     "showGrid": false,
     "dotColor": "#c59b27",
     "statusText": "ST. MARTIN BASILIKA // RWU CAMPUS",
-    "stylesheet": "themes/weingarten.css"
+    "stylesheet": "themes/weingarten.css",
+    "module": "weingarten-campus.js"
   },
   "wuerzburg": {
     "name": "WÜRZBURG (RESIDENZ & WEIN)",
@@ -152,14 +156,14 @@
     "module": "winxp-desktop.js"
   },
   "minecraft": {
-    "name": "MINECRAFT (8-BIT)",
+    "name": "MINECRAFT",
     "category": "retro",
-    "hasCli": false,
+    "hasCli": true,
     "showGrid": true,
     "dotColor": "#5b8731",
-    "statusText": "SERVER: 20.0 TPS",
+    "statusText": "JUKEBOX: C418 // PLAYING AT MIDPOINT",
     "stylesheet": "themes/minecraft.css",
-    "module": "minecraft-mining.js"
+    "module": "minecraft-theme.js"
   },
   "roblox": {
     "name": "ROBLOX (CLASSIC STUDIO)",
@@ -191,22 +195,24 @@
     "module": "among-us-task.js"
   },
   "gta-sa": {
-    "name": "GTA SAN ANDREAS (GROVE ST)",
+    "name": "GTA SAN ANDREAS",
     "category": "retro",
-    "hasCli": false,
-    "showGrid": false,
+    "hasCli": true,
+    "showGrid": true,
     "dotColor": "#2d8a4e",
     "statusText": "RESPECT + // MISSION PASSED",
-    "stylesheet": "themes/gta-sa.css"
+    "stylesheet": "themes/gta-sa.css",
+    "module": "gta-san-andreas.js"
   },
   "pixel-gun": {
-    "name": "PIXEL GUN 3D",
+    "name": "PIXEL GUN 3D (ARMORY)",
     "category": "retro",
-    "hasCli": false,
+    "hasCli": true,
     "showGrid": true,
     "dotColor": "#f39c12",
-    "statusText": "ARMORY: FAST DEATH // GEMS: 250",
-    "stylesheet": "themes/pixel-gun.css"
+    "statusText": "ARMORY: FAST DEATH // GEMS: 380",
+    "stylesheet": "themes/pixel-gun.css",
+    "module": "pixel-gun-lobby.js"
   },
   "the-sims": {
     "name": "THE SIMS (PLUMBOB)",
@@ -224,7 +230,8 @@
     "showGrid": true,
     "dotColor": "#00e5ff",
     "statusText": "EYWA LINK: SYNCHRONIZED",
-    "stylesheet": "themes/avatar.css"
+    "stylesheet": "themes/avatar.css",
+    "module": "avatar-pandora.js"
   },
   "macos-finder": {
     "name": "MACOS (FINDER & PHOTO BOOTH)",
@@ -237,13 +244,14 @@
     "module": "macos-finder.js"
   },
   "detroit": {
-    "name": "DETROIT: BECOME HUMAN (CYBERLIFE)",
+    "name": "DETROIT: BECOME HUMAN",
     "category": "cli",
     "hasCli": true,
     "showGrid": true,
     "dotColor": "#00aaff",
-    "statusText": "SOFTWARE INSTABILITY ▲ // LED: BLUE",
-    "stylesheet": "themes/detroit.css"
+    "statusText": "CYBERLIFE: RK800 // INSTABILITY: 28%",
+    "stylesheet": "themes/detroit.css",
+    "module": "detroit-become-human.js"
   },
   "beyond-two-souls": {
     "name": "BEYOND: TWO SOULS (AIDEN LINK)",
@@ -263,7 +271,8 @@
     "statusText": "ROCKPORT PD // PURSUIT ACTIVE",
     "stylesheet": "themes/nfs-most-wanted.css",
     "module": "nfs-most-wanted.js"
-  },"nfs-hot-pursuit": {
+  },
+  "nfs-hot-pursuit": {
     "name": "NFS HOT PURSUIT REMASTERED",
     "category": "retro",
     "hasCli": true,
@@ -282,5 +291,25 @@
     "statusText": "BAYVIEW TUNING // RACHEL 350Z // NEON READY",
     "stylesheet": "themes/nfs-underground-2.css",
     "module": "nfs-underground-2.js"
+  },
+  "obsession": {
+    "name": "OBSESSION (2025 SOUNDTRACK)",
+    "category": "cinema",
+    "hasCli": true,
+    "showGrid": true,
+    "dotColor": "#ff0f3b",
+    "statusText": "OST: CARTER BURWELL // CRITICAL: 84%",
+    "stylesheet": "themes/obsession.css",
+    "module": "obsession-cinema.js"
+  },
+  "ps5": {
+    "name": "PLAYSTATION 5 (DUALSENSE)",
+    "category": "retro",
+    "hasCli": false,
+    "showGrid": false,
+    "dotColor": "#0070d1",
+    "statusText": "PLAY HAS NO LIMITS // PS5 READY",
+    "stylesheet": "themes/ps5.css",
+    "module": "ps5-experience.js"
   }
 }

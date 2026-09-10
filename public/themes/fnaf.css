@@ -1,3 +1,4 @@
+/* themes/fnaf.css */
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 :root[data-theme="fnaf"] {
@@ -36,6 +37,13 @@
   overflow-x: hidden;
 }
 
+/* CLI & Terminal Alanını Yukarı Kaydırma (Çakışmayı Önler) */
+[data-theme="fnaf"] .terminal-scroll-viewport,
+[data-theme="fnaf"] .interactive-shell-window,
+[data-theme="fnaf"] .service-grid-layout {
+  margin-bottom: 75px !important;
+}
+
 /* CRT Scanlines */
 [data-theme="fnaf"] body::before {
   content: " ";
@@ -49,7 +57,96 @@
   z-index: 998;
 }
 
-/* --- FNAF GLITCH & OVERLAY SİSTEMİ --- */
+/* --- SOL ÜSTTEKİ KOMPAKT VE ŞIK AUDIO KASET HUD --- */
+.fnaf-audio-hud {
+  position: fixed;
+  top: 18px;
+  left: 20px;
+  background: rgba(10, 8, 8, 0.94);
+  border: 1.5px solid #ffffff;
+  border-left: 3px solid #ff2222;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.85);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1200;
+  backdrop-filter: blur(8px);
+}
+
+.fnaf-audio-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fnaf-audio-label {
+  font-size: 0.75rem;
+  color: #ff2222;
+  letter-spacing: 1.5px;
+}
+
+.fnaf-audio-title {
+  font-size: 1.05rem;
+  color: #ffffff;
+  text-shadow: 0 0 6px #ffffff;
+  max-width: 190px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fnaf-audio-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fnaf-audio-btn {
+  background: #181414;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+  font-family: 'VT323', monospace;
+  font-size: 1.05rem;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fnaf-audio-btn:hover {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 0 10px #ffffff;
+}
+
+.fnaf-audio-btn.active {
+  background: #3bf17a;
+  color: #000000;
+  border-color: #3bf17a;
+  box-shadow: 0 0 10px #3bf17a;
+}
+
+.fnaf-vol-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 60px;
+  height: 4px;
+  background: #252020;
+  border: 1px solid #777777;
+  outline: none;
+}
+
+.fnaf-vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: 14px;
+  background: #ff2222;
+  border: 1px solid #ffffff;
+  cursor: pointer;
+}
+
+/* --- NOISE & GLITCH KATMANI --- */
 .fnaf-noise-canvas {
   position: fixed;
   inset: 0;
@@ -60,7 +157,6 @@
   z-index: 997;
 }
 
-/* Freddy Twitch Frame (Ani Ekran Bozulması) */
 .fnaf-twitch-frame {
   position: fixed;
   inset: 0;
@@ -75,7 +171,6 @@
   background: radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.18) 0%, rgba(0,0,0,0.8) 80%);
 }
 
-/* Ekran Titreme / RGB Split Animasyonu */
 body.fnaf-screen-glitch {
   animation: fnafTwitchGlitch 0.12s infinite;
   filter: contrast(160%) brightness(120%);
@@ -88,36 +183,38 @@ body.fnaf-screen-glitch {
   100% { transform: translate(0, 0) skewX(0deg); }
 }
 
-/* --- FNAF 12 AM & POWER HUD (SOL ALT) --- */
+/* SOL ALT POWER HUD (Terminal ile çakışmayacak zarif konum) */
 .fnaf-power-hud {
   position: fixed;
-  bottom: 24px;
-  left: 30px;
+  bottom: 35px;
+  left: 20px;
   display: flex;
   flex-direction: column;
   gap: 2px;
   z-index: 100;
   pointer-events: none;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .fnaf-time-display {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: #ffffff;
   text-shadow: 2px 2px 0px #000000;
 }
 
 .fnaf-night-tag {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #888888;
 }
 
 .fnaf-battery-box {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 6px;
-  font-size: 0.85rem;
+  gap: 2px;
+  font-size: 0.8rem;
   color: #ffffff;
 }
 
@@ -125,25 +222,25 @@ body.fnaf-screen-glitch {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
 }
 
 .fnaf-usage-bar {
-  width: 10px;
-  height: 14px;
+  width: 8px;
+  height: 12px;
   background: #3bf17a;
   box-shadow: 0 0 6px #3bf17a;
 }
 
-/* --- MONİTÖR FLIP ÇUBUĞU (ALT ORTA) --- */
+/* MONİTÖR FLIP ÇUBUĞU (ALT ORTA) */
 .fnaf-monitor-flip-bar {
   position: fixed;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 320px;
-  height: 28px;
-  background: rgba(15, 12, 12, 0.9);
+  width: 280px;
+  height: 26px;
+  background: rgba(15, 12, 12, 0.95);
   border: 2px solid #ffffff;
   border-bottom: none;
   display: flex;
@@ -157,7 +254,7 @@ body.fnaf-screen-glitch {
 .fnaf-monitor-flip-bar:hover {
   background: #ffffff;
   color: #000000;
-  box-shadow: 0 0 20px #ffffff;
+  box-shadow: 0 0 15px #ffffff;
 }
 
 .fnaf-flip-text {
@@ -166,18 +263,18 @@ body.fnaf-screen-glitch {
   letter-spacing: 2px;
 }
 
-/* --- GÜVENLİK KAMERASI GÖRÜNÜMÜ (CAM VIEW) --- */
+/* GÜVENLİK KAMERASI MODALI & HIZLI ÇIKIŞ BUTONU */
 .fnaf-cam-view {
   position: fixed;
-  inset: 20px;
-  background: rgba(5, 5, 8, 0.94);
-  border: 4px solid #ffffff;
-  z-index: 102;
+  inset: 16px;
+  background: rgba(5, 5, 8, 0.96);
+  border: 3px solid #ffffff;
+  z-index: 2000;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 24px;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.95);
+  padding: 20px;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.98);
   animation: camOpenStatic 0.15s ease-out;
 }
 
@@ -189,8 +286,27 @@ body.fnaf-screen-glitch {
 .fnaf-cam-header {
   display: flex;
   justify-content: space-between;
-  font-size: 1.2rem;
+  align-items: center;
+  font-size: 1.25rem;
   color: #ffffff;
+}
+
+.fnaf-cam-close-btn {
+  background: #ff2222;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  font-family: 'VT323', monospace;
+  font-size: 1.15rem;
+  padding: 4px 12px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 34, 34, 0.6);
+  transition: all 0.15s ease;
+}
+
+.fnaf-cam-close-btn:hover {
+  background: #ffffff;
+  color: #ff2222;
+  transform: scale(1.05);
 }
 
 .fnaf-rec-dot {
@@ -200,19 +316,19 @@ body.fnaf-screen-glitch {
 
 .fnaf-cam-map {
   position: absolute;
-  bottom: 40px;
-  right: 40px;
+  bottom: 30px;
+  right: 30px;
   display: grid;
-  grid-template-columns: repeat(2, 80px);
+  grid-template-columns: repeat(2, 85px);
   gap: 8px;
 }
 
 .fnaf-cam-btn {
   background: #151515;
-  border: 2px solid #ffffff;
+  border: 1.5px solid #ffffff;
   color: #ffffff;
   font-family: 'VT323', monospace;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   padding: 6px;
   cursor: pointer;
 }

@@ -10,6 +10,8 @@ import viewRoutes from './routes/viewRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import spotifyRoutes from './routes/spotifyRoutes.js';
 import themeRoutes from './routes/themeRoutes.js';
+import serviceRoutes from './routes/serviceRoutes.js';
+import debugRoutes from './routes/debugRoutes.js';
 
 const app = express();
 
@@ -30,7 +32,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/spotify', spotifyRoutes);
 app.use('/api/themes', themeRoutes);
 app.use('/api/avatars', avatarRoutes);
-
+app.use('/api/services', serviceRoutes);
+app.use('/api/debug', debugRoutes);
 
 
 

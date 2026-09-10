@@ -19,8 +19,9 @@ const getBasicAuthHeader = () => {
 
 /**
  * Kullanıcıyı yönlendireceğimiz Spotify OAuth URL'ini üretir.
+ * State parametresi ile giriş yapan kullanıcı ID'sini aktarıyoruz.
  */
-export const getAuthorizeURL = () => {
+export const getAuthorizeURL = (state = '') => {
   const { clientId, redirectUri } = getClientCredentials();
 
   const scopes = [
@@ -36,7 +37,8 @@ export const getAuthorizeURL = () => {
     client_id: clientId,
     scope: scopes,
     redirect_uri: redirectUri,
-    show_dialog: 'true'
+    show_dialog: 'true',
+    ...(state && { state })
   });
 
   return `https://accounts.spotify.com/authorize?${params.toString()}`;
@@ -84,6 +86,20 @@ export const refreshAccessToken = async (refreshToken) => {
 };
 
 /**
+ * Giriş yapan kullanıcının temel Spotify profil bilgilerini getirir.
+ */
+export const getUserProfile = async (accessToken) => {
+  const res = await fetch('https://api.spotify.com/v1/me', {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    }
+  });
+
+  if (!res.ok) return null;
+  return await res.json();
+};
+
+/**
  * O an çalan şarkı bilgisini çeker.
  */
 export const getCurrentlyPlaying = async (accessToken) => {
@@ -93,8 +109,8 @@ export const getCurrentlyPlaying = async (accessToken) => {
     }
   });
 
-  // Şarkı çalmıyorsa Spotify 204 No Content döner
-  if (res.status === 204 || res.status > 400) {
+  // Şarkı çalmıyorsa veya içerik yoksa 204 döner
+  if (res.status === 204 || res.status >= 400) {
     return null;
   }
 
@@ -103,8 +119,6 @@ export const getCurrentlyPlaying = async (accessToken) => {
 
 /**
  * Kullanıcının en çok dinlediği şarkıları çeker.
- * @param {string} timeRange - 'short_term' (4 hafta), 'medium_term' (6 ay), 'long_term' (tüm zamanlar)
- * @param {number} limit - Kaç adet şarkı getirileceği (max: 50)
  */
 export const getTopTracks = async (accessToken, timeRange = 'medium_term', limit = 10) => {
   const res = await fetch(`https://api.spotify.com/v1/me/top/tracks?limit=${limit}&time_range=${timeRange}`, {
@@ -112,6 +126,10 @@ export const getTopTracks = async (accessToken, timeRange = 'medium_term', limit
       'Authorization': `Bearer ${accessToken}`
     }
   });
+
+  if (!res.ok) {
+    return { items: [] };
+  }
 
   return await res.json();
 };
