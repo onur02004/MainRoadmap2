@@ -104,10 +104,102 @@ const TRACK_DATABASE = {
     vibe: 'Dance Pop',
     trivia: 'Global listeleri sallayan dans marşı.',
     lyrics: [{ time: 10, text: 'Every time you look at me, I go hot...', active: true }]
+  },
+  maraton: {
+    title: 'Maraton',
+    artist: 'Ati242',
+    cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s',
+    tempo: '140 BPM',
+    key: 'F Minor',
+    energy: '91%',
+    vibe: 'Turkish Drill / Rap',
+    trivia: 'Ati242 nin en popüler yüksek enerjili drill parçalarından biri.',
+    lyrics: [{ time: 30, text: 'Bu bir maraton, durmak yok...', active: true }]
   }
 };
 
 let currentTrackKey = 'rebel';
+
+/* ==============================================================
+   SPA (SINGLE PAGE APPLICATION) YÖNETİMİ & SHARE TRACK WIZARD
+   ============================================================== */
+function initSPA() {
+  const links = document.querySelectorAll('.nav-menu-list .nav-link');
+  
+  links.forEach(link => {
+    link.addEventListener('click', (e) => {
+      const href = link.getAttribute('href');
+      
+      if (href && href.startsWith('#')) {
+        e.preventDefault();
+        
+        // Menü aktif sınıfı güncelle
+        links.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        
+        // Sayfaları gizle
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+        
+        if (href === '#share') {
+          document.getElementById('view-share')?.classList.add('active');
+          window.resetShareWizard();
+        } else if (href === '#home') {
+          document.getElementById('view-home')?.classList.add('active');
+        } else {
+          // Diğer menüler placeholder olduğundan Home'a düşür
+          document.getElementById('view-home')?.classList.add('active');
+        }
+      }
+    });
+  });
+}
+
+// 1. Adıma Dönüş / Sıfırlama
+window.resetShareWizard = function() {
+  document.getElementById('step-1-search')?.classList.add('active');
+  document.getElementById('step-2-settings')?.classList.remove('active');
+  const searchInput = document.getElementById('shareSearchInput');
+  if (searchInput) searchInput.value = '';
+};
+
+// 1. Adımdan Şarkı Seçildiğinde 2. Adıma Geçiş
+window.selectTrackForShare = function(trackKey) {
+  const track = TRACK_DATABASE[trackKey] || TRACK_DATABASE['rebel'];
+  
+  const imgEl = document.getElementById('selShareImg');
+  const titleEl = document.getElementById('selShareTitle');
+  const artistEl = document.getElementById('selShareArtist');
+
+  if (imgEl) imgEl.src = track.cover;
+  if (titleEl) titleEl.textContent = track.title;
+  if (artistEl) artistEl.textContent = track.artist;
+  
+  // Adım geçişi
+  document.getElementById('step-1-search')?.classList.remove('active');
+  document.getElementById('step-2-settings')?.classList.add('active');
+};
+
+// Şu Anda Çalan Parçayı Seçme Butonu
+window.shareCurrentlyPlaying = function() {
+  window.selectTrackForShare(currentTrackKey || 'rebel');
+};
+
+// 2. Adım Sonunda Paylaşımı Tamamlama
+window.submitShare = function() {
+  const title = document.getElementById('selShareTitle')?.textContent || 'Şarkı';
+  const highlight = document.getElementById('shareHighlightInput')?.value || '';
+  const comment = document.getElementById('shareCommentInput')?.value || '';
+  const privacy = document.getElementById('sharePrivacySelect')?.value || 'friends';
+
+  alert(`"${title}" başarıyla paylaşıldı!\n\nHighlight: ${highlight || 'Yok'}\nYorum: ${comment || 'Yok'}\nGizlilik: ${privacy}\n\n(Backend hazır olduğunda burası API'ye POST isteği atacaktır)`);
+
+  // Formu temizle ve Home'a geri dön
+  if (document.getElementById('shareHighlightInput')) document.getElementById('shareHighlightInput').value = '';
+  if (document.getElementById('shareCommentInput')) document.getElementById('shareCommentInput').value = '';
+  
+  document.querySelector('.nav-link[href="#home"]')?.click();
+};
+
 
 /* 1. SPOTIFY AUTH */
 async function initSpotifyAuth() {
@@ -548,7 +640,7 @@ window.playToDock = function(title, artist, coverUrl, trackKey = 'rebel') {
   }
 };
 
-/* 10. SCROLL ANİMASYONU (PÜRÜZSÜZ GEÇİŞ) */
+/* 10. SCROLL ANİMASYONU */
 function initScrollMorphAnimations() {
   const scrollContainer = document.getElementById('feedScrollContainer');
   const friendsStrip = document.getElementById('friendsListeningStrip');
@@ -639,117 +731,11 @@ function initRatingSystemListeners() {
 
 /* INITIALIZATION */
 document.addEventListener('DOMContentLoaded', () => {
+  initSPA();
   initSpotifyAuth();
   fetchFriendsActivity();
   fetchMyNowPlaying();
-  initCompanionTabs();// songshare.js
-
-const TRACK_DATABASE = {
-  rebel: {
-    title: 'Rebel Yell',
-    artist: 'Billy Idol',
-    cover: 'https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352'
-  },
-  skyfull: {
-    title: 'A Sky Full of Stars',
-    artist: 'Coldplay',
-    cover: 'https://i.scdn.co/image/ab67616d00001e028ff7c3580d429c8212b9a3b6'
-  },
-  everlong: {
-    title: 'Everlong',
-    artist: 'Foo Fighters',
-    cover: 'https://i1.sndcdn.com/artworks-000079984264-e8xxju-t500x500.jpg'
-  },
-  maraton: {
-    title: 'Maraton',
-    artist: 'Ati242',
-    cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s'
-  }
-};
-
-let currentTrackKey = 'rebel';
-
-window.playToDock = function(title, artist, coverUrl, trackKey = 'rebel') {
-  currentTrackKey = trackKey;
-  const coverImg = document.getElementById('playerCoverImg');
-  const trackTitle = document.getElementById('playerTrackTitle');
-  const trackArtist = document.getElementById('playerTrackArtist');
-
-  if (coverImg && coverUrl) coverImg.src = coverUrl;
-  if (trackTitle) trackTitle.textContent = title;
-  if (trackArtist) trackArtist.textContent = artist;
-};
-
-/* ==============================================
-   SPA ROUTING & SHARE PAGE LOGIC
-   ============================================== */
-function initSPA() {
-  const links = document.querySelectorAll('.nav-menu-list .nav-link');
-  
-  links.forEach(link => {
-    link.addEventListener('click', (e) => {
-      const href = link.getAttribute('href');
-      
-      if(href.startsWith('#')) {
-        e.preventDefault();
-        
-        // Menü aktif durumunu güncelle
-        links.forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-        
-        // Tüm görünüm bölümlerini gizle
-        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-        
-        // Hedef sayfayı göster
-        if (href === '#share') {
-          document.getElementById('view-share').classList.add('active');
-          resetShareWizard();
-        } else if (href === '#home') {
-          document.getElementById('view-home').classList.add('active');
-        } else {
-          // Diğer menüler yapım aşamasında, default home göster
-          document.getElementById('view-home').classList.add('active');
-        }
-      }
-    });
-  });
-}
-
-window.resetShareWizard = function() {
-  document.getElementById('step-1-search').classList.add('active');
-  document.getElementById('step-2-settings').classList.remove('active');
-  document.getElementById('shareSearchInput').value = '';
-};
-
-window.selectTrackForShare = function(trackKey) {
-  const track = TRACK_DATABASE[trackKey] || TRACK_DATABASE['rebel'];
-  
-  // Ayarlar (Step 2) kısmındaki track bilgilerini güncelle
-  document.getElementById('selShareImg').src = track.cover;
-  document.getElementById('selShareTitle').textContent = track.title;
-  document.getElementById('selShareArtist').textContent = track.artist;
-  
-  // Adımları değiştir
-  document.getElementById('step-1-search').classList.remove('active');
-  document.getElementById('step-2-settings').classList.add('active');
-};
-
-window.shareCurrentlyPlaying = function() {
-  // Şu anda dock'ta çalan şarkıyı seç
-  selectTrackForShare(currentTrackKey || 'rebel');
-};
-
-window.submitShare = function() {
-  alert("Paylaşım başarılı! (Bu bir placeholder, gerçek sistemde backend'e istek atılacak)");
-  
-  // Ana sayfaya geri dön
-  document.querySelector('.nav-link[href="#home"]').click();
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-  initSPA();
-});
-
+  initCompanionTabs();
   initExpandToggle();
   initFullscreenControls();
   initScrollMorphAnimations();
