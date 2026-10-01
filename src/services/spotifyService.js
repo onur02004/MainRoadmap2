@@ -152,3 +152,41 @@ export const searchTracks = async (accessToken, query, limit = 5) => {
 
   return await res.json();
 };
+
+
+/**
+ * Sanatçı adına göre Spotify'dan en yüksek çözünürlüklü 2 fotoğrafı ve türleri çeker.
+ */
+export const getArtistDetailsByName = async (artistName) => {
+  try {
+    const appToken = await getAppAccessToken();
+    if (!appToken) return null;
+
+    // Şarkıdaki düetleri veya feat kısımlarını temizle (Örn: "Billy Idol, Steve Stevens" -> "Billy Idol")
+    const cleanArtist = artistName.split(',')[0].split('feat.')[0].trim();
+
+    const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(cleanArtist)}&type=artist&limit=1`;
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${appToken}`
+      }
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const artist = data.artists?.items?.[0];
+
+    if (!artist) return null;
+
+    const images = artist.images || [];
+
+    return {
+      artist_cover: images[0]?.url || null,        // 1. En yüksek kalite
+      artist_cover_backup: images[1]?.url || null, // 2. Orta/Alternatif kalite
+      genres: artist.genres || []
+    };
+  } catch (err) {
+    console.error('[Spotify Artist Fetch Hatası]:', err.message);
+    return null;
+  }
+};

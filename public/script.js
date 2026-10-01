@@ -1,6 +1,7 @@
 // public/script.js
 import { ThemeManager } from './themes/theme-registry.js';
 import { loadServices, handleServiceClick, clearServicesCache } from './services-client.js';
+import { renderAvatar, refreshAvatar } from './avatarRenderer.js';
 
 export let currentSession = {
   isLoggedIn: false,
@@ -23,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initAvatarClickRedirect();
   initLiveTelemetrySimulation();
   initScrollOpacityController();
-  
+
   // Kaydırma yönlendirme okunu başlat
   initScrollHintManager();
 
@@ -120,7 +121,13 @@ async function checkActiveSession() {
         username: u.user_name,
         role: (u.relation || 'USER').toUpperCase(),
         nodeId: `#${u.id ? String(u.id).slice(0, 4) : '8921'}-X`,
-        avatar: u.profile_pic_path || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.user_name}`
+
+        avatar: u.profile_pic_path ||
+          `https://api.dicebear.com/7.x/bottts/svg?seed=${u.user_name}`,
+
+        avatar_type: u.avatar_type || 'photo',
+        avatar_data: u.avatar_data || {},
+        profile_pic_path: u.profile_pic_path || null
       };
       applyUserSession(currentSession);
       await renderServicesFromBackend();
@@ -149,13 +156,39 @@ export function applyUserSession(user) {
   const roleEl = document.getElementById('lblRole');
   const sessionEl = document.getElementById('lblSessionId');
   const statusEl = document.getElementById('lblStatus');
-  const avatarEl = document.getElementById('userAvatar');
   const promptEl = document.getElementById('lblCliPrompt');
 
   if (nameEl) nameEl.textContent = user.username;
   if (roleEl) roleEl.textContent = user.role;
   if (sessionEl) sessionEl.textContent = user.nodeId;
-  if (avatarEl) avatarEl.src = user.avatar;
+  const avatarEl = document.getElementById('userAvatar');
+
+  if (avatarEl) {
+    // Eski img ise global avatar container'a dönüştür
+    if (avatarEl.tagName === 'IMG') {
+      const container = document.createElement('div');
+
+      container.id = avatarEl.id;
+      container.className = avatarEl.className;
+      container.dataset.avatar = '';
+      container.dataset.avatarSize = '64';
+
+      avatarEl.replaceWith(container);
+    }
+
+    const globalAvatar = document.getElementById('userAvatar');
+
+    if (globalAvatar && currentSession.isLoggedIn) {
+      renderAvatar(globalAvatar, {
+        user_name: user.username,
+        avatar_type: user.avatar_type || 'photo',
+        avatar_data: user.avatar_data || {},
+        profile_pic_path: user.profile_pic_path || user.avatar
+      }, {
+        size: 64
+      });
+    }
+  }
 
   if (!user.isLoggedIn) {
     if (statusEl) { statusEl.textContent = 'OFFLINE'; statusEl.className = 'status-offline'; }
@@ -173,7 +206,16 @@ export function applyUserSession(user) {
   const guiDot = document.getElementById('guiStatusDot');
   const guiActionsBar = document.getElementById('guiActionsBar');
 
-  if (guiAvatar) guiAvatar.src = user.avatar;
+  if (guiAvatar && user.isLoggedIn) {
+    renderAvatar(guiAvatar, {
+      user_name: user.username,
+      avatar_type: user.avatar_type || 'photo',
+      avatar_data: user.avatar_data || {},
+      profile_pic_path: user.profile_pic_path || user.avatar
+    }, {
+      size: guiAvatar.dataset.avatarSize || 96
+    });
+  }
   if (guiRole) guiRole.textContent = user.role;
   if (guiSession) guiSession.textContent = user.nodeId;
 
@@ -220,7 +262,7 @@ async function renderServicesFromBackend() {
 
   if (coreContainer) {
     coreContainer.innerHTML = '';
-    
+
     if (core.length === 0) {
       coreContainer.innerHTML = `
         <div class="service-block maintenance-card" style="grid-column: 1 / -1;">
@@ -363,25 +405,25 @@ function initCliAuth() {
       }
 
       window.location.href = '/login';
-    } 
+    }
     else if (action === 'account') {
       if (!currentSession.isLoggedIn) {
         appendTerminalLog(`[AUTH_ERR] Login required to open account console.`, true);
       } else {
         window.location.href = '/account';
       }
-    } 
+    }
     else if (action === 'logout') {
       localStorage.removeItem('token');
       clearServicesCache();
       appendTerminalLog(`[AUTH] Session terminated. Redirecting...`);
       setTimeout(() => window.location.reload(), 400);
-    } 
+    }
     else if (action === 'clear') {
       const history = document.getElementById('terminalHistory');
       if (history) history.innerHTML = '';
       appendTerminalLog(`[TERMINAL] Buffer cleared.`);
-    } 
+    }
     else if (action === 'help') {
       appendTerminalLog(`COMMANDS:`);
       appendTerminalLog(`  login <username> <password>  Direct terminal authentication`);
@@ -390,10 +432,10 @@ function initCliAuth() {
       appendTerminalLog(`  whoami                       Display current node session`);
       appendTerminalLog(`  logout                       Terminate cluster session`);
       appendTerminalLog(`  clear                        Clear terminal screen`);
-    } 
+    }
     else if (action === 'whoami') {
       appendTerminalLog(`USER: ${currentSession.username} | ROLE: ${currentSession.role} | NODE: ${currentSession.nodeId}`);
-    } 
+    }
     else {
       appendTerminalLog(`[ERR] Command not found: ${action}. Type 'help' for available commands.`);
     }
@@ -449,7 +491,7 @@ export function appendTerminalLog(text, isHighlight = false) {
   const div = document.createElement('div');
   div.className = 'log-entry';
   div.innerHTML = `<span class="log-time">${now}</span> ${isHighlight ? `<span class="highlight">${text}</span>` : text}`;
-  
+
   history.appendChild(div);
   scrollToTerminalBottom();
 }
@@ -611,7 +653,7 @@ function drawFixedGrid(blueprint, meta) {
 
     if (pairCandidates.length > 0) {
       const highPriorityPairs = pairCandidates.filter(p => p.priority === 2);
-      const chosenPair = highPriorityPairs.length > 0 
+      const chosenPair = highPriorityPairs.length > 0
         ? highPriorityPairs[Math.floor(Math.random() * highPriorityPairs.length)]
         : pairCandidates[Math.floor(Math.random() * pairCandidates.length)];
 

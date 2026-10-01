@@ -70,3 +70,115 @@ CREATE TABLE song_suggestions (
 );
 
 CREATE INDEX idx_song_suggestions_user_id ON song_suggestions (user_id);
+
+
+ALTER TABLE users
+ADD COLUMN avatar_type text NOT NULL DEFAULT 'builtin',
+ADD COLUMN avatar_data jsonb;
+
+
+CREATE TABLE avatar_designs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    user_id UUID NOT NULL
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    design_type TEXT NOT NULL,
+
+    name TEXT NOT NULL,
+
+    design_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT avatar_designs_type_check
+        CHECK (
+            design_type IN (
+                'pixel',
+                'blobatar'
+            )
+        )
+);
+
+
+CREATE INDEX idx_avatar_designs_user_id
+ON avatar_designs(user_id);
+
+
+ALTER TABLE users
+ADD COLUMN last_song_id TEXT,
+ADD COLUMN last_song_name TEXT,
+ADD COLUMN last_song_artist TEXT,
+ADD COLUMN last_song_album TEXT,
+ADD COLUMN last_song_cover TEXT,
+ADD COLUMN last_song_url TEXT,
+ADD COLUMN last_song_played_at TIMESTAMPTZ;
+
+
+CREATE TABLE song_ratings (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    song_share_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+
+    rating smallint NOT NULL,
+
+    created_at timestamptz NOT NULL DEFAULT NOW(),
+    updated_at timestamptz NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT song_ratings_rating_check
+        CHECK (rating >= 0 AND rating <= 100),
+
+    CONSTRAINT song_ratings_unique_user_share
+        UNIQUE (song_share_id, user_id),
+
+    CONSTRAINT song_ratings_song_share_fk
+        FOREIGN KEY (song_share_id)
+        REFERENCES song_suggestions(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT song_ratings_user_fk
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX idx_song_ratings_song_share_id
+    ON song_ratings(song_share_id);
+
+CREATE INDEX idx_song_ratings_user_id
+    ON song_ratings(user_id);
+
+    CREATE TABLE song_comments (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    song_share_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+
+    comment text NOT NULL,
+
+    created_at timestamptz NOT NULL DEFAULT NOW(),
+    updated_at timestamptz NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT song_comments_song_share_fk
+        FOREIGN KEY (song_share_id)
+        REFERENCES song_suggestions(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT song_comments_user_fk
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX idx_song_comments_song_share_id
+    ON song_comments(song_share_id);
+
+CREATE INDEX idx_song_comments_user_id
+    ON song_comments(user_id);
+
+CREATE INDEX idx_song_comments_created_at
+    ON song_comments(created_at);

@@ -16,3 +16,7 @@ export const getAccount = (req, res) => {
 export const getLogin = (req, res) => {
   res.sendFile(path.join(publicPath, 'login.html'));
 };
+
+export const getSongShare = (req, res) => {
+  res.sendFile(path.join(publicPath, '/songshare/songShare.html'));
+};

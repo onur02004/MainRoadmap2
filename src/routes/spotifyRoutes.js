@@ -23,4 +23,7 @@ router.get('/friends-activity', protect, spotifyController.getFriendsActivity);
 // /api/spotify/search?q=sarkiarama
 router.get('/search', protect, spotifyController.searchSpotifyTracks);
 
+// /api/spotify/artist-images?name=Creed
+router.get('/artist-images', spotifyController.getArtistImages);
+
 export default router;

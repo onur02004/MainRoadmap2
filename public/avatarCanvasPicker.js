@@ -697,8 +697,13 @@ class InfiniteAvatarCanvas {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ avatar: this.selectedUrl })
+        body: JSON.stringify({
+          avatar_type: 'builtin',
+          avatar_data: {},
+          profile_pic_path: this.selectedUrl
+        })
       });
+
 
       const result = await res.json();
 

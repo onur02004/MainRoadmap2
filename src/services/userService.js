@@ -45,14 +45,75 @@ export const findUserById = async (id) => {
   return rows[0];
 };
 
-export const updateUserAvatar = async (userId, avatarPath) => {
+export const updateUserAvatar = async (userId, avatarType, avatarData, profilePicPath = null ) => {
+
   const sql = `
-    UPDATE users 
-    SET profile_pic_path = $1, updated_at = NOW() 
-    WHERE id = $2 
-    RETURNING id, user_name, email, profile_pic_path, relation;
+    UPDATE users
+    SET
+      avatar_type = $1,
+      avatar_data = $2,
+      profile_pic_path = $3,
+      updated_at = NOW()
+    WHERE id = $4
+
+    RETURNING
+      id,
+      user_name,
+      email,
+      relation,
+      avatar_type,
+      avatar_data,
+      profile_pic_path;
   `;
-  const values = [avatarPath, userId];
-  const { rows } = await query(sql, values);
+
+  const values = [
+    avatarType,
+    avatarData,
+    profilePicPath,
+    userId
+  ];
+
+  const { rows } = await query(
+    sql,
+    values
+  );
+
   return rows[0];
+};
+
+export const createAvatarDesign = async (
+    userId,
+    designType,
+    name,
+    designData
+) => {
+
+    const sql = `
+        INSERT INTO avatar_designs (
+            user_id,
+            design_type,
+            name,
+            design_data
+        )
+        VALUES ($1, $2, $3, $4)
+        RETURNING
+            id,
+            user_id,
+            design_type,
+            name,
+            design_data,
+            created_at,
+            updated_at;
+    `;
+
+    const values = [
+        userId,
+        designType,
+        name,
+        designData
+    ];
+
+    const { rows } = await query(sql, values);
+
+    return rows[0];
 };

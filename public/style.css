@@ -2132,3 +2132,455 @@ body.inspect-mode-active .gui-user-card-panel:hover {
   0% { height: 20%; }
   100% { height: 100%; }
 }
+
+/* ============================================================
+   GLOBAL AVATAR
+============================================================ */
+
+.global-avatar {
+    display: block;
+    position: relative;
+    overflow: hidden;
+
+    flex-shrink: 0;
+
+    border-radius: inherit;
+}
+
+.global-avatar-renderer {
+    display: block;
+    position: relative;
+    overflow: hidden;
+
+    flex-shrink: 0;
+}
+
+.global-avatar-renderer img,
+.global-avatar-renderer svg,
+.global-avatar-renderer canvas {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+}
+
+.global-avatar-renderer canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* ============================================================
+   GLOBAL BLOBATAR AVATAR
+   ============================================================ */
+
+/*
+   Bu CSS artık sadece #blobatarPreview için değil,
+   sitedeki bütün global avatarlar için çalışır.
+*/
+
+
+/* ============================================================
+   GLOBAL BLOBATAR SVG
+   ============================================================ */
+
+.global-avatar-renderer svg.blobatar-global {
+
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    overflow: visible;
+
+    transform-origin: center center;
+
+    will-change: transform;
+
+}
+
+
+/* ============================================================
+   BLOBATAR LIVE MOTION
+   ============================================================ */
+
+.global-avatar-renderer svg.blobatar-live {
+
+    animation:
+        globalBlobatarFloat
+        4.8s
+        ease-in-out
+        infinite,
+
+        globalBlobatarTilt
+        7s
+        ease-in-out
+        infinite;
+
+}
+
+
+/* ============================================================
+   FLOAT / BREATHING
+   ============================================================ */
+
+@keyframes globalBlobatarFloat {
+
+    0%,
+    100% {
+
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            scale(1);
+
+    }
+
+
+    25% {
+
+        transform:
+            translate3d(
+                0,
+                -5px,
+                0
+            )
+            scale(1.012);
+
+    }
+
+
+    50% {
+
+        transform:
+            translate3d(
+                0,
+                -9px,
+                0
+            )
+            scale(1.022);
+
+    }
+
+
+    75% {
+
+        transform:
+            translate3d(
+                0,
+                -4px,
+                0
+            )
+            scale(1.01);
+
+    }
+
+}
+
+
+/* ============================================================
+   SUBTLE TILT
+   ============================================================ */
+
+@keyframes globalBlobatarTilt {
+
+    0%,
+    100% {
+
+        rotate: 0deg;
+
+    }
+
+
+    25% {
+
+        rotate: -0.8deg;
+
+    }
+
+
+    50% {
+
+        rotate: 0.6deg;
+
+    }
+
+
+    75% {
+
+        rotate: -0.4deg;
+
+    }
+
+}
+
+
+/* ============================================================
+   MOUSE / EYE TRACKING
+   ============================================================ */
+
+.global-avatar-renderer
+svg.blobatar-global
+.mo-eyes {
+
+    transform:
+        translate3d(
+            calc(
+                var(--mo-track-x, 0)
+                * 3px
+            ),
+            calc(
+                var(--mo-track-y, 0)
+                * 3px
+            ),
+            0
+        );
+
+    transform-origin:
+        center center;
+
+    will-change:
+        transform;
+
+    transition:
+        transform
+        80ms
+        linear;
+
+}
+
+
+/* ============================================================
+   EYE CONTAINERS
+   ============================================================ */
+
+.global-avatar-renderer
+svg.blobatar-global
+.mo-eye {
+
+    transform-origin:
+        center center;
+
+    will-change:
+        transform;
+
+}
+
+
+/* ============================================================
+   BLOBATAR ROOT
+   ============================================================ */
+
+.global-avatar-renderer
+svg.blobatar-global
+.mo-root {
+
+    transform-origin:
+        center center;
+
+}
+
+
+/* ============================================================
+   ACCESSIBILITY
+   ============================================================ */
+
+@media (
+    prefers-reduced-motion: reduce
+) {
+
+    .global-avatar-renderer
+    svg.blobatar-global,
+
+    .global-avatar-renderer
+    svg.blobatar-live {
+
+        animation:
+            none !important;
+
+        transition:
+            none !important;
+
+    }
+
+}
+
+/* ============================================================
+   GLOBAL AVATAR - BLOBATAR
+   ============================================================ */
+
+.global-avatar-renderer {
+    display: block !important;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    filter: none !important;
+}
+
+.global-avatar-renderer svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    overflow: visible !important;
+    filter: none !important;
+}
+
+.global-avatar-renderer svg.blobatar-global {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    overflow: visible !important;
+    transform-origin: center center;
+}
+
+/* Blobatar animation */
+
+.global-avatar-renderer
+svg.blobatar-global.blobatar-live {
+
+    animation:
+        globalBlobatarFloat 4.8s ease-in-out infinite,
+        globalBlobatarTilt 7s ease-in-out infinite;
+}
+
+
+/* Eye tracking */
+
+.global-avatar-renderer
+svg.blobatar-global
+.mo-eyes {
+
+    transform:
+        translate3d(
+            calc(var(--mo-track-x, 0) * 3px),
+            calc(var(--mo-track-y, 0) * 3px),
+            0
+        );
+
+    transform-origin: center center;
+
+    will-change: transform;
+
+    transition:
+        transform
+        80ms
+        linear;
+}
+
+
+/* Eye containers */
+
+.global-avatar-renderer
+svg.blobatar-global
+.mo-eye {
+
+    transform-origin:
+        center center;
+
+    will-change:
+        transform;
+}
+
+
+/* Blobatar root */
+
+.global-avatar-renderer
+svg.blobatar-global
+.mo-root {
+
+    transform-origin:
+        center center;
+}
+
+
+/* Animation */
+
+@keyframes globalBlobatarFloat {
+
+    0%, 100% {
+        transform:
+            translate3d(0, 0, 0)
+            scale(1);
+    }
+
+    25% {
+        transform:
+            translate3d(0, -5px, 0)
+            scale(1.012);
+    }
+
+    50% {
+        transform:
+            translate3d(0, -9px, 0)
+            scale(1.022);
+    }
+
+    75% {
+        transform:
+            translate3d(0, -4px, 0)
+            scale(1.01);
+    }
+}
+
+
+@keyframes globalBlobatarTilt {
+
+    0%, 100% {
+        rotate: 0deg;
+    }
+
+    25% {
+        rotate: -0.8deg;
+    }
+
+    50% {
+        rotate: 0.6deg;
+    }
+
+    75% {
+        rotate: -0.4deg;
+    }
+}
+
+
+/* ============================================================
+   GLOBAL AVATAR FIX - INDEX
+   ============================================================ */
+
+#cliAvatarContainer {
+    width: 96px;
+    height: 96px;
+    position: relative;
+    overflow: hidden;
+}
+
+#cliAvatarContainer #userAvatar.global-avatar {
+    width: 96px !important;
+    height: 96px !important;
+    display: block;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    z-index: 1;
+}
+
+#cliAvatarContainer #userAvatar.global-avatar .global-avatar-renderer {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+#cliAvatarContainer #userAvatar.global-avatar svg,
+#cliAvatarContainer #userAvatar.global-avatar img,
+#cliAvatarContainer #userAvatar.global-avatar canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+}
+
+#cliAvatarContainer .scanline-overlay {
+    z-index: 2;
+    pointer-events: none;
+}

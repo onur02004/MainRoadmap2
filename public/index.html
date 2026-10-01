@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="supabase-dark">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>System Console // Supabase &amp; Render Roadmap</title>
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@600;800&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@600;800&family=Press+Start+2P&family=VT323&display=swap"
+    rel="stylesheet">
+
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
   <!-- FIXED BACKGROUND GRID -->
@@ -30,10 +34,11 @@
   <!-- THEME SELECTOR MODAL / COMMAND PALETTE -->
   <div class="theme-modal-backdrop" id="themeModalBackdrop" style="display: none;">
     <div class="theme-modal-window" role="dialog" aria-modal="true">
-      
+
       <div class="modal-search-header">
         <span class="modal-search-icon">&#128269;</span>
-        <input type="text" id="themeSearchInput" class="modal-search-field" placeholder="Search themes... (e.g. GTA, FNAF, Minecraft, Cyberpunk)" spellcheck="false" autocomplete="off" />
+        <input type="text" id="themeSearchInput" class="modal-search-field"
+          placeholder="Search themes... (e.g. GTA, FNAF, Minecraft, Cyberpunk)" spellcheck="false" autocomplete="off" />
         <button id="themeModalCloseBtn" class="modal-close-btn" type="button">&times;</button>
       </div>
 
@@ -123,10 +128,11 @@
           <button type="button" class="remove-bg-btn" id="btnRemoveCustomBg">&times;</button>
         </div>
       </div>
-      <input type="url" id="edBgImage" class="editor-input-subtle" placeholder="Or enter direct image URL..." autocomplete="off" />
+      <input type="url" id="edBgImage" class="editor-input-subtle" placeholder="Or enter direct image URL..."
+        autocomplete="off" />
 
       <div class="editor-section-title">VISUAL FX &amp; STYLING</div>
-      
+
       <div class="editor-field">
         <label>FONT FAMILY</label>
         <select id="edFontFamily" class="editor-select">
@@ -193,13 +199,14 @@
 
   <!-- HERO VIEWPORT -->
   <main class="viewport-hero">
-    
+
     <div class="left-pane">
-      
+
       <!-- Brand & Project Breadcrumb -->
       <div class="brand-header">
         <svg class="supabase-bolt" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M21.362 9.354H12V.362a.362.362 0 0 0-.618-.256L.106 11.344a.362.362 0 0 0 .256.618H9.72v9.014a.362.362 0 0 0 .618.256l11.278-11.26a.362.362 0 0 0-.254-.618z"/>
+          <path
+            d="M21.362 9.354H12V.362a.362.362 0 0 0-.618-.256L.106 11.344a.362.362 0 0 0 .256.618H9.72v9.014a.362.362 0 0 0 .618.256l11.278-11.26a.362.362 0 0 0-.254-.618z" />
         </svg>
         <span class="brand-text">sys-cluster</span>
         <span class="breadcrumb-slash">/</span>
@@ -210,7 +217,8 @@
       <div class="gui-user-card-panel" id="guiUserPanel" style="display: none;">
         <div class="gui-card-body">
           <div class="gui-avatar-wrapper">
-            <img id="guiUserAvatar" class="gui-avatar-large" src="https://api.dicebear.com/7.x/identicon/svg?seed=off" alt="Profile" />
+            <div id="guiUserAvatar" class="gui-avatar-large global-avatar" data-avatar data-avatar-size="64"
+              aria-label="Profile avatar"></div>
             <span class="gui-status-indicator offline" id="guiStatusDot"></span>
           </div>
 
@@ -219,7 +227,8 @@
               <h2 id="guiLblUsername" class="gui-username">AUTHENTICATION_REQUIRED</h2>
               <span id="guiLblRole" class="gui-role-badge">OFFLINE</span>
             </div>
-            <p class="gui-session-text" id="guiSessionText">SESSION ID: <strong id="guiLblSession">#NO-SESSION</strong></p>
+            <p class="gui-session-text" id="guiSessionText">SESSION ID: <strong id="guiLblSession">#NO-SESSION</strong>
+            </p>
             <div class="gui-badge-row">
               <span class="gui-chip" id="guiLblStatus">UNAUTHENTICATED</span>
               <span class="gui-chip cluster-chip" id="guiClusterChip">EU-CENTRAL</span>
@@ -233,13 +242,15 @@
 
       <!-- 2. CLI AÇIKKEN GÖRÜNEN TERMİNAL AKIŞI -->
       <div class="terminal-scroll-viewport" id="cliTerminalViewport">
-        
+
         <div class="terminal-history" id="terminalHistory">
-          <div class="log-entry"><span class="log-time" id="logTime1">14:52:33</span> [POSTGRES] POOL_CONNECTED (port :5432)</div>
-          <div class="log-entry"><span class="log-time" id="logTime2">14:52:36</span> [REALTIME] WEBSOCKET_LISTENER_ONLINE ...</div>
-          
+          <div class="log-entry"><span class="log-time" id="logTime1">14:52:33</span> [POSTGRES] POOL_CONNECTED (port
+            :5432)</div>
+          <div class="log-entry"><span class="log-time" id="logTime2">14:52:36</span> [REALTIME]
+            WEBSOCKET_LISTENER_ONLINE ...</div>
+
           <div class="ascii-container">
-<pre class="ascii-art">
+            <pre class="ascii-art">
 .- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -.
 |                                                                             |
 |   ╦  ╦╔═╗╦  ╔═╗╔═╗╔╦╗╔═╗                                                    |
@@ -254,31 +265,37 @@
 </pre>
           </div>
 
-          <div class="log-entry"><span class="log-time" id="logTime3">14:52:40</span> ALLOCATING REST COMPUTE NODES ...</div>
-          <div class="log-entry"><span class="log-time" id="logTime4">14:52:43</span> <span class="highlight">INSTANCE READY</span></div>
+          <div class="log-entry"><span class="log-time" id="logTime3">14:52:40</span> ALLOCATING REST COMPUTE NODES ...
+          </div>
+          <div class="log-entry"><span class="log-time" id="logTime4">14:52:43</span> <span class="highlight">INSTANCE
+              READY</span></div>
         </div>
 
         <div class="cli-bottom-anchor">
           <div class="cli-user-stream-line">
             <div class="cli-avatar-badge" id="cliAvatarContainer" title="User avatar stream">
-              <img id="userAvatar" class="cli-dithered-img" src="https://api.dicebear.com/7.x/identicon/svg?seed=off" alt="Avatar" />
+              <div id="userAvatar" class="global-avatar" data-avatar data-avatar-size="96" aria-label="Avatar">
+              </div>
               <div class="scanline-overlay"></div>
             </div>
 
             <div class="cli-user-meta-stack">
               <p class="cli-p-line">
-                <span class="cli-dim">&gt;</span> AUTH_USER: <strong id="lblUsername" class="cli-highlight">anonymous</strong>
+                <span class="cli-dim">&gt;</span> AUTH_USER: <strong id="lblUsername"
+                  class="cli-highlight">anonymous</strong>
                 <span class="role-badge" id="lblRole">GUEST</span>
               </p>
               <p class="cli-p-line">
-                <span class="cli-dim">&gt;</span> SESSION: <span class="status-offline" id="lblStatus">OFFLINE</span> (<span id="lblSessionId" class="cli-dim">#NO-AUTH</span>)
+                <span class="cli-dim">&gt;</span> SESSION: <span class="status-offline" id="lblStatus">OFFLINE</span>
+                (<span id="lblSessionId" class="cli-dim">#NO-AUTH</span>)
               </p>
             </div>
           </div>
 
           <form id="cliForm" class="cli-prompt-line" onsubmit="return false;">
             <span class="cli-prompt-sym" id="lblCliPrompt">guest@cluster:~$</span>
-            <input type="text" id="cliInput" class="cli-raw-input" placeholder="type 'login', 'account' or 'help'" spellcheck="false" autocomplete="off" />
+            <input type="text" id="cliInput" class="cli-raw-input" placeholder="type 'login', 'account' or 'help'"
+              spellcheck="false" autocomplete="off" />
           </form>
         </div>
 
@@ -301,7 +318,7 @@
 
   <!-- SUPABASE TELEMETRY & SERVICES SECTION -->
   <section id="servicesSection" class="services-container">
-    
+
     <div class="telemetry-bar">
       <div class="telemetry-item">
         <span class="telemetry-lbl">REST_THROUGHPUT</span>
@@ -339,7 +356,8 @@
         <div class="telemetry-val-row">
           <strong class="telemetry-val highlight-green">LIVE</strong>
           <svg class="sparkline" viewBox="0 0 60 18">
-            <path d="M0,12 L10,10 L20,14 L30,4 L40,11 L50,6 L60,8" fill="none" stroke="var(--accent-action)" stroke-width="1.8"/>
+            <path d="M0,12 L10,10 L20,14 L30,4 L40,11 L50,6 L60,8" fill="none" stroke="var(--accent-action)"
+              stroke-width="1.8" />
           </svg>
         </div>
         <div class="telemetry-sub">channel: <code>#global-stream</code></div>
@@ -363,7 +381,10 @@
 
   </section>
 
-  <!-- ES6 Module Import -->
   <script type="module" src="script.js"></script>
+
+  <script type="module" src="avatarRenderer.js">
+  </script>
 </body>
+
 </html>

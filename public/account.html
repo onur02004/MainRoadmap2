@@ -86,8 +86,8 @@
         <div class="gui-card-body">
           <div class="avatar-change-wrapper" id="btnOpenAvatarVault" title="Click to Open 2D Avatar Vault">
             <div class="gui-avatar-wrapper">
-              <img id="userAvatar" class="gui-avatar-large profile-avatar-main"
-                src="https://api.dicebear.com/7.x/bottts/svg?seed=user" alt="Avatar" />
+              <div id="guiUserAvatar" class="gui-avatar-large global-avatar" data-avatar data-avatar-size="64">
+              </div>
               <span class="gui-status-indicator online" id="userStatusDot"></span>
             </div>
             <div class="avatar-edit-overlay">CHANGE_IMG 🕸️</div>
@@ -276,6 +276,26 @@
         </div>
         <span class="mode-launch-badge" id="indicatorSideMap">EXPLORE &rarr;</span>
       </div>
+
+      <div class="mode-card-btn blobatar-mode" id="btnSideBlobatar">
+        <div class="mode-icon-box">🧬</div>
+
+        <div class="mode-card-text">
+          <strong>BLOBATAR STUDIO</strong>
+          <span>Build your own living avatar</span>
+        </div>
+
+        <span class="mode-launch-badge">CREATE →</span>
+      </div>
+
+      <div class="mode-card-btn pixel-studio-mode" id="btnSidePixelStudio" role="button" tabindex="0">
+        <div class="mode-icon-box">▦</div>
+        <div class="mode-card-text">
+          <strong>PIXEL STUDIO</strong>
+          <span>Create pixel artwork</span>
+        </div>
+        <span class="mode-launch-badge">CREATE →</span>
+      </div>
     </aside>
 
     <main class="vault-list-layout" id="vaultListView">
@@ -286,6 +306,465 @@
         </div>
         <div class="list-nodes-tree-scroll" id="mindmapNodesTree"></div>
       </section>
+    </main>
+
+    <!-- =========================================================
+     PIXEL STUDIO
+========================================================= -->
+
+    <main id="pixelStudioView" class="pixel-studio-view" style="display:none;">
+
+      <div class="pixel-studio-header">
+
+        <div>
+          <div class="pixel-studio-eyebrow">CREATIVE TOOLS</div>
+
+          <h1 class="pixel-studio-title">
+            Pixel Studio
+          </h1>
+
+          <p class="pixel-studio-subtitle">
+            Create your own pixel art.
+          </p>
+        </div>
+
+        <button id="btnPixelStudioBack" class="pixel-studio-back">
+          <span>←</span>
+          Back
+        </button>
+
+      </div>
+
+
+      <div class="pixel-studio-layout">
+
+
+        <!-- =================================================
+             LEFT : EDITOR
+        ================================================== -->
+
+        <section class="pixel-editor-panel">
+
+          <div class="pixel-editor-topbar">
+
+            <div class="pixel-editor-size">
+              <span class="pixel-status-dot"></span>
+              <span>32 × 32</span>
+            </div>
+
+            <div class="pixel-editor-actions">
+
+              <button id="pixelUndo" class="pixel-icon-btn" title="Undo">
+                ↶
+              </button>
+
+              <button id="pixelRedo" class="pixel-icon-btn" title="Redo">
+                ↷
+              </button>
+
+              <button id="pixelClear" class="pixel-small-btn">
+                Clear
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <!-- CANVAS -->
+
+          <div id="pixelCanvasWrapper" class="pixel-canvas-wrapper">
+
+            <canvas id="pixelEditorCanvas" width="640" height="640"></canvas>
+
+          </div>
+
+
+          <!-- TOOLBAR -->
+
+          <div class="pixel-toolbar">
+
+            <button class="pixel-tool active" data-pixel-tool="brush" title="Brush">
+              <span>✎</span>
+              <label>Brush</label>
+            </button>
+
+            <button class="pixel-tool" data-pixel-tool="eraser" title="Eraser">
+              <span>⌫</span>
+              <label>Eraser</label>
+            </button>
+
+            <button class="pixel-tool" data-pixel-tool="fill" title="Fill">
+              <span>▧</span>
+              <label>Fill</label>
+            </button>
+
+            <button class="pixel-tool" data-pixel-tool="picker" title="Color Picker">
+              <span>◎</span>
+              <label>Picker</label>
+            </button>
+
+            <div class="pixel-toolbar-divider"></div>
+
+            <button id="pixelGridToggle" class="pixel-tool active">
+              <span>⊞</span>
+              <label>Grid</label>
+            </button>
+
+          </div>
+
+
+          <!-- COLOR -->
+
+          <div class="pixel-color-section">
+
+            <div class="pixel-section-label">
+              COLOR
+            </div>
+
+            <div class="pixel-color-row">
+
+              <input id="pixelColor" type="color" value="#4F46E5">
+
+              <div id="pixelColorPreview" class="pixel-color-preview"></div>
+
+              <input id="pixelColorHex" class="pixel-color-hex" value="#4F46E5" maxlength="7">
+
+            </div>
+
+
+            <div id="pixelPalette" class="pixel-palette"></div>
+
+          </div>
+
+
+          <!-- ZOOM -->
+
+          <div class="pixel-zoom-row">
+
+            <button id="pixelZoomOut">
+              −
+            </button>
+
+            <span id="pixelZoomValue">
+              100%
+            </span>
+
+            <button id="pixelZoomIn">
+              +
+            </button>
+
+            <button id="pixelZoomReset">
+              Reset
+            </button>
+
+          </div>
+
+
+          <!-- SAVE -->
+
+          <div class="pixel-save-area">
+
+            <input id="pixelDesignName" class="pixel-design-name" type="text" maxlength="32"
+              placeholder="Design name...">
+
+            <div class="pixel-save-buttons">
+
+              <button id="pixelSaveDesign" class="pixel-save-btn" type="button">
+                SAVE DESIGN
+              </button>
+
+              <button id="pixelUseAsAvatar" class="pixel-save-btn pixel-avatar-btn" type="button">
+                USE AS AVATAR
+              </button>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             RIGHT : PRESETS
+        ================================================== -->
+
+        <aside class="pixel-presets-panel">
+
+          <div class="pixel-presets-header">
+
+            <div>
+              <div class="pixel-presets-eyebrow">
+                LIBRARY
+              </div>
+
+              <h2>
+                Presets
+              </h2>
+            </div>
+
+            <span id="pixelPresetCount">
+              0
+            </span>
+
+          </div>
+
+
+          <div id="pixelPresetGrid" class="pixel-preset-grid"></div>
+
+
+          <div class="pixel-my-designs">
+
+            <div class="pixel-presets-header">
+
+              <div>
+                <div class="pixel-presets-eyebrow">
+                  PERSONAL
+                </div>
+
+                <h2>
+                  My Designs
+                </h2>
+              </div>
+
+            </div>
+
+            <div id="pixelSavedDesigns" class="pixel-saved-designs"></div>
+
+          </div>
+
+        </aside>
+
+      </div>
+
+    </main>
+
+    <!-- ================= BLOBATAR STUDIO ================= -->
+    <main id="blobatarStudioView" class="blobatar-studio-view" style="display: none;">
+
+      <div class="blobatar-studio-header">
+
+        <div>
+          <span class="studio-eyebrow">PROCEDURAL IDENTITY</span>
+
+          <h1>BLOBATAR STUDIO</h1>
+
+          <p>
+            Create your own living profile avatar.
+          </p>
+        </div>
+
+        <button type="button" id="btnBlobatarBack" class="gui-action-btn">
+          ← BACK TO VAULT
+        </button>
+
+      </div>
+
+
+      <div class="blobatar-editor-layout">
+
+
+        <!-- ================= PREVIEW ================= -->
+
+        <section class="blobatar-preview-panel">
+
+          <div class="studio-panel-label">
+            LIVE PREVIEW
+          </div>
+
+          <div class="blobatar-preview-frame">
+
+            <div id="blobatarPreview" class="blobatar-preview"></div>
+
+            <div class="blobatar-preview-meta">
+
+              <span id="blobPreviewExpression">
+                IDLE
+              </span>
+
+              <span class="preview-meta-separator">
+                •
+              </span>
+
+              <span id="blobPreviewShape">
+                AUTO
+              </span>
+
+            </div>
+
+          </div>
+
+          <div class="blobatar-preview-status">
+
+            <span class="pulse-dot"></span>
+
+            <span>
+              AVATAR ENGINE ONLINE
+            </span>
+
+          </div>
+
+        </section>
+
+
+        <!-- ================= EDITOR ================= -->
+
+        <section class="blobatar-controls">
+
+
+          <!-- EXPRESSION -->
+
+          <div class="blob-control-section">
+
+            <div class="blob-control-heading">
+              EXPRESSION
+            </div>
+
+            <div class="blob-expression-grid">
+
+              <button type="button" class="blob-expression-btn active" data-blob-expression="idle">
+                IDLE
+              </button>
+
+              <button type="button" class="blob-expression-btn" data-blob-expression="happy">
+                HAPPY
+              </button>
+
+              <button type="button" class="blob-expression-btn" data-blob-expression="sad">
+                SAD
+              </button>
+
+              <button type="button" class="blob-expression-btn" data-blob-expression="mad">
+                MAD
+              </button>
+
+              <button type="button" class="blob-expression-btn" data-blob-expression="surprised">
+                SURPRISED
+              </button>
+
+              <button type="button" class="blob-expression-btn" data-blob-expression="wink">
+                WINK
+              </button>
+
+              <button type="button" class="blob-expression-btn" data-blob-expression="sleepy">
+                SLEEPY
+              </button>
+
+              <button type="button" class="blob-expression-btn" data-blob-expression="love">
+                LOVE
+              </button>
+            </div>
+
+          </div>
+
+
+          <!-- SHAPE -->
+
+          <div class="blob-control-section blob-shape-section">
+
+            <div class="blob-control-heading">
+              <span>BODY SHAPE</span>
+              <span class="blob-control-value" id="blobShapeValue">AUTO</span>
+            </div>
+
+            <div class="blob-shape-picker" id="blobShapePicker" aria-label="Choose body shape"></div>
+
+          </div>
+
+
+          <!-- COLOR -->
+
+          <div class="blob-control-section">
+
+            <div class="blob-control-heading">
+              COLOR
+            </div>
+
+            <div class="blob-slider-row">
+
+              <input type="range" id="blobHue" min="0" max="360" value="160">
+              <span id="blobHueValue">160°</span>
+
+            </div>
+
+          </div>
+
+
+          <!-- TONE -->
+
+          <div class="blob-control-section">
+
+            <div class="blob-control-heading">
+              TONE
+            </div>
+
+            <div class="blob-slider-row">
+
+              <input type="range" id="blobTone" min="0" max="100" value="50">
+              <span id="blobToneValue">
+                MID
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <!-- MOTION -->
+
+          <div class="blob-control-section">
+
+            <div class="blob-control-heading">
+              MOTION
+            </div>
+
+            <label class="blob-toggle-row">
+
+              <input type="checkbox" id="blobMotion" checked>
+
+              <span class="blob-toggle"></span>
+
+              <span>
+                ALWAYS ANIMATE
+              </span>
+
+            </label>
+
+
+            <label class="blob-toggle-row">
+
+              <input type="checkbox" id="blobGaze" checked>
+
+              <span class="blob-toggle"></span>
+
+              <span>
+                FOLLOW POINTER
+              </span>
+
+            </label>
+
+          </div>
+
+
+          <!-- ACTIONS -->
+
+          <div class="blobatar-actions">
+
+            <button type="button" id="btnBlobRandom" class="gui-action-btn">
+              🎲 RANDOMIZE
+            </button>
+
+            <button type="button" id="btnBlobSave" class="gui-action-btn primary">
+              ✓ SAVE AVATAR
+            </button>
+
+          </div>
+
+        </section>
+
+      </div>
+
     </main>
 
     <div class="canvas-viewport" id="canvasViewport" style="display: none;">
@@ -345,6 +824,9 @@
   </div>
 
   <script type="module" src="account.js"></script>
+
+  <script type="module" src="avatarRenderer.js">
+  </script>
 </body>
 
 </html>
