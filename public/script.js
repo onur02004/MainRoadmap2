@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   new ThemeManager();
 
+  initQuickGuide();
+  initThemeFeatureRail();
+
   await checkActiveSession();
   scrollToTerminalBottom();
 
@@ -595,9 +598,8 @@ function renderDesktopGrid() {
   ];
 
   currentGridMeta = {
-    "0-4": { tag: "▲ REST_GATEWAY", dot: true },
-    "1-5": { tag: "▼ DB_CLUSTER", dot: false },
-    "3-3": { tag: "▲ REALTIME", dot: true }
+    "0-4": { tag: ":)", dot: true },
+    "1-5": { tag: ":(", dot: false },
   };
 
   drawFixedGrid(currentGridBlueprint, currentGridMeta);
@@ -732,4 +734,334 @@ function drawFixedGrid(blueprint, meta) {
 
     container.appendChild(rowEl);
   });
+}
+
+//Guide
+function initQuickGuide() {
+    const backdrop = document.getElementById('helpTourBackdrop');
+    const openBtn = document.getElementById('helpTourOpenBtn');
+    const closeBtn = document.getElementById('tourCloseBtn');
+    const skipBtn = document.getElementById('tourSkipBtn');
+    const nextBtn = document.getElementById('tourNextBtn');
+
+    if (!backdrop || !openBtn || !nextBtn) return;
+
+    const steps = [
+        {
+            title: 'Welcome to sys-cluster',
+            body: 'This page is a themed service console. The guide is optional and can be opened again from QUICK GUIDE at any time.'
+        },
+        {
+            title: 'Choose your theme',
+            body: 'The large THEME button opens the theme gallery. Search by name or use categories such as Retro & Gaming; choose a card to apply it.',
+            target: '#themeModalOpenBtn'
+        },
+        {
+            title: 'Explore services',
+            body: 'Scroll down to the service directory. Each card describes a module; some may require login or a specific role.',
+            target: '#servicesSection'
+        },
+        {
+            title: 'Account and terminal',
+            body: 'Use the terminal prompt for commands like help, login -a, account, whoami and logout. You can also use the account/login buttons when shown.',
+            target: '#cliTerminalViewport'
+        }
+    ];
+
+    let step = 0;
+
+    const title = document.getElementById('tourTitle');
+    const body = document.getElementById('tourBody');
+    const label = document.getElementById('tourStepLabel');
+    const fill = document.getElementById('tourProgressFill');
+
+    function renderStep() {
+        const item = steps[step];
+
+        title.textContent = item.title;
+        body.textContent = item.body;
+
+        label.textContent =
+            `QUICK GUIDE · ${step + 1} / ${steps.length}`;
+
+        fill.style.width =
+            `${((step + 1) / steps.length) * 100}%`;
+
+        nextBtn.textContent =
+            step === steps.length - 1
+                ? 'Done ✓'
+                : 'Next →';
+    }
+
+    function closeTour(markSeen = false) {
+        backdrop.hidden = true;
+        document.body.classList.remove('tour-open');
+
+        if (markSeen) {
+            localStorage.setItem(
+                'syscluster_quick_guide_seen',
+                '1'
+            );
+        }
+    }
+
+    function openTour() {
+        step = 0;
+
+        renderStep();
+
+        backdrop.hidden = false;
+        document.body.classList.add('tour-open');
+
+        nextBtn.focus();
+    }
+
+    openBtn.addEventListener('click', openTour);
+
+    closeBtn?.addEventListener('click', () => {
+        closeTour(true);
+    });
+
+    skipBtn?.addEventListener('click', () => {
+        closeTour(true);
+    });
+
+    nextBtn.addEventListener('click', () => {
+        if (step < steps.length - 1) {
+            step++;
+            renderStep();
+        } else {
+            closeTour(true);
+        }
+    });
+
+    backdrop.addEventListener('click', event => {
+        if (event.target === backdrop) {
+            closeTour();
+        }
+    });
+
+    document.addEventListener('keydown', event => {
+        if (
+            event.key === 'Escape' &&
+            !backdrop.hidden
+        ) {
+            closeTour();
+        }
+    });
+}
+
+function initThemeFeatureRail() {
+    const rail = document.getElementById('themeFeatureRail');
+    const cards = document.getElementById('themeFeatureCards');
+    const title = document.getElementById('themeFeatureTitle');
+    const intro = document.getElementById('themeFeatureIntro');
+
+    if (!rail || !cards) return;
+
+    const catalog = [
+        {
+            match: /minecraft|voxel/i,
+            name: 'Minecraft mode',
+            intro: 'Voxel-inspired extras for this theme.',
+
+            items: [
+                {
+                    icon: '▦',
+                    title: 'Voxel explorer',
+                    text: 'Jump to the animated grid and explore the block-style environment.',
+
+                    action: () => {
+                        document
+                            .getElementById('cornerGrid')
+                            ?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
+                    }
+                },
+                {
+                    icon: '⌘',
+                    title: 'Command console',
+                    text: 'Try the built-in terminal commands.',
+
+                    action: () => {
+                        document.getElementById('cliInput')?.focus();
+
+                        document
+                            .getElementById('cliTerminalViewport')
+                            ?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
+                    }
+                }
+            ]
+        },
+
+        {
+            match: /fnaf|five.?nights|horror/i,
+            name: 'Night shift features',
+            intro: 'A few quick actions that fit the horror-console theme.',
+
+            items: [
+                {
+                    icon: '◉',
+                    title: 'System status',
+                    text: 'Jump to the live telemetry readout.',
+
+                    action: () => {
+                        document
+                            .querySelector('.telemetry-bar')
+                            ?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
+                    }
+                },
+                {
+                    icon: '⌁',
+                    title: 'Signal terminal',
+                    text: 'Focus the console input and inspect available commands.',
+
+                    action: () => {
+                        document.getElementById('cliInput')?.focus();
+
+                        document
+                            .getElementById('cliTerminalViewport')
+                            ?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
+                    }
+                }
+            ]
+        },
+
+        {
+            match: /gta|grand.?theft|racing|cyberpunk|retro|gaming|arcade/i,
+            name: 'Arcade shortcuts',
+            intro: 'Theme-related shortcuts are collected here while a gaming theme is active.',
+
+            items: [
+                {
+                    icon: '▤',
+                    title: 'Browse modules',
+                    text: 'Find the services and interactive modules available to your account.',
+
+                    action: () => {
+                        document
+                            .getElementById('servicesSection')
+                            ?.scrollIntoView({
+                                behavior: 'smooth'
+                            });
+                    }
+                },
+                {
+                    icon: '⌘',
+                    title: 'Open console',
+                    text: 'Focus the terminal and see the help command list.',
+
+                    action: () => {
+                        document.getElementById('cliInput')?.focus();
+
+                        document
+                            .getElementById('cliTerminalViewport')
+                            ?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
+                    }
+                }
+            ]
+        }
+    ];
+
+    function update() {
+        const themeId =
+            document.documentElement.dataset.theme || '';
+
+        const themeLabel =
+            document.getElementById('currentThemeName')
+                ?.textContent || '';
+
+        const combined = `${themeId} ${themeLabel}`;
+
+        const entry = catalog.find(item =>
+            item.match.test(combined)
+        );
+
+        // Bu temaya özel özellik yoksa bölümü gizle.
+        if (!entry) {
+            rail.hidden = true;
+            cards.replaceChildren();
+            return;
+        }
+
+        title.textContent = entry.name;
+        intro.textContent = entry.intro;
+
+        cards.replaceChildren();
+
+        entry.items.forEach(item => {
+            const button = document.createElement('button');
+
+            button.type = 'button';
+            button.className = 'theme-feature-card';
+
+            const icon = document.createElement('span');
+            icon.className = 'theme-feature-icon';
+            icon.textContent = item.icon;
+
+            const heading = document.createElement('strong');
+            heading.textContent = item.title;
+
+            const description = document.createElement('span');
+            description.textContent = item.text;
+
+            const action = document.createElement('span');
+            action.className = 'theme-feature-action';
+            action.textContent = 'Open →';
+
+            button.append(
+                icon,
+                heading,
+                description,
+                action
+            );
+
+            button.addEventListener('click', item.action);
+
+            cards.appendChild(button);
+        });
+
+        rail.hidden = false;
+    }
+
+    // İlk açılışta aktif temayı kontrol et.
+    update();
+
+    // Tema değiştiğinde özellikleri güncelle.
+    new MutationObserver(update).observe(
+        document.documentElement,
+        {
+            attributes: true,
+            attributeFilter: ['data-theme']
+        }
+    );
+
+    // Görünen tema adını da takip et.
+    const themeName =
+        document.getElementById('currentThemeName');
+
+    if (themeName) {
+        new MutationObserver(update).observe(
+            themeName,
+            {
+                childList: true,
+                characterData: true,
+                subtree: true
+            }
+        );
+    }
 }

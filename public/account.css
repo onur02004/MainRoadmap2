@@ -247,6 +247,7 @@
   flex-direction: column;
   gap: 4px;
   margin-bottom: 12px;
+  margin-top: 5vh;
 }
 .account-badge {
   font-size: 0.65rem;
@@ -255,7 +256,7 @@
   letter-spacing: 1.5px;
 }
 .account-main-title {
-  font-size: 1.5rem;
+  font-size: 2.5rem;
   font-weight: 900;
   letter-spacing: 2px;
   color: var(--text-bright, #fff);

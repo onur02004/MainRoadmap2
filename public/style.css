@@ -2584,3 +2584,431 @@ svg.blobatar-global
     z-index: 2;
     pointer-events: none;
 }
+
+
+/* =========================================
+   THEME BUTTON — MORE VISIBLE
+========================================= */
+
+.top-nav-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.theme-nav-btn {
+    min-height: 54px;
+    padding: 13px 20px;
+    gap: 13px;
+
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.035em;
+
+    border: 2px solid var(--accent-action);
+
+    color: var(--text-bright);
+
+    background: linear-gradient(
+        135deg,
+        var(--panel-bg),
+        rgba(0, 0, 0, 0.72)
+    );
+
+    box-shadow:
+        0 0 0 3px var(--accent-glow),
+        0 8px 28px rgba(0, 0, 0, 0.55);
+
+    animation: themeButtonPulse 3s ease-in-out infinite;
+}
+
+.theme-nav-btn:hover,
+.theme-nav-btn:focus-visible {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 0 0 4px var(--accent-glow),
+        0 10px 34px rgba(0, 0, 0, 0.65);
+
+    outline: 2px solid var(--accent-action);
+    outline-offset: 3px;
+}
+
+.theme-nav-btn .theme-dot {
+    width: 11px;
+    height: 11px;
+}
+
+.theme-nav-btn .kbd-badge {
+    font-size: 0.7rem;
+    padding: 3px 7px;
+}
+
+@keyframes themeButtonPulse {
+    0%, 100% {
+        box-shadow:
+            0 0 0 2px var(--accent-glow),
+            0 8px 28px rgba(0, 0, 0, 0.5);
+    }
+
+    50% {
+        box-shadow:
+            0 0 0 5px var(--accent-glow),
+            0 8px 32px rgba(0, 0, 0, 0.62);
+    }
+}
+
+
+/* =========================================
+   QUICK GUIDE BUTTON
+========================================= */
+
+.help-tour-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    min-height: 44px;
+    padding: 9px 13px;
+
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+
+    background: var(--panel-bg);
+    color: var(--text-bright);
+
+    font: 700 0.72rem 'JetBrains Mono', monospace;
+
+    cursor: pointer;
+
+    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.35);
+}
+
+.help-tour-btn > span:first-child {
+    display: grid;
+    place-items: center;
+
+    width: 23px;
+    height: 23px;
+
+    border-radius: 50%;
+
+    color: #06100b;
+    background: var(--accent-action);
+
+    font-size: 1rem;
+}
+
+.help-tour-btn:hover {
+    border-color: var(--accent-action);
+}
+
+
+/* =========================================
+   QUICK GUIDE MODAL
+========================================= */
+
+.tour-backdrop[hidden],
+.theme-feature-rail[hidden] {
+    display: none !important;
+}
+
+.tour-backdrop {
+    position: fixed;
+    inset: 0;
+
+    z-index: 2200;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(0, 0, 0, 0.46);
+    backdrop-filter: blur(3px);
+}
+
+.tour-card {
+    width: min(460px, 100%);
+    padding: 24px;
+
+    color: var(--text-main);
+    background: var(--panel-bg);
+
+    border: 1px solid var(--accent-action);
+    border-radius: 12px;
+
+    box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.55),
+        0 0 30px var(--accent-glow);
+
+    animation: modalScaleUp 0.18s ease-out;
+}
+
+.tour-topline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    color: var(--accent-action);
+
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.tour-close {
+    background: transparent;
+    border: 0;
+
+    color: var(--text-main);
+    font-size: 1.7rem;
+
+    cursor: pointer;
+}
+
+.tour-card h2 {
+    margin: 16px 0 8px;
+
+    color: var(--text-bright);
+    font-size: 1.25rem;
+}
+
+.tour-card p {
+    min-height: 76px;
+
+    font-size: 0.86rem;
+    line-height: 1.7;
+}
+
+.tour-progress {
+    height: 4px;
+    margin: 18px 0;
+
+    background: var(--border-subtle);
+
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.tour-progress span {
+    display: block;
+
+    height: 100%;
+    width: 25%;
+
+    background: var(--accent-action);
+
+    transition: width 0.2s ease;
+}
+
+.tour-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.tour-actions button {
+    padding: 10px 14px;
+
+    border-radius: 6px;
+
+    font: 700 0.75rem 'JetBrains Mono', monospace;
+
+    cursor: pointer;
+}
+
+.tour-secondary {
+    border: 1px solid var(--border-color);
+
+    background: transparent;
+    color: var(--text-main);
+}
+
+.tour-primary {
+    border: 1px solid var(--accent-action);
+
+    background: var(--accent-action);
+    color: #06100b;
+}
+
+
+/* =========================================
+   THEME-SPECIFIC FEATURE CARDS
+========================================= */
+
+.theme-feature-rail {
+    position: relative;
+    z-index: 2;
+
+    margin: 0 40px 28px;
+    padding: 22px;
+
+    border: 1px solid var(--box-border);
+    border-radius: 10px;
+
+    background: linear-gradient(
+        135deg,
+        var(--panel-bg),
+        rgba(0, 0, 0, 0.25)
+    );
+
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+}
+
+.theme-feature-heading {
+    margin-bottom: 16px;
+}
+
+.feature-kicker {
+    color: var(--accent-action);
+
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+}
+
+.theme-feature-heading h2 {
+    color: var(--text-bright);
+
+    font-size: 1.2rem;
+    margin: 4px 0;
+}
+
+.theme-feature-heading p {
+    color: var(--text-dim);
+    font-size: 0.78rem;
+}
+
+.theme-feature-cards {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(210px, 1fr));
+
+    gap: 12px;
+}
+
+.theme-feature-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+
+    min-height: 150px;
+    padding: 16px;
+
+    text-align: left;
+
+    background: rgba(255, 255, 255, 0.025);
+
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+
+    color: var(--text-main);
+    font: inherit;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.18s,
+        border-color 0.18s,
+        background 0.18s;
+}
+
+.theme-feature-card:hover,
+.theme-feature-card:focus-visible {
+    transform: translateY(-3px);
+
+    border-color: var(--accent-action);
+    background: var(--box-glow);
+
+    outline: none;
+}
+
+.theme-feature-icon {
+    color: var(--accent-action);
+    font-size: 1.5rem;
+}
+
+.theme-feature-card strong {
+    color: var(--text-bright);
+    font-size: 0.88rem;
+}
+
+.theme-feature-card > span:not(.theme-feature-icon):not(.theme-feature-action) {
+    font-size: 0.73rem;
+    line-height: 1.55;
+
+    color: var(--text-dim);
+}
+
+.theme-feature-action {
+    margin-top: auto;
+
+    color: var(--accent-action);
+
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 768px) {
+    .top-nav-bar {
+        right: 12px;
+        top: 12px;
+        gap: 6px;
+    }
+
+    .theme-nav-btn {
+        min-height: 44px;
+        padding: 9px 11px;
+
+        font-size: 0.68rem;
+        gap: 7px;
+    }
+
+    .theme-nav-btn .kbd-badge {
+        display: none;
+    }
+
+    .help-tour-btn {
+        min-height: 40px;
+        padding: 7px 9px;
+
+        font-size: 0.62rem;
+    }
+
+    .theme-feature-rail {
+        margin: 0 16px 22px;
+        padding: 16px;
+    }
+
+    .tour-card {
+        padding: 20px;
+    }
+}
+
+
+/* =========================================
+   ACCESSIBILITY: REDUCED MOTION
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .theme-nav-btn {
+        animation: none;
+    }
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}
