@@ -27,8 +27,8 @@ router.get('/profile', protect, (req, res) => {
                 email:
                     req.user.email,
 
-                relation:
-                    req.user.relation,
+                role:
+                    req.user.role,
 
                 profile_pic_path:
                     req.user.profile_pic_path,
@@ -67,8 +67,8 @@ router.get('/me', protect, (req, res) => {
                 email:
                     req.user.email,
 
-                relation:
-                    req.user.relation,
+                role:
+                    req.user.role,
 
                 profile_pic_path:
                     req.user.profile_pic_path,

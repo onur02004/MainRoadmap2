@@ -1,6 +1,7 @@
 import pool from '../config/db.js';
 import fs from 'fs/promises';
 import path from 'path';
+import logger from '../utils/logger.js';
 
 // Sistem temalarını (themes.json) ve Veritabanındaki Temaları Birleştir
 export const getThemes = async (req, res) => {
@@ -33,8 +34,10 @@ export const getThemes = async (req, res) => {
       };
     });
 
+    logger.detail('THEMES', `Fetched and merged themes for user: ${userId}`);
     res.json(mergedThemes);
   } catch (err) {
+    logger.error('THEMES', `Error fetching themes for user: ${userId}`, err);
     res.status(500).json({ error: 'Failed to fetch themes', details: err.message });
   }
 };
@@ -79,8 +82,10 @@ export const saveCustomTheme = async (req, res) => {
     ];
 
     const result = await pool.query(query, values);
+    logger.detail('THEMES', `Saved custom theme for user: ${userId}`, { themeKey, name });
     res.status(201).json({ success: true, theme: result.rows[0] });
   } catch (err) {
+    logger.error('THEMES', `Error saving theme for user: ${userId}`, err);
     res.status(500).json({ error: 'Failed to save theme', details: err.message });
   }
 };
@@ -89,8 +94,10 @@ export const deleteCustomTheme = async (req, res) => {
   try {
     const { themeKey } = req.params;
     await pool.query(`DELETE FROM custom_themes WHERE theme_key = $1`, [themeKey]);
+    logger.detail('THEMES', `Deleted custom theme: ${themeKey}`);
     res.json({ success: true, message: `Theme ${themeKey} deleted` });
   } catch (err) {
+    logger.error('THEMES', `Error deleting theme: ${themeKey}`, err);
     res.status(500).json({ error: 'Failed to delete theme', details: err.message });
   }
 };
@@ -142,6 +149,7 @@ export const getPhotoboothSnaps = async (req, res) => {
       });
     }
 
+    logger.detail('THEMES', `Fetched photobooth snaps for user: ${userId}`, { photoCount: samplePhotos.length });
     return res.json({
       isAuthenticated: true,
       status: 'ok',
@@ -149,6 +157,7 @@ export const getPhotoboothSnaps = async (req, res) => {
       photos: samplePhotos
     });
   } catch (err) {
+    logger.error('THEMES', `Error fetching photobooth snaps for user: ${userId}`, err);
     return res.status(500).json({
       isAuthenticated: false,
       status: 'error',

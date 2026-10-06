@@ -1,12 +1,14 @@
 import catchAsync from '../utils/catchAsync.js';
 import AppError from '../utils/appError.js';
 import db from '../config/db.js';
+import logger from '../utils/logger.js';
+
 
 // LRCLIB API Yapılandırması
 const LRCLIB_BASE_URL = 'https://lrclib.net';
 const LRCLIB_HEADERS = {
   // LRCLIB kuralları gereği User-Agent zorunludur
-  'User-Agent': 'SongShareBackend/1.0.0 (https://github.com/myproject)'
+  'User-Agent': 'SongShareBackend/1.0.0 (https://github.com/onur02004/MainRoadmap2)'
 };
 
 /**
@@ -27,17 +29,18 @@ async function fetchLyricsFromLRCLIB(trackName, artistName, albumName = null, du
     });
 
     if (response.status === 404) {
+      logger.info(`LRCLIB`, `No Lyrics found: ${trackName} - ${artistName}`);
       return null;
     }
 
     if (!response.ok) {
-      console.warn(`[LRCLIB Warning] İstek başarısız: ${response.status}`);
+      logger.warn(`LRCLIB`, `Request failed: ${response.status}`);
       return null;
     }
 
     return await response.json();
   } catch (error) {
-    console.error('[LRCLIB Error] Şarkı sözü çekilirken hata oluştu:', error.message);
+    logger.error(`LRCLIB`, 'Error fetching lyrics:', error);
     return null;
   }
 }
@@ -50,6 +53,7 @@ export const fetchSongLyrics = catchAsync(async (req, res, next) => {
   const { track_name, artist_name, album_name, duration } = req.query;
 
   if (!track_name || !artist_name) {
+    logger.error(`LRCLIB`, 'track_name and artist_name paramaters are mandatory.');
     return next(new AppError('track_name ve artist_name sorgu parametreleri zorunludur.', 400));
   }
 
@@ -61,12 +65,13 @@ export const fetchSongLyrics = catchAsync(async (req, res, next) => {
   );
 
   if (!lyricsData) {
+    logger.info(`LRCLIB`, `No Lyrics found: ${track_name} - ${artist_name}`);
     return res.status(404).json({
       status: 'fail',
       message: 'LRCLIB üzerinde bu şarkıya ait söz bulunamadı.'
     });
   }
-
+  logger.info(`LRCLIB`, `Fetched Lyrics: ${track_name} - ${artist_name}`);
   res.status(200).json({
     status: 'success',
     data: {
@@ -108,11 +113,13 @@ export const shareSong = catchAsync(async (req, res, next) => {
   } = req.body;
 
   if (!song_name || !song_artist) {
+    logger.warn(`SONGSHARE`, 'song_name and song_artist parameters are mandatory.');
     return next(new AppError('Şarkı adı ve sanatçı bilgisi zorunludur.', 400));
   }
 
   // Eğer istemci söz göndermediyse arka planda LRCLIB'e sorup otomatik doldur
   if (!lyrics && !time_synced_lyrics) {
+    logger.detail(`SONGSHARE-LRCLIB`, `Lyrics missing, Fetching lyrics from LRCLIB for: ${song_name} - ${song_artist}`);
     const lrcResult = await fetchLyricsFromLRCLIB(song_name, song_artist, album_name, duration);
     if (lrcResult) {
       lyrics = lrcResult.plainLyrics || null;
@@ -147,6 +154,7 @@ export const shareSong = catchAsync(async (req, res, next) => {
 
   const result = await db.query(query, values);
 
+  logger.info(`SONGSHARE`, `New song shared by user ${song_name} - ${song_artist}`);
   res.status(201).json({
     status: 'success',
     message: 'Şarkı başarıyla paylaşıldı.',
@@ -165,6 +173,7 @@ export const getFeed = catchAsync(async (req, res, next) => {
     req.query.userId;
 
   if (!currentUserId) {
+    logger.error(`SONGSHARE`, 'User ID not found in request for feed retrieval.');
     return next(
       new AppError('Kullanıcı kimliği bulunamadı.', 401)
     );
@@ -261,6 +270,7 @@ export const getFeed = catchAsync(async (req, res, next) => {
     [currentUserId]
   );
 
+  logger.detail(`SONGSHARE`, `Fetched feed for user ${currentUserId}`, { user_id: currentUserId });
   res.status(200).json({
     status: 'success',
     results: result.rows.length,

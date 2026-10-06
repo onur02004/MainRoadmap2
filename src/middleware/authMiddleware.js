@@ -36,7 +36,7 @@ export const protect = async (req, res, next) => {
 
 export const restrictTo = (...roles) => {
   return (req, res, next) => {
-    const userRole = (req.user?.relation || req.user?.role || '').toUpperCase();
+    const userRole = (req.user?.role || '').toUpperCase();
     const allowed = roles.map(r => r.toUpperCase());
     if (!allowed.includes(userRole)) {
       return next(new AppError('Bu işlemi gerçekleştirmek için yetkiniz bulunmuyor.', 403));

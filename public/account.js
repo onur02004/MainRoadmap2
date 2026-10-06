@@ -89,8 +89,8 @@ async function loadUserProfile() {
         user.user_name,
 
       role:
-        user.relation
-          ? user.relation.toUpperCase()
+        user.role
+          ? user.role.toUpperCase()
           : 'ROLE_UNAVAILABLE',
 
       email:

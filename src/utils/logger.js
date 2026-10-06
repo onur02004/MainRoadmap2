@@ -60,6 +60,57 @@ let currentLevel = LEVELS[
 ] || LEVELS.medium;
 
 
+const LOG_BUFFER_LIMIT = 1000;
+const logBuffer = [];
+let nextLogId = 1;
+
+function serializeLogData(data) {
+    if (data === undefined) return '';
+
+    if (data instanceof Error) {
+        return JSON.stringify({
+            name: data.name,
+            message: data.message,
+            stack: data.stack
+        });
+    }
+
+    try {
+        return typeof data === 'string'
+            ? data
+            : JSON.stringify(data);
+    } catch {
+        return '[Data could not be serialized]';
+    }
+}
+
+function getRecentLogs({ after = 0, level = 'ALL', limit = 100 } = {}) {
+    const normalizedLevel = String(level).toUpperCase();
+    const safeLimit = Math.min(
+        Math.max(Number(limit) || 100, 1),
+        200
+    );
+
+    let logs = logBuffer.filter(log => log.id > after);
+
+    if (normalizedLevel !== 'ALL') {
+        logs = logs.filter(
+            log => log.level === normalizedLevel
+        );
+    }
+
+    // İlk istekte son kayıtları göster.
+    if (Number(after) === 0) {
+        logs = logs.slice(-safeLimit);
+    } else {
+        logs = logs.slice(0, safeLimit);
+    }
+
+    return logs;
+}
+
+
+
 function getCallerLocation() {
     const stack = new Error().stack;
 
@@ -116,28 +167,50 @@ function getCallerLocation() {
 }
 
 
+
 function write(level, category, message, data) {
-    // Hatalar ve uyarılar tüm modlarda görünür.
-    const priority = {
+    const priorities = {
         error: 0,
         warn: 0,
         info: 1,
         detail: 2,
         debug: 3
-    }[level];
+    };
 
+    const priority = priorities[level];
     if (priority === undefined) return;
-    if (priority > currentLevel) return;
 
-
-    const time = new Date().toLocaleTimeString('de-DE');
+    const time = new Date().toISOString();
     const location = getCallerLocation();
 
+    const record = {
+        id: nextLogId++,
+        timestamp: time,
+        level: level.toUpperCase(),
+        category: String(category || 'GENERAL'),
+        location,
+        message: String(message ?? ''),
+        data: serializeLogData(data)
+    };
+
+    // Console seviyesinden bağımsız olarak logu sakla.
+    logBuffer.push(record);
+
+    if (logBuffer.length > LOG_BUFFER_LIMIT) {
+        logBuffer.splice(
+            0,
+            logBuffer.length - LOG_BUFFER_LIMIT
+        );
+    }
+
+    // Terminale yazdırma filtresi.
+    if (priority > currentLevel) return;
+
     const prefix = [
-        `[${time}]`,
-        `[${level.toUpperCase()}]`,
-        `[${category}]`,
-        `[${location}]`
+        `[${new Date(time).toLocaleTimeString('de-DE')}]`,
+        `[${record.level}]`,
+        `[${record.category}]`,
+        `[${record.location}]`
     ].join(' ');
 
     if (data === undefined) {
@@ -146,6 +219,7 @@ function write(level, category, message, data) {
         console.log(prefix, message, data);
     }
 }
+
 
 const logger = {
     setLevel(level) {
@@ -162,6 +236,7 @@ const logger = {
         return Object.keys(LEVELS)
             .find(key => LEVELS[key] === currentLevel);
     },
+    getRecentLogs,
 
     error: (category, message, data) =>
         write("error", category, message, data),
