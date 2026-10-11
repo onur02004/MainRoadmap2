@@ -651,6 +651,42 @@
   animation: feedSkeletonShimmer 1.45s infinite;
 }
 
+/* =========================================================
+   FEED SKELETON -> GERÇEK KART GEÇİŞİ
+   ========================================================= */
+
+.feed-loading-stack {
+    animation: feedSkeletonFadeIn 0.35s ease forwards;
+}
+
+@keyframes feedSkeletonFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.friends-loading-skeleton {
+    animation: friendsSkeletonEnter 0.4s ease forwards;
+}
+
+@keyframes friendsSkeletonEnter {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .feed-skeleton-line,
 .feed-skeleton-cover,
 .feed-skeleton-pill {
@@ -961,7 +997,7 @@
   position: absolute;
   bottom: 44px;
   left: 0;
-  width: 220px;
+  width: 380px;
   background: rgba(22, 26, 34, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.18);
   backdrop-filter: blur(16px);
@@ -973,6 +1009,7 @@
   flex-direction: column;
   gap: 8px;
   z-index: 50;
+  background: linear-gradient(135deg, rgba(22, 28, 40, 0.85), rgba(12, 16, 24, 0.95));
 }
 .rate-mini-popup.active { display: flex; }
 .mini-popup-title { font-size: 0.7rem; font-weight: 700; color: var(--text-dim); }
@@ -2275,6 +2312,8 @@ select.form-input option { background: #12151b; color: #fff; }
    APPLE MUSIC STYLE LYRICS: LOADING SKELETON & STAGGER ANIMATIONS
    ========================================================================== */
 
+   
+   
 /* Yükleme Ekranı Kutusu */
 .lyrics-skeleton-container {
   display: flex;
@@ -2371,7 +2410,7 @@ select.form-input option { background: #12151b; color: #fff; }
   color: var(--text-dim);
 }
 
-.feed-card img,
+.feed-card .album-cover-main,
 .ios-friend-card img,
 .album-cover,
 .track-cover {
@@ -2740,45 +2779,6 @@ select.form-input option { background: #12151b; color: #fff; }
 /* =========================================================
    HOME INITIAL SETTLE
    ========================================================= */
-
-#view-home {
-  opacity: 0;
-
-  transform:
-    translateY(-18px)
-    scale(.995);
-
-  filter: blur(3px);
-
-  transition:
-    opacity .9s cubic-bezier(.22,1,.36,1),
-    transform 1.1s cubic-bezier(.16,1,.3,1),
-    filter 1s cubic-bezier(.22,1,.36,1);
-}
-
-#view-home.home-content-ready {
-  opacity: 1;
-
-  transform:
-    translateY(0)
-    scale(1);
-
-  filter: blur(0);
-}
-
-
-#view-home {
-  transform:
-    translateY(-12px);
-
-  transition:
-    transform 1s cubic-bezier(.16,1,.3,1);
-}
-
-#view-home.home-content-ready {
-  transform:
-    translateY(0);
-}
 
 .friends-listening-strip.is-docked-right .strip-title {
   font-size: 0.58rem;
@@ -4683,4 +4683,439 @@ canvas {
     font-weight: 600;
 
     color: #596170;
+}
+
+
+/* 
+=========================================================
+  NOT YET
+========================================================= */
+
+#view-notyet.active {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#view-notyet > img{
+  border-radius: 12px;
+  margin-top: 12px;
+  width: 50vh;
+}
+
+
+.coverflow-stage-3d {
+    transition:
+        opacity .9s cubic-bezier(.22,1,.36,1),
+        filter .9s cubic-bezier(.22,1,.36,1),
+        transform 1s cubic-bezier(.22,1,.36,1);
+}
+
+.coverflow-stage-3d.recommendations-loading {
+    opacity: .55;
+    filter:
+        blur(8px)
+        saturate(.65);
+    transform:
+        translateY(12px)
+        scale(.97);
+}
+
+.coverflow-stage-3d.recommendations-ready {
+    opacity: 1;
+    filter: blur(0) saturate(1);
+    transform:
+        translateY(0)
+        scale(1);
+}
+
+.spotlight-coverflow-panel {
+    transition:
+        opacity .8s cubic-bezier(.22,1,.36,1),
+        transform .9s cubic-bezier(.22,1,.36,1),
+        filter .9s cubic-bezier(.22,1,.36,1);
+}
+
+.spotlight-coverflow-panel.recommendations-loading {
+    opacity: .65;
+    transform:
+        translateY(18px)
+        scale(.985);
+    filter: blur(3px);
+}
+
+.spotlight-coverflow-panel.recommendations-ready {
+    opacity: 1;
+    transform:
+        translateY(0)
+        scale(1);
+    filter: blur(0);
+}
+
+/* =========================================================
+   COMPANION DOCK - INITIAL LOADING SKELETON
+   ========================================================= */
+
+.dock-loading-skeleton {
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0.035) 20%,
+    rgba(255, 255, 255, 0.11) 45%,
+    rgba(255, 255, 255, 0.035) 70%
+  );
+
+  background-size: 250% 100%;
+  animation: companionSkeletonShimmer 1.8s
+    cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+#playerCoverSkeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.dock-loading-line {
+  display: block;
+  height: 20px;
+  width: 68%;
+  border-radius: 7px;
+
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0.04) 20%,
+    rgba(255, 255, 255, 0.13) 45%,
+    rgba(255, 255, 255, 0.04) 70%
+  );
+
+  background-size: 250% 100%;
+  animation: companionSkeletonShimmer 1.8s
+    cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.dock-loading-line-small {
+  width: 42%;
+  height: 13px;
+  margin-top: 8px;
+  opacity: 0.8;
+}
+
+@keyframes companionSkeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Gerçek veri geldiğinde yumuşak geçiş */
+#playerCoverImg {
+  transition:
+    opacity 0.35s ease,
+    filter 0.35s ease;
+}
+
+#playerTrackTitle,
+#playerTrackArtist {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+
+.feed-author-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.feed-author-avatar {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  flex: 0 0 34px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.feed-author-avatar > * {
+  width: 100%;
+  height: 100%;
+}
+
+
+
+/* ==========================================
+   APPLE MUSIC STYLE — INTERACTIVE COVER
+   ========================================== */
+
+.cover-stage {
+  isolation: isolate;
+  perspective: 900px;
+  transform: translateZ(0);
+  transform-origin: center;
+  transition:
+    box-shadow 650ms cubic-bezier(.2, .8, .2, 1),
+    border-color 500ms ease,
+    transform 650ms cubic-bezier(.2, .8, .2, 1);
+  will-change: transform;
+}
+
+/* Albüm kapağı */
+.feed-card .cover-stage .album-cover-main {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1);
+  backface-visibility: hidden;
+  transition:
+    opacity 850ms cubic-bezier(.22, 1, .36, 1),
+    filter 850ms cubic-bezier(.22, 1, .36, 1),
+    transform 1100ms cubic-bezier(.16, 1, .3, 1);
+}
+
+/* Sanatçı / grup fotoğrafı */
+.artist-cover-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  filter: blur(12px) saturate(.85);
+  transform: scale(1.12) rotate(1.2deg);
+  pointer-events: none;
+  backface-visibility: hidden;
+  transition:
+    opacity 900ms cubic-bezier(.22, 1, .36, 1),
+    filter 1000ms cubic-bezier(.22, 1, .36, 1),
+    transform 1200ms cubic-bezier(.16, 1, .3, 1);
+}
+
+/* Global image-loaded kuralını kapak animasyonuna uyumlu tut */
+.feed-card .cover-stage .artist-cover-overlay.image-loaded {
+  opacity: 0;
+  filter: blur(12px) saturate(.85);
+  transform: scale(1.12) rotate(1.2deg);
+}
+
+.feed-card .cover-stage.is-artist-visible .artist-cover-overlay.image-loaded {
+  opacity: 1;
+  filter: blur(0) saturate(1.05);
+  transform: scale(1.015) rotate(0deg);
+}
+
+.feed-card .cover-stage.is-artist-visible .album-cover-main.image-loaded {
+  opacity: 0;
+  filter: blur(8px);
+  transform: scale(.94);
+}
+
+/* Işığın kapak üzerinde kayması */
+.cover-gloss {
+  position: absolute;
+  z-index: 3;
+  inset: -60%;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 255, 255, .10) 45%,
+    rgba(255, 255, 255, .25) 50%,
+    rgba(255, 255, 255, .07) 55%,
+    transparent 65%
+  );
+  transform: translateX(-45%) rotate(8deg);
+  transition:
+    opacity 500ms ease,
+    transform 1300ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.cover-stage.is-hovering .cover-gloss {
+  opacity: 1;
+  transform: translateX(35%) rotate(8deg);
+}
+
+/* Mouse yaklaşınca hafif derinlik ve büyüme */
+.cover-stage.is-hovering {
+  transform: translateY(-3px) scale(1.025);
+  border-color: rgba(255, 255, 255, .30);
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, .48),
+    0 0 24px rgba(255, 255, 255, .06);
+}
+
+.cover-stage.is-hovering .album-cover-main.image-loaded {
+  transform: scale(1.065);
+}
+
+/* Sanatçı fotoğrafına geçerken minik, yumuşak mikro hareket */
+@keyframes coverMicroMotion {
+  0%   { transform: translateY(-3px) scale(1.025) rotate(0deg); }
+  35%  { transform: translateY(-3px) scale(1.025) rotate(.25deg); }
+  65%  { transform: translateY(-3px) scale(1.025) rotate(-.2deg); }
+  100% { transform: translateY(-3px) scale(1.025) rotate(0deg); }
+}
+
+.cover-stage.is-artist-visible {
+  animation: coverMicroMotion 650ms ease-out 1;
+}
+
+/* Play butonu fotoğrafın üstünde kalsın */
+.cover-stage .cover-play-cta {
+  z-index: 5;
+  transition:
+    transform 450ms cubic-bezier(.2, .8, .2, 1),
+    box-shadow 450ms ease,
+    background 450ms ease;
+}
+
+.cover-stage.is-hovering .cover-play-cta {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 0 6px rgba(255, 255, 255, .07),
+    0 8px 24px rgba(62, 207, 142, .35);
+}
+
+/* Resim yüklenemezse bozuk katman gösterme */
+.artist-cover-overlay.artist-cover-failed {
+  display: none !important;
+}
+
+/* Hareket hassasiyeti olan kullanıcılar için */
+@media (prefers-reduced-motion: reduce) {
+  .cover-stage,
+  .cover-stage *,
+  .cover-stage::before,
+  .cover-stage::after {
+    animation: none !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+
+/* SHARE WIZARD POLISH — score, privacy cards and artist information */
+.share-stage-cluster { display:grid; grid-template-columns:minmax(190px,230px) minmax(430px,650px) minmax(300px,360px); align-items:stretch; justify-content:center; gap:14px; max-width:1420px; }
+.share-artist-panel { align-self:stretch; min-width:0; min-height:420px; border:1px solid rgba(255,255,255,.09); border-radius:26px; overflow:hidden; position:relative; display:flex; flex-direction:column; background:linear-gradient(160deg,rgba(24,29,42,.96),rgba(10,12,18,.94)); box-shadow:0 24px 65px rgba(0,0,0,.28); opacity:0; transform:translateX(-14px) scale(.985); pointer-events:none; transition:opacity .45s ease,transform .6s cubic-bezier(.2,.8,.2,1),border-color .3s ease; }
+.share-stage-cluster.has-lyrics-attached .share-artist-panel { opacity:1; transform:translateX(0) scale(1); pointer-events:auto; border-color:rgba(105,125,255,.24); }
+.artist-panel-art-wrap { height:190px; position:relative; overflow:hidden; flex-shrink:0; }
+.artist-panel-art-wrap > img { width:100%; height:100%; object-fit:cover; display:block; opacity:.88; transform:scale(1.03); transition:transform 1.2s cubic-bezier(.16,1,.3,1),opacity .4s ease; }
+.share-artist-panel:hover .artist-panel-art-wrap > img { transform:scale(1.11); opacity:1; }
+.artist-art-glow { position:absolute; inset:0; background:linear-gradient(180deg,rgba(8,10,16,.12),rgba(8,10,16,.08) 40%,#10131c 100%); }
+.artist-panel-eyebrow { position:absolute; top:14px; left:14px; display:flex; gap:7px; align-items:center; border:1px solid rgba(255,255,255,.18); border-radius:30px; padding:7px 10px; background:rgba(8,10,16,.48); backdrop-filter:blur(12px); color:#fff; font-size:.58rem; font-weight:800; letter-spacing:1.1px; }
+.artist-panel-copy { padding:4px 18px 18px; display:flex; flex-direction:column; gap:10px; min-height:0; }
+.artist-panel-kicker { color:#8b9aff; font-size:.61rem; font-weight:800; letter-spacing:1.5px; }
+.artist-panel-copy h2 { margin:0; font-size:1.18rem; line-height:1.25; letter-spacing:-.5px; overflow-wrap:anywhere; }
+.artist-panel-copy p { margin:0; color:#a7adbd; font-size:.76rem; line-height:1.65; }
+.artist-fact-row { display:flex; gap:10px; align-items:center; padding:11px; border:1px solid rgba(255,255,255,.08); border-radius:14px; background:rgba(255,255,255,.035); margin-top:4px; }
+.artist-fact-icon { width:32px; height:32px; display:grid; place-items:center; flex-shrink:0; border-radius:10px; color:#a5b4fc; background:rgba(129,140,248,.13); }
+.artist-fact-row div { min-width:0; display:flex; flex-direction:column; gap:4px; }
+.artist-fact-row small { color:#717b90; font-size:.53rem; font-weight:800; letter-spacing:.8px; }
+.artist-fact-row strong { color:#f4f5fb; font-size:.72rem; line-height:1.35; overflow-wrap:anywhere; }
+.artist-spotify-link { display:flex; justify-content:space-between; align-items:center; gap:8px; text-decoration:none; color:#d1fae5; font-size:.69rem; font-weight:700; padding:10px 0; transition:color .2s ease,gap .2s ease; }
+.artist-spotify-link:hover { color:#4adea0; gap:12px; }
+.artist-panel-footnote { margin-top:auto; display:flex; align-items:center; gap:8px; padding-top:12px; color:#667085; font-size:.59rem; }
+.artist-panel-footnote span { width:6px; height:6px; border-radius:50%; background:#818cf8; box-shadow:0 0 12px #818cf8; }
+.rating-dynamic-container { position:relative; overflow:hidden; padding:19px 20px 18px !important; border-radius:20px !important; background:radial-gradient(130% 130% at 0% 0%,rgba(99,102,241,.17),transparent 58%),linear-gradient(135deg,rgba(25,30,45,.96),rgba(13,17,25,.96)) !important; border:1px solid rgba(148,163,184,.19) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 12px 30px rgba(0,0,0,.18); transition:border-color .25s ease,box-shadow .25s ease,transform .25s ease; }
+.rating-dynamic-container::before { content:""; position:absolute; width:180px; height:180px; border-radius:50%; right:-85px; top:-110px; background:var(--rating-glow,rgba(99,102,241,.22)); filter:blur(38px); opacity:.8; pointer-events:none; transition:background .3s ease; }
+.rating-dynamic-container:focus-within { border-color:rgba(129,140,248,.52) !important; box-shadow:0 0 0 3px rgba(99,102,241,.08),0 16px 36px rgba(0,0,0,.24); }
+.rating-header { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.rating-header .field-label { color:#c4cad8 !important; font-size:.72rem !important; font-weight:800 !important; letter-spacing:.7px; text-transform:uppercase; }
+#wizardRatingValue { display:grid; place-items:center; min-width:58px; height:48px; padding:0 8px; box-sizing:border-box; border-radius:15px; color:#fff; font-size:1.7rem; line-height:1; font-weight:800; letter-spacing:-1px; font-variant-numeric:tabular-nums; background:linear-gradient(145deg,rgba(129,140,248,.2),rgba(62,207,142,.11)); border:1px solid rgba(255,255,255,.12); text-shadow:0 0 22px var(--rating-glow,rgba(129,140,248,.4)); transition:transform .18s ease,color .25s ease,text-shadow .25s ease; }
+.rating-dynamic-container:active #wizardRatingValue { transform:scale(.96); }
+.rating-scale { position:relative; z-index:1; display:flex; justify-content:space-between; margin:13px 0 7px !important; color:#778197 !important; font-size:.62rem !important; font-weight:800; letter-spacing:.5px; }
+.rating-scale span:last-child { color:#a5b4fc; }
+.rating-dynamic-container .slider-wrapper { position:relative; z-index:1; padding:4px 0 2px; }
+#wizardRatingSlider { appearance:none; -webkit-appearance:none; display:block; width:100%; height:8px !important; border:0; border-radius:999px; outline:none; cursor:pointer; background:linear-gradient(90deg,#818cf8 0%,#3ecf8e 50%,#27303d 50%,#27303d 100%); box-shadow:inset 0 1px 3px rgba(0,0,0,.35); transition:filter .2s ease; }
+#wizardRatingSlider:hover { filter:brightness(1.12); }
+#wizardRatingSlider::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:#f8fafc; border:4px solid #818cf8; box-shadow:0 0 0 4px rgba(129,140,248,.13),0 0 18px var(--rating-glow,rgba(129,140,248,.5)); transition:transform .18s ease,border-color .2s ease,box-shadow .2s ease; }
+#wizardRatingSlider:hover::-webkit-slider-thumb { transform:scale(1.12); }
+#wizardRatingSlider::-moz-range-thumb { width:14px; height:14px; border-radius:50%; background:#f8fafc; border:4px solid #818cf8; box-shadow:0 0 0 4px rgba(129,140,248,.13),0 0 18px var(--rating-glow,rgba(129,140,248,.5)); }
+#wizardRatingSlider:focus-visible { outline:2px solid #a5b4fc; outline-offset:7px; }
+.privacy-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin-top:10px; }
+.privacy-option { position:relative; min-width:0; min-height:112px; display:flex; flex-direction:column; align-items:flex-start; gap:7px; text-align:left; padding:12px 10px; border-radius:15px; color:#d7dbea; background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.09); font:inherit; cursor:pointer; transition:transform .22s ease,border-color .22s ease,background .22s ease,box-shadow .22s ease; }
+.privacy-option:not(:disabled):hover { transform:translateY(-2px); border-color:rgba(129,140,248,.5); }
+.privacy-option.is-selected { border-color:rgba(62,207,142,.65); background:linear-gradient(145deg,rgba(62,207,142,.13),rgba(129,140,248,.09)); box-shadow:inset 0 0 0 1px rgba(62,207,142,.08),0 8px 24px rgba(62,207,142,.06); }
+.privacy-option-icon { display:grid; place-items:center; width:29px; height:29px; border-radius:10px; background:rgba(255,255,255,.07); color:#a5b4fc; font-size:.77rem; }
+.privacy-option.is-selected .privacy-option-icon { background:rgba(62,207,142,.14); color:#5ee4a6; }
+.privacy-option strong { font-size:.67rem; line-height:1.2; }
+.privacy-option small { color:#8b93a5; font-size:.57rem; line-height:1.3; }
+.privacy-option-state { display:none; position:absolute; top:9px; right:9px; color:#5ee4a6; font-size:.65rem; }
+.privacy-option.is-selected .privacy-option-state { display:block; }
+.privacy-option.is-disabled { cursor:not-allowed; opacity:.42; filter:saturate(.45); }
+.privacy-soon { color:#8791a7; font-size:.48rem; font-weight:800; letter-spacing:.7px; margin-top:auto; }
+.privacy-select-state { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0,0,0,0) !important; white-space:nowrap !important; border:0 !important; }
+@media (max-width:1250px) { .share-stage-cluster { grid-template-columns:minmax(160px,200px) minmax(400px,1fr) minmax(290px,330px); gap:10px; } .share-wizard-wrapper { padding:28px 26px; } .share-lyrics-dock-panel { width:330px; min-width:290px; } }
+@media (max-width:1050px) { .share-stage-cluster { display:flex; flex-wrap:wrap; } .share-artist-panel { order:2; flex:1 1 220px; min-height:300px; } .share-wizard-wrapper { order:1; flex:1 1 440px; max-width:none; } .share-lyrics-dock-panel { order:3; flex:1 1 300px; width:auto; min-width:0; border-radius:24px; border-left:1px solid rgba(255,255,255,.16); min-height:360px; } }
+@media (max-width:620px) { .privacy-options { gap:6px; } .privacy-option { padding:10px 7px; min-height:105px; } .privacy-option strong { font-size:.6rem; } .privacy-option small { font-size:.53rem; } .share-artist-panel { flex-basis:100%; } .artist-panel-art-wrap { height:155px; } }
+@media (prefers-reduced-motion:reduce) { .share-artist-panel,.artist-panel-art-wrap > img,.rating-dynamic-container,.privacy-option,#wizardRatingSlider::-webkit-slider-thumb { transition:none !important; } }
+
+
+
+.artist-genres-section {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 4px;
+}
+
+.artist-section-label {
+  color: #8b9aff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+}
+
+.artist-genre-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.artist-genre-chip {
+  padding: 6px 10px;
+  border: 1px solid rgba(139, 154, 255, 0.22);
+  border-radius: 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(139, 154, 255, 0.13),
+    rgba(62, 207, 142, 0.07)
+  );
+  color: #dce1ff;
+  font-size: 0.68rem;
+  font-weight: 600;
+  animation: artistGenreIn 0.35s ease both;
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.artist-genre-chip:hover {
+  background: rgba(139, 154, 255, 0.23);
+  transform: translateY(-2px);
+}
+
+.artist-genre-placeholder {
+  color: #858b9b;
+  font-size: 0.72rem;
+}
+
+@keyframes artistGenreIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

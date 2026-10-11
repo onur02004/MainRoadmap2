@@ -2,6 +2,7 @@ import catchAsync from '../utils/catchAsync.js';
 import AppError from '../utils/appError.js';
 import db from '../config/db.js';
 import logger from '../utils/logger.js';
+import * as spotifyService from '../services/spotifyService.js';
 
 
 // LRCLIB API Yapılandırması
@@ -112,6 +113,29 @@ export const shareSong = catchAsync(async (req, res, next) => {
     time_synced_lyrics
   } = req.body;
 
+  // Sanatçı/grup fotoğraflarını Spotify'dan otomatik al
+  let song_artist_cover_url = req.body.song_artist_cover_url || null;
+  let song_artist_cover_url_backup = req.body.song_artist_cover_url_backup || null;
+  let song_artist_genre = req.body.song_artist_genre || null;
+
+  if (!song_artist_cover_url) {
+    try {
+      const artistMeta =
+        await spotifyService.getArtistDetailsByName(song_artist);
+
+      if (artistMeta) {
+        song_artist_cover_url = artistMeta.artist_cover || null;
+        song_artist_cover_url_backup = artistMeta.artist_cover_backup || null;
+        song_artist_genre = artistMeta.genres || [];
+      }
+    } catch (error) {
+      logger.warn(
+        'SONGSHARE',
+        `Sanatçı fotoğrafı alınamadı: ${song_artist}`
+      );
+    }
+  }
+
   if (!song_name || !song_artist) {
     logger.warn(`SONGSHARE`, 'song_name and song_artist parameters are mandatory.');
     return next(new AppError('Şarkı adı ve sanatçı bilgisi zorunludur.', 400));
@@ -129,10 +153,16 @@ export const shareSong = catchAsync(async (req, res, next) => {
 
   const query = `
     INSERT INTO song_suggestions (
-      user_id, song_name, song_artist, spotify_uri, song_url, 
-      song_cover_url, visibility, target_users, rating_by_user, 
-      comment_by_user, recommended_time_by_user, lyrics, time_synced_lyrics, date_added
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
+      user_id, song_name, song_artist, spotify_uri, song_url,
+      song_cover_url, song_artist_cover_url,
+      song_artist_cover_url_backup, song_artist_genre,
+      visibility, target_users, rating_by_user,
+      comment_by_user, recommended_time_by_user,
+      lyrics, time_synced_lyrics, date_added
+    )VALUES (
+      $1, $2, $3, $4, $5, $6, $7, $8, $9,
+      $10, $11, $12, $13, $14, $15, $16, NOW()
+    )
     RETURNING *;
   `;
 
@@ -143,6 +173,13 @@ export const shareSong = catchAsync(async (req, res, next) => {
     spotify_uri || null,
     song_url || null,
     song_cover_url || null,
+    song_artist_cover_url,
+    song_artist_cover_url_backup,
+    Array.isArray(song_artist_genre)
+      ? song_artist_genre
+      : song_artist_genre
+        ? [song_artist_genre]
+        : null,
     visibility,
     target_users,
     rating_by_user !== undefined ? rating_by_user : null,
@@ -150,9 +187,25 @@ export const shareSong = catchAsync(async (req, res, next) => {
     recommended_time_by_user || null,
     lyrics || null,
     time_synced_lyrics ? JSON.stringify(time_synced_lyrics) : null
+
   ];
 
-  const result = await db.query(query, values);
+  let result;
+
+  try {
+    result = await db.query(query, values);
+  } catch (error) {
+    console.error('SONGSHARE INSERT ERROR:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      hint: error.hint,
+      column: error.column,
+      table: error.table
+    });
+
+    throw error;
+  }
 
   logger.info(`SONGSHARE`, `New song shared by user ${song_name} - ${song_artist}`);
   res.status(201).json({
@@ -549,77 +602,77 @@ export const addComment = catchAsync(async (req, res, next) => {
 
 export const getRecommendations = catchAsync(async (req, res, next) => {
 
-    const recommendations = [
+  const recommendations = [
 
-        {
-            id: 'rec-001',
-            title: 'Hot',
-            artist: 'Inna',
-            coverUrl: 'https://i.scdn.co/image/ab67616d00001e023d6413c7dc24318bdbd5b366',
-            spotifyUrl: 'https://open.spotify.com/track/5F4d5D9s0hM8f0gM6XvQeF'
-        },
+    {
+      id: 'rec-001',
+      title: 'Hot',
+      artist: 'Inna',
+      coverUrl: 'https://i.scdn.co/image/ab67616d00001e023d6413c7dc24318bdbd5b366',
+      spotifyUrl: 'https://open.spotify.com/track/5F4d5D9s0hM8f0gM6XvQeF'
+    },
 
-        {
-            id: 'rec-002',
-            title: 'Aklımda Biri Var',
-            artist: 'Artis',
-            coverUrl: 'https://i.scdn.co/image/ab67616d0000b273960635da26f6fbccbeb36b2d',
-            spotifyUrl: ''
-        },
+    {
+      id: 'rec-002',
+      title: 'Aklımda Biri Var',
+      artist: 'Artis',
+      coverUrl: 'https://i.scdn.co/image/ab67616d0000b273960635da26f6fbccbeb36b2d',
+      spotifyUrl: ''
+    },
 
-        {
-            id: 'rec-003',
-            title: 'A Sky Full of Stars',
-            artist: 'Coldplay',
-            coverUrl: 'https://i.scdn.co/image/ab67616d00001e028ff7c3580d429c8212b9a3b6',
-            spotifyUrl: ''
-        },
+    {
+      id: 'rec-003',
+      title: 'A Sky Full of Stars',
+      artist: 'Coldplay',
+      coverUrl: 'https://i.scdn.co/image/ab67616d00001e028ff7c3580d429c8212b9a3b6',
+      spotifyUrl: ''
+    },
 
-        {
-            id: 'rec-004',
-            title: 'Self Aware',
-            artist: 'Alternative',
-            coverUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpAp5NlImEisne6bbOOYVnPRHVm5B1gT4YQfF1Vi5dDQ&s=10',
-            spotifyUrl: ''
-        },
+    {
+      id: 'rec-004',
+      title: 'Self Aware',
+      artist: 'Alternative',
+      coverUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpAp5NlImEisne6bbOOYVnPRHVm5B1gT4YQfF1Vi5dDQ&s=10',
+      spotifyUrl: ''
+    },
 
-        {
-            id: 'rec-005',
-            title: 'Maraton',
-            artist: 'Ati242',
-            coverUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s',
-            spotifyUrl: ''
-        },
+    {
+      id: 'rec-005',
+      title: 'Maraton',
+      artist: 'Ati242',
+      coverUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s',
+      spotifyUrl: ''
+    },
 
-        {
-            id: 'rec-006',
-            title: 'Join Me',
-            artist: 'HIM',
-            coverUrl: 'https://i.scdn.co/image/ab67616d0000b273a8cfc41719dc2c2028e0aad5',
-            spotifyUrl: ''
-        },
+    {
+      id: 'rec-006',
+      title: 'Join Me',
+      artist: 'HIM',
+      coverUrl: 'https://i.scdn.co/image/ab67616d0000b273a8cfc41719dc2c2028e0aad5',
+      spotifyUrl: ''
+    },
 
-        {
-            id: 'rec-007',
-            title: 'Denize Bıraksam',
-            artist: 'Turkish Rock',
-            coverUrl: 'https://i.scdn.co/image/ab67616d0000b2736054a3d4d3fadf0173dbdf07',
-            spotifyUrl: ''
-        },
+    {
+      id: 'rec-007',
+      title: 'Denize Bıraksam',
+      artist: 'Turkish Rock',
+      coverUrl: 'https://i.scdn.co/image/ab67616d0000b2736054a3d4d3fadf0173dbdf07',
+      spotifyUrl: ''
+    },
 
-        {
-            id: 'rec-008',
-            title: 'Bi Tik',
-            artist: 'Pop Mix',
-            coverUrl: 'https://i1.sndcdn.com/artworks-ixY9Sl5eXz1mPMyZ-Sq9u8Q-t500x500.jpg',
-            spotifyUrl: ''
-        }
+    {
+      id: 'rec-008',
+      title: 'Bi Tik',
+      artist: 'Pop Mix',
+      coverUrl: 'https://i1.sndcdn.com/artworks-ixY9Sl5eXz1mPMyZ-Sq9u8Q-t500x500.jpg',
+      spotifyUrl: ''
+    }
 
-    ];
+  ];
 
-    res.status(200).json({
-        status: 'success',
-        results: recommendations.length,
-        data: recommendations
-    });
+  res.status(200).json({
+    status: 'success',
+    results: recommendations.length,
+    data: recommendations
+  });
 });

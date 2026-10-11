@@ -394,33 +394,47 @@ export const searchSpotifyTracks = catchAsync(async (req, res, next) => {
   });
 });
 
+
 /**
- * Sanatçı adını query'den alarak görselleri döner.
+ * Sanatçı/grup fotoğraflarını Spotify'dan getirir.
  * GET /api/spotify/artist-images?name=Creed
  */
 export const getArtistImages = catchAsync(async (req, res, next) => {
-  const { name } = req.query;
+  const name = String(req.query.name || '').trim();
 
-  if (!name || name.trim() === '') {
-    return next(new AppError('Sanatçı adı (name) parametresi zorunludur.', 400));
+  if (!name) {
+    return next(
+      new AppError('Sanatçı adı (name) parametresi zorunludur.', 400)
+    );
   }
 
-  // Örneğin "Temper City" veya "Creed"
-  const cleanName = name.split(',')[0].trim();
-  const artistData = await spotifyService.searchArtistImages(cleanName, 2);
+  const artistData =
+    await spotifyService.getArtistDetailsByName(name);
 
-  if (!artistData || !artistData.images || artistData.images.length === 0) {
+  if (!artistData?.artist_cover) {
     return res.status(404).json({
       status: 'fail',
-      message: `${cleanName} için Spotify üzerinde fotoğraf bulunamadı.`
+      message: `${name} için Spotify üzerinde fotoğraf bulunamadı.`,
+      data: {
+        artist: name,
+        primaryImage: null,
+        backupImage: null,
+        genres: []
+      }
     });
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
-    data: artistData
+    data: {
+      artist: name,
+      primaryImage: artistData.artist_cover,
+      backupImage: artistData.artist_cover_backup,
+      genres: artistData.genres || []
+    }
   });
 });
+
 
 export const shareSong = catchAsync(async (req, res, next) => {
   const userId = req.user?.id || req.user?._id || req.body.userId || '11111111-1111-1111-1111-111111111111'; //[cite: 4]

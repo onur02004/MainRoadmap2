@@ -177,6 +177,8 @@ function getEstimatedSpotifyPosition() {
 
   if (!track) return 0;
 
+  if (!track.syncWithSpotify) return;
+
   let position = Number(track.playbackPositionSec) || 0;
 
   // Spotify'dan aldığımız pozisyonun üzerinden geçen süreyi ekle
@@ -651,6 +653,8 @@ async function loadRecommendations() {
       const artist = song.artist || 'Bilinmeyen Sanatçı';
       const cover = song.coverUrl || '';
 
+
+
       return `
         <div
             class="coverflow-item"
@@ -689,6 +693,9 @@ async function loadRecommendations() {
     coverflowCurrentIndex =
       Math.floor((recommendations.length - 1) / 2);
 
+    // Coverflow item'ları DOM'a eklendikten sonra engine'i başlat
+    initCoverflowEngine();
+
 
     console.log(
       `🎵 ${recommendations.length} müzik önerisi yüklendi.`
@@ -712,7 +719,7 @@ async function loadRecommendations() {
     .forEach(img => prepareImage(img));
 }
 
-let coverflowCurrentIndex = 4;
+let coverflowCurrentIndex = 0;
 let activeBgLayer = 'A';
 
 function initCoverflowEngine() {
@@ -721,6 +728,17 @@ function initCoverflowEngine() {
   const dotsContainer = document.getElementById('coverflowDots');
   const btnHide = document.getElementById('btnHideSpotlight');
   const spotlightPanel = document.getElementById('spotlightPanel');
+
+  if (!stage) return;
+
+  spotlightPanel?.classList.add('recommendations-loading');
+  stage.classList.add('recommendations-loading');
+
+  stage.classList.remove('recommendations-loading');
+  stage.classList.add('recommendations-ready');
+
+  spotlightPanel?.classList.remove('recommendations-loading');
+  spotlightPanel?.classList.add('recommendations-ready');
 
   if (!stage || items.length === 0) return;
 
@@ -852,12 +870,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.handleYTStateChange = onYTStateChange;
 
-  window.currentSelectedTrack = {
-    name: 'Rebel Yell',
-    artist: 'Billy Idol',
-    uri: 'spotify:track:4TIJ7zSBNejNuQIYKjKXNE',
-    imageUrl: 'https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352'
-  };
+  window.currentSelectedTrack = null;
 
   // ----------------------------------------------------
   // 3. SPA VIEW & SAYFA GEÇİŞ YÖNETİMİ
@@ -866,7 +879,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewSections = document.querySelectorAll('.view-section');
 
   function switchView(targetHash) {
-    const viewName = targetHash.replace('#', '') || 'home';
+    let viewName = targetHash.replace('#', '') || 'home';
+
+    if (targetHash === '#discover' || targetHash === '#activity' || targetHash === '#search') {
+      viewName = 'notyet';
+    }
+
+    if (targetHash === '#quit') {
+      window.location.href = '/';
+    }
 
     navLinks.forEach(link => {
       const href = link.getAttribute('href');
@@ -924,45 +945,260 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let lastTrackTitle = null;
 
+  let companionDockLoaded = false;
+  let lastPlayedTrack = null;
+
+  function setCompanionDockLoading() {
+    const skeleton = document.getElementById('playerCoverSkeleton');
+    const img = document.getElementById('playerCoverImg');
+
+    const title = document.getElementById('playerTrackTitle');
+    const artist = document.getElementById('playerTrackArtist');
+
+    const indicator = document.getElementById('nowPlayingIndicator');
+
+    skeleton?.classList.add('dock-loading-skeleton');
+
+    if (img) {
+      img.style.display = 'none';
+      img.style.opacity = '0';
+    }
+
+    title?.classList.add('dock-loading-line');
+    artist?.classList.add(
+      'dock-loading-line',
+      'dock-loading-line-small'
+    );
+
+    if (indicator) {
+      indicator.textContent = 'LOADING';
+    }
+  }
+
+
+  function setCompanionDockTrack({
+    title,
+    artist,
+    cover,
+    isPlaying = false,
+    isLastPlayed = false
+  }) {
+    const skeleton = document.getElementById('playerCoverSkeleton');
+    const img = document.getElementById('playerCoverImg');
+
+    const titleEl = document.getElementById('playerTrackTitle');
+    const artistEl = document.getElementById('playerTrackArtist');
+    const indicator = document.getElementById('nowPlayingIndicator');
+
+    skeleton?.classList.remove('dock-loading-skeleton');
+
+    if (titleEl) {
+      titleEl.classList.remove(
+        'dock-loading-line',
+        'dock-loading-line-small'
+      );
+
+      titleEl.textContent = title || '';
+    }
+
+    if (artistEl) {
+      artistEl.classList.remove(
+        'dock-loading-line',
+        'dock-loading-line-small'
+      );
+
+      artistEl.textContent = artist || '';
+    }
+
+    if (cover && img) {
+      img.src = cover;
+      img.style.display = 'block';
+
+      requestAnimationFrame(() => {
+        img.style.opacity = '1';
+      });
+    } else if (img) {
+      img.style.display = 'none';
+    }
+
+    if (indicator) {
+      if (isPlaying) {
+        indicator.textContent = 'LISTENING NOW';
+      } else if (isLastPlayed) {
+        indicator.textContent = 'LAST PLAYED';
+      } else {
+        indicator.textContent = 'COMPANION';
+      }
+    }
+
+    companionDockLoaded = true;
+  }
+
+
+  function setCompanionDockEmpty() {
+    const skeleton = document.getElementById('playerCoverSkeleton');
+    const img = document.getElementById('playerCoverImg');
+
+    const title = document.getElementById('playerTrackTitle');
+    const artist = document.getElementById('playerTrackArtist');
+    const indicator = document.getElementById('nowPlayingIndicator');
+
+    skeleton?.classList.remove('dock-loading-skeleton');
+
+    if (img) {
+      img.style.display = 'none';
+      img.removeAttribute('src');
+    }
+
+    title?.classList.remove(
+      'dock-loading-line',
+      'dock-loading-line-small'
+    );
+
+    artist?.classList.remove(
+      'dock-loading-line',
+      'dock-loading-line-small'
+    );
+
+    if (title) title.textContent = 'Müzik Çalmıyor';
+    if (artist) artist.textContent = 'Spotify Beklemede';
+
+    if (indicator) {
+      indicator.textContent = 'COMPANION';
+    }
+
+    companionDockLoaded = true;
+  }
+
   async function loadMyNowPlaying() {
     const token = localStorage.getItem('token');
-    if (!token) return;
+
+    if (!token) {
+      setCompanionDockEmpty();
+      return;
+    }
 
     try {
       const res = await fetch('/api/spotify/now-playing', {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         credentials: 'include'
       });
-      if (!res.ok) return;
+
+      if (!res.ok) {
+        console.warn('Now playing alınamadı:', res.status);
+        setCompanionDockEmpty();
+        return;
+      }
 
       const data = await res.json();
-      const dockSong = document.getElementById('playerTrackTitle');
-      const dockArtist = document.getElementById('playerTrackArtist');
-      const dockImg = document.getElementById('playerCoverImg');
-      const dockIndicator = document.getElementById('nowPlayingIndicator');
 
+      const dockSong =
+        document.getElementById('playerTrackTitle');
+
+      /*
+       * =====================================================
+       * 1. ŞU ANDA ÇALIYOR
+       * =====================================================
+       */
       if (data.isPlaying && data.title) {
-        updateGetCurrentSongButton(true, data.title);
-        if (lastTrackTitle !== data.title) {
-          lastTrackTitle = data.title;
-          if (dockSong) dockSong.textContent = data.title;
-          if (dockArtist) dockArtist.textContent = data.artist;
-          if (dockImg && data.albumArt) dockImg.src = data.albumArt;
-          if (dockIndicator) dockIndicator.textContent = 'LISTENING NOW';
 
-          window.fetchSyncedLyricsExternal?.(data.title, data.artist);
+        updateGetCurrentSongButton(
+          true,
+          data.title
+        );
+
+        const trackChanged =
+          lastTrackTitle !== data.title;
+
+        lastTrackTitle = data.title;
+
+        setCompanionDockTrack({
+          title: data.title,
+          artist: data.artist,
+          cover: data.albumArt,
+          isPlaying: true
+        });
+
+        if (trackChanged) {
+          window.fetchSyncedLyricsExternal?.(
+            data.title,
+            data.artist
+          );
         }
-      } else {
-        updateGetCurrentSongButton(false);
-        if (lastTrackTitle !== null) {
-          lastTrackTitle = null;
-          if (dockSong) dockSong.textContent = 'Müzik Çalmıyor';
-          if (dockArtist) dockArtist.textContent = 'Spotify Beklemede';
-          if (dockIndicator) dockIndicator.textContent = 'COMPANION';
-        }
+
+        return;
       }
+
+      /*
+       * =====================================================
+       * 2. ÇALMIYOR AMA SON ÇALAN VAR
+       * =====================================================
+       */
+
+      updateGetCurrentSongButton(false);
+
+      const lastSong =
+        data.lastSong ||
+        {};
+
+      const lastTitle =
+        lastSong.name ||
+        data.last_song_name ||
+        data.lastSongName ||
+        null;
+
+      const lastArtist =
+        lastSong.artist ||
+        data.last_song_artist ||
+        data.lastSongArtist ||
+        null;
+
+      const lastCover =
+        lastSong.cover ||
+        data.last_song_cover ||
+        data.lastSongCover ||
+        null;
+
+      if (lastTitle) {
+
+        lastTrackTitle = null;
+
+        setCompanionDockTrack({
+          title: lastTitle,
+          artist: lastArtist || 'Bilinmeyen Sanatçı',
+          cover: lastCover,
+          isPlaying: false,
+          isLastPlayed: true
+        });
+
+        return;
+      }
+
+      /*
+       * =====================================================
+       * 3. HİÇBİR ŞARKI YOK
+       * =====================================================
+       */
+
+      lastTrackTitle = null;
+
+      setCompanionDockEmpty();
+
     } catch (err) {
-      console.warn('Now playing alınamadı:', err);
+      console.warn(
+        'Now playing alınamadı:',
+        err
+      );
+
+      /*
+       * İlk yükleme sırasında hata olursa
+       * skeleton sonsuza kadar kalmasın.
+       */
+      if (!companionDockLoaded) {
+        setCompanionDockEmpty();
+      }
     }
   }
 
@@ -1050,7 +1286,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (navPill) navPill.textContent = `${liveCount} live`;
 
       if (activities.length === 0) {
-        container.innerHTML = `<p style="font-size:0.75rem; color:var(--text-dim); padding:12px;">Aktif arkadaş bulunmuyor.</p>`;
+        container.innerHTML = `
+        <p style="
+            font-size:0.75rem;
+            color:var(--text-dim);
+            padding:12px;
+        ">
+            Aktif arkadaş bulunmuyor.
+        </p>
+    `;
+
+        friendsActivityLoaded = true;
         return;
       }
 
@@ -1339,6 +1585,8 @@ ${!isLive
 
       }).join('');
 
+      friendsActivityLoaded = true;
+
       // ------------------------------------------------------
       // FRIEND AVATARS - GLOBAL AVATAR RENDERER
       // ------------------------------------------------------
@@ -1456,7 +1704,9 @@ ${!isLive
           duration_ms: data.duration_ms || 0,
 
           // Spotify gerçekten çalıyor mu?
-          isPlaying: data.isPlaying
+          isPlaying: data.isPlaying,
+
+          syncWithSpotify: true
         };
 
         applyTrackToWizard(window.currentSelectedTrack);
@@ -1621,11 +1871,91 @@ ${!isLive
       artist,
       imageUrl: coverUrl,
       uri: spotifyUri,
-      duration_ms: durationMs
+      duration_ms: durationMs,
+      syncWithSpotify: false
     };
     applyTrackToWizard(window.currentSelectedTrack);
     window.triggerRightPanelsSlideOut(window.currentSelectedTrack);
   };
+
+
+  const artistInfoCache = new Map();
+  let artistInfoRequestId = 0;
+
+  async function loadShareArtistInfo(artistName, fallbackCover = '') {
+    const imageEl = document.getElementById('shareArtistCover');
+    const genresEl = document.getElementById('shareArtistGenres');
+
+    if (!artistName) return;
+
+    const requestId = ++artistInfoRequestId;
+    const artist = artistName.split(',')[0].trim();
+
+    if (genresEl) {
+      genresEl.textContent = 'Türler yükleniyor...';
+    }
+
+    try {
+      let data = artistInfoCache.get(artist.toLowerCase());
+
+      if (!data) {
+        const response = await fetch(
+          `/api/spotify/artist-images?name=${encodeURIComponent(artist)}`
+        );
+
+        if (!response.ok) throw new Error('Sanatçı bilgisi alınamadı');
+
+        const result = await response.json();
+        data = result.data ?? result.artist ?? result;
+
+        artistInfoCache.set(artist.toLowerCase(), data);
+      }
+
+      // Hızlı parça değişimlerinde eski sonuçları uygulama.
+      if (requestId !== artistInfoRequestId) return;
+
+      const rawImage =
+        data.primaryImageUrl ||
+        data.primaryImage ||
+        data.imageUrl ||
+        data.artistImage ||
+        data.images?.[0]?.url ||
+        data.images?.[0] ||
+        data.image ||
+        data.backupImageUrl ||
+        data.backupImage;
+
+      const artistImage =
+        typeof rawImage === 'string' ? rawImage : rawImage?.url;
+
+      const genres = Array.isArray(data.genres) ? data.genres : [];
+
+      if (imageEl) {
+        imageEl.src = artistImage || fallbackCover || '';
+        imageEl.alt = `${artist} sanatçı fotoğrafı`;
+      }
+
+      if (genresEl) {
+        genresEl.innerHTML = genres.length
+          ? genres.map(genre =>
+            `<span class="artist-genre-chip">${escapeHtml(genre)}</span>`
+          ).join('')
+          : '<span class="artist-genre-placeholder">Tür bilgisi bulunamadı</span>';
+      }
+    } catch (error) {
+      if (requestId !== artistInfoRequestId) return;
+
+      console.error('Sanatçı bilgisi yüklenemedi:', error);
+
+      if (imageEl) imageEl.src = fallbackCover || '';
+
+      if (genresEl) {
+        genresEl.innerHTML =
+          '<span class="artist-genre-placeholder">Tür bilgisi alınamadı</span>';
+      }
+    }
+  }
+
 
   function applyTrackToWizard(track, isNowPlaying = false) {
     const emptyLayer = document.getElementById('wizEmptyLayer');
@@ -1661,6 +1991,25 @@ ${!isLive
     if (titleEl) titleEl.textContent = track.name;
     if (artistEl) artistEl.textContent = track.artist;
     if (badgeEl) badgeEl.textContent = isNowPlaying ? 'Şu Anda Çalıyor' : 'Seçilen Parça';
+
+    // Sol sanatçı bilgi kartını seçilen parçayla senkronize et.
+    const artistCover = document.getElementById('shareArtistCover');
+    const artistName = document.getElementById('shareArtistName');
+    const artistTrack = document.getElementById('shareArtistTrack');
+    const artistDescription = document.getElementById('shareArtistDescription');
+    const artistLink = document.getElementById('shareArtistSpotifyLink');
+    loadShareArtistInfo(track.artist, track.imageUrl);
+    if (artistName) artistName.textContent = track.artist || 'Bilinmeyen sanatçı';
+    if (artistTrack) artistTrack.textContent = track.name || 'Bilinmeyen parça';
+    if (artistDescription) {
+      artistDescription.textContent = `Paylaşımına eklediğin parça: “${track.name || 'Bilinmeyen parça'}”. Sanatçının diğer çalışmalarını Spotify üzerinden keşfedebilirsin.`;
+    }
+    if (artistLink) {
+      const firstArtist = (track.artist || '').split(',')[0].trim();
+      artistLink.href = firstArtist
+        ? `https://open.spotify.com/search/${encodeURIComponent(firstArtist)}`
+        : 'https://open.spotify.com/';
+    }
 
     const step2Img = document.getElementById('step2SelImg');
     const step2Title = document.getElementById('step2SelTitle');
@@ -1845,16 +2194,21 @@ ${!isLive
 
     const percent = rating;
 
-    const color = '#3ecf8e';
+    const color = rating < 35 ? '#818cf8' : rating < 70 ? '#60a5fa' : '#3ecf8e';
+    const glow = rating < 35 ? 'rgba(129,140,248,.42)' : rating < 70 ? 'rgba(96,165,250,.42)' : 'rgba(62,207,142,.42)';
+    const container = slider.closest('.rating-dynamic-container');
+    if (container) container.style.setProperty('--rating-glow', glow);
+    if (display) {
+      display.style.color = color;
+      display.style.textShadow = `0 0 22px ${glow}`;
+    }
 
     slider.style.background = `
-        linear-gradient(
-            90deg,
-            ${color} 0%,
+        linear-gradient(90deg,
+            #818cf8 0%,
             ${color} ${percent}%,
             #27303d ${percent}%,
-            #27303d 100%
-        )
+            #27303d 100%)
     `;
 
     slider.style.setProperty(
@@ -1868,10 +2222,31 @@ ${!isLive
   updateWizardRatingAnimation(
     document.getElementById('wizardRatingSlider')?.value || 50
   );
+
+  // Görünürlük kartları dropdown yerine yan yana; yalnızca public aktif.
+  document.querySelectorAll('.privacy-option[data-privacy]').forEach(option => {
+    option.addEventListener('click', () => {
+      if (option.disabled) return;
+      const privacy = option.dataset.privacy;
+      const select = document.getElementById('wizardPrivacySelect');
+      if (select) select.value = privacy;
+      document.querySelectorAll('.privacy-option[data-privacy]').forEach(card => {
+        const selected = card === option;
+        card.classList.toggle('is-selected', selected);
+        card.setAttribute('aria-pressed', String(selected));
+      });
+    });
+  });
   // ----------------------------------------------------
   // 8. YENİ ŞARKIYI FEED'E YAYINLAMA
   // ----------------------------------------------------
   window.submitWizardShare = async function () {
+
+    if (!window.currentSelectedTrack?.uri) {
+      alert('Lütfen önce paylaşmak istediğin şarkıyı seç.');
+      return;
+    }
+
     const token = localStorage.getItem('token');
     const comment = document.getElementById('wizardCommentInput')?.value || '';
     const rating = document.getElementById('wizardRatingSlider')?.value || 5;
@@ -2095,6 +2470,19 @@ ${!isLive
       '';
 
 
+    const artistCover =
+      feedValue(
+        raw,
+        'song_artist_cover_url',
+        'songArtistCoverUrl',
+        'artist_cover_url',
+        'artistCoverUrl',
+        'group_photo_url',
+        'groupPhotoUrl'
+      ) || '';
+
+
+
     const spotifyUrl =
       feedValue(
         raw,
@@ -2157,69 +2545,18 @@ ${!isLive
      */
 
     const avatar =
-      feedValue(
-        raw,
-        'sharer_avatar',
-        'avatar',
-        'avatar_url',
-        'avatarUrl',
-        'profile_image',
-        'profileImage',
-        'user.avatar',
-        'author.avatar',
-        'sender.avatar',
-        'shared_by.avatar'
-      ) ||
-      feedValue(
-        user,
-        'avatar',
-        'avatar_url',
-        'avatarUrl',
-        'profile_image'
-      ) ||
-      '';
-
-
-    /*
-     * Avatar renderer için gereken bilgiler
-     *
-     * Backend:
-     * avatar_type
-     * avatar_data
-     */
+      feedValue(raw, 'sharer_avatar', 'profile_pic_path', 'avatar') ||
+      feedValue(user, 'profile_pic_path', 'avatar');
 
     const avatarType =
-      feedValue(
-        raw,
-        'sharer_avatar_type',
-        'avatar_type',
-        'avatarType',
-        'user.avatar_type',
-        'author.avatar_type'
-      ) ||
-      feedValue(
-        user,
-        'avatar_type',
-        'avatarType'
-      ) ||
-      null;
-
+      feedValue(raw, 'sharer_avatar_type', 'avatar_type', 'avatarType') ||
+      feedValue(user, 'avatar_type', 'avatarType') ||
+      'builtin';
 
     const avatarData =
-      feedValue(
-        raw,
-        'sharer_avatar_data',
-        'avatar_data',
-        'avatarData',
-        'user.avatar_data',
-        'author.avatar_data'
-      ) ||
-      feedValue(
-        user,
-        'avatar_data',
-        'avatarData'
-      ) ||
-      null;
+      feedValue(raw, 'sharer_avatar_data', 'avatar_data', 'avatarData') ||
+      feedValue(user, 'avatar_data', 'avatarData') ||
+      {};
 
 
     /*
@@ -2310,16 +2647,19 @@ ${!isLive
      * ====================================================
      */
 
-    const created =
-      feedValue(
-        raw,
-        'created_at',
-        'createdAt',
-        'date',
-        'timestamp',
-        'shared_at',
-        'sharedAt'
-      );
+
+    const created = feedValue(
+      raw,
+      'date_added',
+      'dateAdded',
+      'created_at',
+      'createdAt',
+      'shared_at',
+      'sharedAt',
+      'date',
+      'timestamp'
+    );
+
 
 
     const id =
@@ -2394,6 +2734,11 @@ ${!isLive
       cover,
       spotifyUrl,
       uri,
+
+      cover,
+      artistCover,
+      spotifyUrl,
+
 
       /*
        * User
@@ -2797,6 +3142,7 @@ ${!isLive
 
     const avatar = escapeHtml(feedAvatarUrl(item));
     const cover = escapeHtml(item.cover);
+    const artistCover = escapeHtml(item.artistCover || '');
     const spotify = escapeHtml(spotifyTrackUrl(item));
 
     const cardId =
@@ -2852,6 +3198,17 @@ ${!isLive
         ? item.comments
         : [];
 
+
+    // ----------------------------------------------------
+    // FEED TIME LABEL
+    // ----------------------------------------------------
+
+    const shareTime = feedTimeLabel(
+      item.created ??
+      item.date_added ??
+      item.created_at ??
+      item.createdAt
+    );
     // ----------------------------------------------------
     // REPOST USERS
     // ----------------------------------------------------
@@ -3105,12 +3462,7 @@ ${!isLive
 
           <div class="avatar-holder">
 
-            <img
-              src="${avatar}"
-              class="user-avatar"
-              alt="${safeUser}"
-              onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.userName)}'"
-            >
+            <div class="feed-author-avatar" data-feed-author-avatar></div>
 
             <span class="user-dot-badge"></span>
 
@@ -3142,48 +3494,66 @@ ${!isLive
 
         <!-- COVER -->
 
-        <div class="cover-stage">
-
-          ${cover
+        
+<div
+  class="cover-stage"
+  ${artistCover ? 'data-artist-cover="true"' : ''}
+>
+  ${cover
         ? `
-                <img
-                  src="${cover}"
-                  alt="${safeTitle}"
-                  class="album-cover-main"
-                  loading="lazy"
-                  onerror="this.style.opacity='0.2'"
-                >
-              `
+        <img
+          src="${cover}"
+          alt="${safeTitle}"
+          class="album-cover-main"
+          loading="lazy"
+          draggable="false"
+          onerror="this.style.opacity='0.2'"
+        >
+      `
         : `
-                <div
-                  class="album-cover-main"
-                  style="background:#151922;"
-                ></div>
-              `
+        <div
+          class="album-cover-main"
+          style="background:#151922;"
+        ></div>
+      `
       }
 
-          <button
-            class="cover-play-cta"
-            onclick='playToDock(
-              ${JSON.stringify(item.title)},
-              ${JSON.stringify(item.artist)},
-              ${JSON.stringify(item.cover)},
-              ${JSON.stringify(String(item.id))}
-            )'
-          >
+  ${artistCover
+        ? `
+        <img
+          src="${artistCover}"
+          alt="${safeArtist}"
+          class="artist-cover-overlay"
+          loading="lazy"
+          draggable="false"
+          onerror="this.classList.add('artist-cover-failed')"
+        >
+      `
+        : ''
+      }
 
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
+  <div class="cover-gloss"></div>
 
-          </button>
+  <button
+    class="cover-play-cta"
+    onclick='playToDock(
+      ${JSON.stringify(item.title)},
+      ${JSON.stringify(item.artist)},
+      ${JSON.stringify(item.cover)},
+      ${JSON.stringify(String(item.id))}
+    )'
+  >
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+    </svg>
+  </button>
+</div>
 
-        </div>
 
         <!-- TRACK DETAILS -->
 
@@ -3202,6 +3572,8 @@ ${!isLive
           </div>
 
           <!-- OWNER COMMENT / HIGHLIGHT -->
+          
+          
 
           ${quote || highlightSeconds > 0 ||
         (
@@ -3226,11 +3598,9 @@ ${!isLive
           : ''
         }
 
-                  ${highlightSeconds > 0 ||
-          (
-            typeof item.highlight === 'string' &&
-            item.highlight.includes(':')
-          )
+        
+
+          ${escapeHtml(highlightLabel) != '0:00'
           ? `
                         <button
                           class="btn-highlight-time"
@@ -3266,9 +3636,31 @@ ${!isLive
           : ''
         }
 
+        <div class="share-time-label">
+  <svg
+    width="11"
+    height="11"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2",
+    style="color: var(--text-dim);"
+  >
+    <circle cx="12" cy="12" r="10"></circle>
+    <polyline points="12 6 12 12 16 14"></polyline>
+  </svg>
+
+  <span style="color: var(--text-dim); font-weight: 700; fonst-size: 0.75rem; margin-left: 4px;">
+    ${escapeHtml(shareTime)}
+  </span>
+</div>
+
                 </div>
               `
         : ''
+
+
+
       }
 
           <!-- RATING -->
@@ -4107,10 +4499,96 @@ ${!isLive
 
     }
 
+
+    // Feed kartları DOM'a eklendikten sonra avatarları çiz
+    const feedCards = container.querySelectorAll('.feed-card');
+
+
+    const normalizedItems = items.map(item => ({
+      item,
+      normalized: normalizeFeedItem(item)
+    }));
+
+    normalizedItems.forEach(({ normalized }) => {
+      const cardId =
+        `feedCard-${String(normalized.id).replace(/[^a-zA-Z0-9_-]/g, '_')}-`;
+
+      const card = Array.from(
+        container.querySelectorAll('.feed-card')
+      ).find(element => element.id.startsWith(cardId));
+
+      if (!card) return;
+
+      const avatarElement = card.querySelector(
+        '[data-feed-author-avatar]'
+      );
+
+      if (!avatarElement) return;
+
+      renderAvatar(
+        avatarElement,
+        {
+          user_name: normalized.userName,
+          username: normalized.userName,
+          avatar_type: normalized.avatarType,
+          avatar_data: normalized.avatarData || {},
+          profile_pic_path: normalized.avatar
+        },
+        { size: 34 }
+      );
+    });
+
+
+
     // Fotoğraflar yüklendikçe Apple-style reveal
+
     container
-      .querySelectorAll('.album-cover-main')
+      .querySelectorAll('.album-cover-main, .artist-cover-overlay')
       .forEach(img => prepareImage(img));
+
+    // Apple Music tarzı kapak etkileşimi
+    container.querySelectorAll('.cover-stage[data-artist-cover="true"]')
+      .forEach(stage => {
+        // Feed yeniden render edilirse aynı event tekrar eklenmesin.
+        if (stage.dataset.hoverBound === 'true') return;
+
+        stage.dataset.hoverBound = 'true';
+
+        let artistTimer = null;
+
+        stage.addEventListener('pointerenter', event => {
+          // Dokunmatik ekranda yapay hover oluşturma.
+          if (event.pointerType === 'touch') return;
+
+          stage.classList.add('is-hovering');
+
+          clearTimeout(artistTimer);
+
+          // Mouse kısa süre kalırsa sanatçı fotoğrafına geç.
+          artistTimer = setTimeout(() => {
+            const artistImage = stage.querySelector('.artist-cover-overlay');
+
+            // Fotoğraf henüz yüklenmediyse geçiş yapma.
+            if (
+              artistImage &&
+              !artistImage.classList.contains('artist-cover-failed') &&
+              artistImage.complete &&
+              artistImage.naturalWidth > 0
+            ) {
+              stage.classList.add('is-artist-visible');
+            }
+          }, 550);
+        });
+
+        stage.addEventListener('pointerleave', () => {
+          clearTimeout(artistTimer);
+
+          // Önceki görsele yumuşak biçimde geri dön.
+          stage.classList.remove('is-artist-visible');
+          stage.classList.remove('is-hovering');
+        });
+      });
+
 
     /*
 * Apple-style card reveal
@@ -4469,52 +4947,25 @@ ${!isLive
 
   async function startup() {
 
-    /*
-     * Bütün ilk yüklemeleri aynı anda başlat.
-     *
-     * Böylece:
-     *
-     * Recommendations
-     * Feed
-     * Friends
-     * Login
-     *
-     * birbirini beklemez.
-     */
+    // Her şeyi aynı anda başlat.
+    // Hiçbirinin bitmesini bekleme.
+    loadRecommendations();
+    checkLogin();
+    fetchSuggestions(feedPage);
+    initShareWizardState();
+    loadFriendsActivity();
 
-    await Promise.allSettled([
-      loadRecommendations(),
-      checkLogin(),
-      fetchSuggestions(feedPage),
-      initShareWizardState(),
-      loadFriendsActivity()
-    ]);
-
-    /*
-     * Recommendation DOM'a yerleştirildikten
-     * sonra Coverflow'u başlat.
-     */
+    // Coverflow hemen mevcut HTML ile başlasın.
     initCoverflowEngine();
 
-    /*
-     * Spotify companion
-     */
+    // Companion
+
+    setCompanionDockLoading();
     loadMyNowPlaying();
     setInterval(loadMyNowPlaying, 5000);
 
-    /*
-     * Friends Activity canlı güncelleme
-     */
+    // Friend activity refresh
     setInterval(loadFriendsActivity, 15000);
-
-    /*
-     * Home'un son küçük "settle" animasyonu
-     */
-    requestAnimationFrame(() => {
-      document
-        .getElementById('view-home')
-        ?.classList.add('home-content-ready');
-    });
   }
 
   startup();
@@ -4584,15 +5035,15 @@ function updateGetCurrentSongButton(isPlaying, trackTitle = '') {
   if (isPlaying) {
     btn.disabled = false;
     btn.removeAttribute('disabled');
-    btn.title = 'Şu an çalan parçayı seç';
+    btn.title = 'Select the currently playing track';
     if (dot) dot.style.display = 'inline-block';
-    if (label) label.textContent = 'Şu Anda Çalanı Al';
+    if (label) label.textContent = 'Get Current Song';
   } else {
     btn.disabled = true;
     btn.setAttribute('disabled', 'true');
-    btn.title = "Spotify'da müzik çalmıyor";
+    btn.title = "Nothing playing on Spotify";
     if (dot) dot.style.display = 'none';
-    if (label) label.textContent = 'Müzik Çalmıyor';
+    if (label) label.textContent = 'Nothing Playing';
   }
 }
 

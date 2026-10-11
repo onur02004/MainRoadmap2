@@ -12,8 +12,9 @@
 }
 
 .back-home-nav {
+  border: 2px solid #3ea0cf;
   background: var(--panel-bg);
-  border: 1px solid var(--border-color);
+  /*border: 1px solid var(--border-color); */
   color: var(--text-main);
   text-decoration: none;
   display: flex;

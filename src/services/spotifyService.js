@@ -190,3 +190,38 @@ export const getArtistDetailsByName = async (artistName) => {
     return null;
   }
 };
+
+
+export const getAppAccessToken = async () => {
+  try {
+    const response = await fetch(
+      'https://accounts.spotify.com/api/token',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: getBasicAuthHeader()
+        },
+        body: new URLSearchParams({
+          grant_type: 'client_credentials'
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        '[Spotify App Token Hatası]',
+        response.status,
+        errorText
+      );
+      return null;
+    }
+
+    const data = await response.json();
+    return data.access_token || null;
+  } catch (error) {
+    console.error('[Spotify App Token Hatası]', error);
+    return null;
+  }
+};

@@ -919,82 +919,49 @@ function renderPixelAvatar(
 // NORMAL IMAGE
 // ============================================================
 
-function renderImageAvatar(
-  container,
-  user,
-  size
-) {
 
+function renderImageAvatar(container, user, size) {
   const src =
-    user.profile_pic_path;
-
+    user.profile_pic_path ||
+    user.profilePicPath ||
+    user.avatar ||
+    user.avatar_url ||
+    user.avatarUrl ||
+    null;
 
   if (!src) {
-
     renderFallbackAvatar(
       container,
-      user.user_name ||
-        'user',
+      user.user_name || user.username || 'user',
       size
     );
-
     return;
   }
 
+  const img = document.createElement('img');
 
-  const img =
-    document.createElement(
-      'img'
+  img.alt = user.user_name || user.username || 'Avatar';
+  img.draggable = false;
+
+  img.style.width = '100%';
+  img.style.height = '100%';
+  img.style.display = 'block';
+  img.style.objectFit = 'cover';
+
+  img.onerror = () => {
+    console.error('[AvatarRenderer] Fotoğraf yüklenemedi:', img.src);
+
+    renderFallbackAvatar(
+      container,
+      user.user_name || user.username || 'user',
+      size
     );
+  };
 
-
-  img.src =
-    src;
-
-
-  img.alt =
-    user.user_name ||
-    'Avatar';
-
-
-  img.draggable =
-    false;
-
-
-  img.style.width =
-    '100%';
-
-
-  img.style.height =
-    '100%';
-
-
-  img.style.display =
-    'block';
-
-
-  img.style.objectFit =
-    'cover';
-
-
-  img.onerror =
-    () => {
-
-      renderFallbackAvatar(
-        container,
-        user.user_name ||
-          'user',
-        size
-      );
-
-    };
-
-
-  container.appendChild(
-    img
-  );
-
+  img.src = src;
+  container.appendChild(img);
 }
+
 
 
 // ============================================================
