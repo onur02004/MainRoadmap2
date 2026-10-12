@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SongShare · User Management</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+  <script src="/admin/admin.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="/"><span class="brand-icon">S</span><span>SongShare<small>ADMIN CONSOLE</small></span></a>
+      <div class="nav-label">MANAGEMENT</div>
+      <button class="nav-item active"><span>♙</span> Users <span class="nav-count">CRUD</span></button>
+      <div class="sidebar-foot"><span class="online-dot"></span><span>Secure admin session</span><a href="/">← Back to SongShare</a></div>
+    </aside>
+    <main class="main">
+      <header class="header">
+        <div><div class="eyebrow">SONGSHARE / ADMIN</div><h1>User management</h1><p>Create accounts and edit existing user details and permissions.</p></div>
+        <button id="createBtn" class="primary">＋ Create user</button>
+      </header>
+      <div id="notice" class="notice" hidden></div>
+      <section class="stats">
+        <div class="stat"><span>Matching users</span><strong id="totalCount">—</strong><small>Based on current filters</small></div>
+        <div class="stat"><span>Admins in results</span><strong id="adminCount">—</strong><small>Current page</small></div>
+        <div class="stat"><span>Verified emails</span><strong id="verifiedCount">—</strong><small>Current page</small></div>
+      </section>
+      <section class="panel">
+        <div class="toolbar"><div><h2>Users</h2><p>Find an account, edit profile fields or update its role.</p></div><div class="filters"><input id="search" type="search" placeholder="Username, name or email…"><select id="roleFilter"><option value="">All roles</option><option value="user">User</option><option value="moderator">Moderator</option><option value="admin">Admin</option></select></div></div>
+        <div class="table-wrap"><table><thead><tr><th>USER</th><th>EMAIL</th><th>ROLE</th><th>VERIFIED</th><th>JOINED</th><th></th></tr></thead><tbody id="users"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody></table></div>
+        <div class="pager"><span id="pageInfo">—</span><div><button id="prev" class="secondary">← Previous</button><button id="next" class="secondary">Next →</button></div></div>
+      </section>
+      <footer>SongShare Admin · User management</footer>
+    </main>
+  </div>
+
+  <dialog id="userModal">
+    <form id="userForm">
+      <div class="modal-top"><div><div class="eyebrow" id="modalEyebrow">NEW ACCOUNT</div><h2 id="modalTitle">Create user</h2><p>Fields are saved directly to PostgreSQL.</p></div><button type="button" class="close" id="closeModal">×</button></div>
+      <input type="hidden" id="userId">
+      <div class="form-grid">
+        <label>Username<input id="user_name" name="user_name" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_]+" placeholder="username"></label>
+        <label>Email<input id="email" name="email" type="email" required placeholder="user@example.com"></label>
+        <label>Real name<input id="real_name" name="real_name" placeholder="Full name"></label>
+        <label>Telephone<input id="tel_nr" name="tel_nr" placeholder="+49…"></label>
+        <label>Role<select id="role" name="role"><option value="user">User</option><option value="moderator">Moderator</option><option value="admin">Admin</option></select></label>
+        <label>Relation<select id="relation" name="relation"><option value="normal">Normal</option><option value="friend">Friend</option><option value="family">Family</option><option value="partner">Partner</option></select></label>
+        <label class="full" id="passwordLabel">Password<input id="password" name="password" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters"><small id="passwordHint">Required when creating a user.</small></label>
+        <label class="check full"><input id="email_verified" type="checkbox"> Email verified</label>
+      </div>
+      <div class="modal-actions"><button type="button" id="cancelBtn" class="secondary">Cancel</button><button type="submit" id="saveBtn" class="primary">Create user</button></div>
+    </form>
+  </dialog>
+</body>
+</html>

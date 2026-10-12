@@ -20,18 +20,38 @@ export const register = async (req, res) => {
     });
 
     // Generate Token
-    const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    logger.info(`REGISTER`, `User registered: ${newUser.email}`);
-    res.status(201).json({
-      status: 'success',
-      data: { user: newUser, token }
+
+    const token = jwt.sign(
+      { id: newUser.id },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+      path: '/'
     });
+
+    logger.info('REGISTER', `User registered: ${newUser.email}`);
+
+    return res.status(201).json({
+      status: 'success',
+      data: {
+        user: newUser,
+        token
+      }
+    });
+
   } catch (error) {
     logger.error(`REGISTER`, 'error registering user', error);
     res.status(500).json({ status: 'error', message: error.message });
   }
 };
+
 
 export const login = async (req, res) => {
   try {
@@ -42,12 +62,32 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    logger.info(`LOGIN`, `User logged in: ${user.user_name}`);
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    logger.info('LOGIN', `User logged in: ${user.user_name}`);
 
-    res.json({ status: 'success', data: { token } });
+    const token = jwt.sign(
+      { id: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+      path: '/'
+    });
+
+    return res.json({
+      status: 'success',
+      data: { token }
+    });
   } catch (error) {
-    logger.warn(`LOGIN`, 'error login user', error);
-    res.status(500).json({ status: 'error', message: error.message });
+    logger.warn('LOGIN', 'error login user', error);
+    return res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
   }
 };
+

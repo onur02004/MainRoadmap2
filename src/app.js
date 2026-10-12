@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import listEndpoints from 'express-list-endpoints';
+import cookieParser from 'cookie-parser';
 
 
 import avatarRoutes from './routes/avatarRoutes.js';
@@ -26,6 +27,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use(express.static('public'));
+app.use(cookieParser());
 
 // UI / Page Routes
 app.use('/', viewRoutes);

@@ -36,32 +36,31 @@ async function initSongShareCurrentUser() {
 document.addEventListener('DOMContentLoaded', initSongShareCurrentUser);
 
 // --- GLOBAL FETCH INTERCEPTOR (JWT SÜRESİ KONTROLÜ) ---
+
+
 const originalFetch = window.fetch;
 
-
 window.fetch = async function (...args) {
-  try {
-    const response = await originalFetch.apply(this, args);
+  const response = await originalFetch.apply(this, args);
+  const requestUrl = args[0] instanceof Request
+    ? args[0].url
+    : String(args[0]);
 
-    // Eğer sunucu 401 (Yetkisiz) veya 403 (Yasak) döndürürse token bitmiş demektir
-    if (response.status === 401 || response.status === 403) {
-      console.warn("JWT token süresi doldu veya geçersiz. Yönlendiriliyor...");
+  // Yalnızca API isteklerinin 401 cevabını değerlendir.
+  if (
+    response.status === 401 &&
+    new URL(requestUrl, window.location.origin).origin === window.location.origin &&
+    requestUrl.includes('/api/')
+  ) {
+    console.warn('API 401 döndürdü:', requestUrl);
 
-      // Süresi dolan token'ı tarayıcıdan temizle
-      localStorage.removeItem('token');
-
-      // Kullanıcıyı giriş sayfasına yönlendir (Kendi giriş linkinize göre düzenleyin)
-      window.location.replace('/login.html');
-
-      // Yönlendirme gerçekleşene kadar sistemdeki diğer kodların çalışıp çökmeye sebep olmaması için işlemi durdur
-      return Promise.reject(new Error("Token Expired - Redirecting..."));
-    }
-
-    return response;
-  } catch (error) {
-    throw error;
+    // Response body'yi okuyarak gerçek sebebi incele.
+    // Şimdilik token'ı otomatik silme.
   }
+
+  return response;
 };
+
 // ----------------------------------------------------
 
 let ytPlayer;
@@ -1534,7 +1533,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </span>
 
             <span class="friend-status-text">
-              ${isLive ? 'Listening Now' : 'Offline'}
+              ${isLive ? 'Listening Now' : ''}
             </span>
 
           </div>
@@ -3114,15 +3113,34 @@ ${!isLive
   };
 
   window.updateMiniScore = function (shareId, value) {
-    const val = Number(value);
+    const val = Math.max(0, Math.min(10, Number(value) || 0));
+    const valueLabel = document.getElementById(`rangeVal-${shareId}`);
+    const moodLabel = document.getElementById(`ratingMood-${shareId}`);
+    const slider = document.getElementById(`rangeInput-${shareId}`);
+    const stage = document.getElementById(`ratingStage-${shareId}`);
+    const popup = document.getElementById(`ratePopup-${shareId}`);
 
-    const valueLabel = document.getElementById(
-      `rangeVal-${shareId}`
-    );
+    const moods = [
+      'Hiç sarmadı', 'Olmadı', 'Zayıf', 'Eh işte', 'Fena değil',
+      'Güzel', 'Gayet iyi', 'Çok iyi!', 'Favorilerimden', 'Başyapıt!', 'Efsane ✨'
+    ];
+    const hue = val <= 3 ? 258 + val * 8 : val <= 6 ? 205 - (val - 3) * 18 : 145 - (val - 6) * 5;
+    const accent = val <= 3 ? '#a78bfa' : val <= 6 ? '#60a5fa' : '#55e6a5';
 
-    if (valueLabel) {
-      valueLabel.textContent = val;
+    if (valueLabel) valueLabel.textContent = val;
+    if (moodLabel) moodLabel.textContent = moods[val];
+    if (slider) {
+      slider.style.setProperty('--rating-progress', `${val * 10}%`);
+      slider.style.setProperty('--rating-accent', accent);
     }
+    if (stage) {
+      stage.style.setProperty('--rating-accent', accent);
+      stage.style.setProperty('--rating-hue', hue);
+      stage.classList.remove('score-pop');
+      void stage.offsetWidth;
+      stage.classList.add('score-pop');
+    }
+    if (popup) popup.style.setProperty('--rating-accent', accent);
   };
 
 
@@ -3723,14 +3741,25 @@ ${!isLive
             <div
               class="rate-mini-popup"
               id="ratePopup-${escapeHtml(String(item.id))}"
+              role="dialog"
+              aria-label="Parçayı puanla"
             >
+              <div class="rating-popup-heading">
+                <div class="rating-popup-icon"><i class="fa-solid fa-wave-square"></i></div>
+                <div class="rating-popup-heading-copy">
+                  <span class="rating-popup-eyebrow">YOUR TAKE</span>
+                  <span class="mini-popup-title">Bu parça kaç puan?</span>
+                </div>
+                <span class="rating-popup-outof">/ 10</span>
+              </div>
 
-              <span class="mini-popup-title">
-                Parçayı Puanla
-              </span>
+              <div class="rating-score-stage" id="ratingStage-${escapeHtml(String(item.id))}">
+                <div class="rating-score-orbit"></div>
+                <div class="rating-score-number" id="rangeVal-${escapeHtml(String(item.id))}">${(myRating / 100).toFixed(1)}</div>
+                <div class="rating-score-caption" id="ratingMood-${escapeHtml(String(item.id))}">Fena değil</div>
+              </div>
 
-              <div class="mini-slider-wrap">
-
+              <div class="rating-slider-area">
                 <input
                     type="range"
                     min="0"
@@ -3741,25 +3770,21 @@ ${!isLive
                     id="rangeInput-${escapeHtml(String(item.id))}"
                     data-share-id="${escapeHtml(String(item.id))}"
                     oninput="window.updateMiniScore(this.dataset.shareId, this.value)"
+                    aria-label="0 ile 10 arasında puan"
                 >
-
-                <span
-                    class="mini-range-val"
-                    id="rangeVal-${escapeHtml(String(item.id))}"
-                >
-                    ${(myRating / 100).toFixed(1)}
-                </span>
-
+                <div class="rating-slider-labels"><span>Skip</span><span>Güzel</span><span>Favorim</span></div>
               </div>
 
-              <button
-                  type="button"
-                  class="btn-submit-mini"
-                  onclick="submitRate('${String(item.id)}')"
-                >
-                  Gönder
+              <div class="rating-popup-footer">
+                <span class="rating-save-hint"><i class="fa-regular fa-circle-check"></i> Puanın topluluk ortalamasına katkı sağlar</span>
+                <button
+                    type="button"
+                    class="btn-submit-mini"
+                    onclick="submitRate('${String(item.id)}')"
+                  >
+                    <span>Puanı gönder</span><i class="fa-solid fa-arrow-up-right-from-square"></i>
                 </button>
-
+              </div>
             </div>
 
             <!-- REPOST -->

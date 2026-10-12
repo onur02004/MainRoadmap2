@@ -1,8 +1,14 @@
 import express from 'express';
 import { protect, restrictTo } from '../middleware/authMiddleware.js';
 import logger from '../utils/logger.js';
+import {
+  listAdminUsers,
+  createAdminUser,
+  updateAdminUser
+} from '../controllers/adminController.js';
 
 const router = express.Router();
+router.use(protect, restrictTo('admin'));
 
 router.get('/logs', protect, restrictTo('ADMIN'), (req, res) => {
     try {
@@ -29,5 +35,10 @@ router.get('/logs', protect, restrictTo('ADMIN'), (req, res) => {
         });
     }
 });
+
+router.get('/users', listAdminUsers);
+router.post('/users', createAdminUser);
+router.patch('/users/:id', updateAdminUser);
+
 
 export default router;

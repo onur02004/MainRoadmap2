@@ -1193,7 +1193,7 @@
 
 .share-wizard-wrapper {
   width: 100%;
-  max-width: 720px;
+  max-width: 920px;
   background: rgba(18, 22, 32, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 32px;
@@ -5119,3 +5119,262 @@ canvas {
     transform: translateY(0);
   }
 }
+
+
+/* ==========================================================
+   FEED RATING EXPERIENCE — large, animated score interaction
+   ========================================================== */
+.card-action-triggers { position: relative; }
+.btn-rate-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 15px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, rgba(76, 225, 160, .16), rgba(60, 130, 246, .10));
+  border: 1px solid rgba(85, 230, 165, .32);
+  box-shadow: inset 0 1px rgba(255,255,255,.06), 0 5px 18px rgba(62,207,142,.05);
+  transition: transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s ease, border-color .28s ease;
+}
+.btn-rate-trigger::before { content: "✦"; font-size: .9rem; transition: transform .35s ease; }
+.btn-rate-trigger:hover { transform: translateY(-2px); border-color: rgba(85,230,165,.7); box-shadow: 0 8px 24px rgba(62,207,142,.15); }
+.btn-rate-trigger:hover::before { transform: rotate(90deg) scale(1.2); }
+
+.rate-mini-popup {
+  --rating-accent: #55e6a5;
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 14px);
+  width: min(430px, calc(100vw - 36px));
+  padding: 20px;
+  gap: 15px;
+  border-radius: 23px;
+  border: 1px solid rgba(255,255,255,.15);
+  background:
+    radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--rating-accent) 17%, transparent), transparent 58%),
+    linear-gradient(145deg, rgba(25,30,43,.98), rgba(10,13,20,.985));
+  box-shadow: 0 26px 80px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.025), 0 0 38px color-mix(in srgb, var(--rating-accent) 10%, transparent);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  transform-origin: bottom left;
+  opacity: 0;
+  transform: translateY(12px) scale(.94);
+  pointer-events: none;
+  transition: opacity .22s ease, transform .34s cubic-bezier(.16,1,.3,1);
+}
+.rate-mini-popup.active {
+  display: flex;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  animation: ratingPopupEnter .38s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes ratingPopupEnter {
+  0% { opacity: 0; transform: translateY(18px) scale(.92); filter: blur(5px); }
+  70% { opacity: 1; transform: translateY(-2px) scale(1.012); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.rating-popup-heading { display:flex; align-items:center; gap:11px; }
+.rating-popup-icon {
+  display:grid; place-items:center; width:39px; height:39px; flex:0 0 39px;
+  border-radius:13px; color:var(--rating-accent);
+  background:color-mix(in srgb, var(--rating-accent) 13%, transparent);
+  border:1px solid color-mix(in srgb, var(--rating-accent) 25%, transparent);
+  font-size:1rem;
+}
+.rating-popup-heading-copy { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.rating-popup-eyebrow { font-size:.58rem; font-weight:800; letter-spacing:1.6px; color:var(--rating-accent); }
+.mini-popup-title { font-size:.96rem; font-weight:800; color:#fff; letter-spacing:-.35px; }
+.rating-popup-outof { margin-left:auto; align-self:flex-start; color:rgba(255,255,255,.4); font-size:.75rem; font-weight:700; }
+.rating-score-stage {
+  position:relative; isolation:isolate; min-height:142px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:0; overflow:hidden; border-radius:18px;
+  background:linear-gradient(135deg, rgba(255,255,255,.045), rgba(255,255,255,.012));
+  border:1px solid rgba(255,255,255,.065);
+  --rating-accent:#55e6a5;
+}
+.rating-score-stage::before {
+  content:""; position:absolute; z-index:-1; width:150px; height:150px; border-radius:50%;
+  background:var(--rating-accent); filter:blur(62px); opacity:.17; transition:background .25s, opacity .25s;
+}
+.rating-score-orbit { position:absolute; width:116px; height:116px; border:1px solid color-mix(in srgb, var(--rating-accent) 26%, transparent); border-radius:50%; animation:ratingOrbit 12s linear infinite; }
+.rating-score-orbit::before,.rating-score-orbit::after { content:""; position:absolute; width:6px; height:6px; border-radius:50%; background:var(--rating-accent); box-shadow:0 0 12px var(--rating-accent); }
+.rating-score-orbit::before { top:13px; right:12px; }
+.rating-score-orbit::after { bottom:10px; left:16px; opacity:.65; }
+@keyframes ratingOrbit { to { transform:rotate(360deg); } }
+.rating-score-number {
+  font-family:'JetBrains Mono',monospace; font-size:4.1rem; line-height:1.05; font-weight:800;
+  letter-spacing:-4px; color:var(--rating-accent); text-shadow:0 0 32px color-mix(in srgb, var(--rating-accent) 38%, transparent);
+  transition:color .2s, text-shadow .2s; z-index:1;
+}
+.rating-score-caption { margin-top:5px; font-size:.76rem; font-weight:800; letter-spacing:.15px; color:rgba(255,255,255,.82); z-index:1; }
+.rating-score-stage.score-pop .rating-score-number { animation:ratingNumberPop .3s cubic-bezier(.16,1,.3,1); }
+@keyframes ratingNumberPop { 0% { transform:scale(.78); opacity:.6; } 65% { transform:scale(1.12); } 100% { transform:scale(1); opacity:1; } }
+.rating-slider-area { padding:1px 3px 0; }
+.mini-slider-wrap { gap:12px; }
+.mini-range-slider {
+  width:100%; height:7px; flex:none; border-radius:99px; cursor:pointer;
+  background:linear-gradient(90deg, var(--rating-accent, #55e6a5) var(--rating-progress, 50%), rgba(255,255,255,.11) var(--rating-progress, 50%));
+  transition:background .2s;
+}
+.mini-range-slider::-webkit-slider-thumb {
+  width:21px; height:21px; border:4px solid #10151d; outline:2px solid var(--rating-accent, #55e6a5);
+  background:#fff; box-shadow:0 0 0 5px color-mix(in srgb, var(--rating-accent, #55e6a5) 16%, transparent), 0 0 20px color-mix(in srgb, var(--rating-accent, #55e6a5) 45%, transparent);
+  transition:transform .15s ease;
+}
+.mini-range-slider::-moz-range-thumb {
+  width:14px; height:14px; border:3px solid #10151d; outline:2px solid var(--rating-accent, #55e6a5);
+  background:#fff; border-radius:50%; box-shadow:0 0 0 5px color-mix(in srgb, var(--rating-accent, #55e6a5) 16%, transparent);
+}
+.mini-range-slider:hover::-webkit-slider-thumb { transform:scale(1.13); }
+.rating-slider-labels { display:flex; justify-content:space-between; margin-top:10px; color:rgba(255,255,255,.37); font-size:.61rem; font-weight:700; }
+.rating-popup-footer { display:flex; flex-direction:column; gap:12px; }
+.rating-save-hint { display:flex; align-items:center; gap:7px; color:rgba(255,255,255,.43); font-size:.61rem; line-height:1.4; }
+.rating-save-hint i { color:var(--rating-accent); }
+.btn-submit-mini {
+  display:flex; align-items:center; justify-content:center; gap:9px; width:100%; min-height:43px;
+  padding:11px 14px; border-radius:12px; font-size:.78rem; letter-spacing:.1px;
+  color:#06110c; background:linear-gradient(110deg, var(--rating-accent), color-mix(in srgb, var(--rating-accent) 66%, #d9fff0));
+  box-shadow:0 8px 24px color-mix(in srgb, var(--rating-accent) 20%, transparent);
+  transition:transform .2s, box-shadow .2s, filter .2s;
+}
+.btn-submit-mini:hover { transform:translateY(-2px); filter:brightness(1.07); box-shadow:0 12px 28px color-mix(in srgb, var(--rating-accent) 28%, transparent); }
+.btn-submit-mini:active { transform:scale(.985); }
+@media (max-width:520px) {
+  .rate-mini-popup { position:fixed; left:50%; bottom:18px; width:calc(100vw - 28px); transform:translate(-50%, 12px) scale(.96); transform-origin:bottom center; z-index:100000; }
+  .rate-mini-popup.active { transform:translate(-50%, 0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rating-score-orbit,.rating-score-stage.score-pop .rating-score-number { animation:none !important; }
+  .rate-mini-popup,.btn-rate-trigger,.btn-submit-mini { transition:none !important; }
+}
+
+
+
+/* =========================================================
+   SCROLLED FRIENDS PANEL — PLAYER ÜSTÜNDE KALAN ALANI KULLAN
+   Tek kaynak: eski dock boyutlarını bu kuralla geçersiz kıl.
+   ========================================================= */
+
+.friends-listening-strip.is-docked-right {
+  position: fixed;
+  top: 18px;
+  right: 24px;
+  bottom: auto;
+  left: auto;
+
+  width: 340px;
+  height: calc(100vh - 360px);
+  min-height: 0;
+  max-height: calc(100vh - 36px);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  transform: none;
+  transform-origin: top right;
+  background: linear-gradient(145deg, rgba(18, 22, 30, .97), rgba(10, 13, 18, .97));
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 20px;
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, .62), inset 0 1px 0 rgba(255, 255, 255, .05);
+  z-index: 999999;
+
+  transition:
+    height .35s cubic-bezier(.16, 1, .3, 1),
+    width .35s cubic-bezier(.16, 1, .3, 1),
+    opacity .3s ease;
+}
+
+.friends-listening-strip.is-docked-right .strip-header {
+  flex: 0 0 auto;
+  min-width: 0;
+  gap: 8px;
+}
+
+.friends-listening-strip.is-docked-right .strip-title {
+  font-size: .68rem;
+}
+
+.friends-listening-strip.is-docked-right .counter-badge {
+  flex: 0 0 auto;
+  font-size: .6rem;
+  padding: 3px 7px;
+}
+
+.friends-listening-strip.is-docked-right .friends-strip-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 2px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.friends-listening-strip.is-docked-right .ios-friend-card {
+  flex: 0 0 82px;
+  width: 100%;
+  height: 82px;
+  min-height: 82px;
+  box-sizing: border-box;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 9px;
+  padding: 8px;
+}
+
+.friends-listening-strip.is-docked-right .avatar-ring-wrap,
+.friends-listening-strip.is-docked-right .chip-avatar {
+  width: 24px;
+  height: 24px;
+}
+
+.friends-listening-strip.is-docked-right .friend-song,
+.friends-listening-strip.is-docked-right .friend-artist,
+.friends-listening-strip.is-docked-right .chip-fullname,
+.friends-listening-strip.is-docked-right .chip-status-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friends-listening-strip.is-docked-right .track-mini-progress {
+  display: none;
+}
+
+/* Çok kısa ekranlarda paneli oynatıcıya bindirmek yerine daha kompakt tut. */
+@media (max-height: 650px) {
+  .friends-listening-strip.is-docked-right {
+    height: max(110px, calc(100vh - 360px));
+    padding: 9px;
+    gap: 7px;
+  }
+
+  .friends-listening-strip.is-docked-right .ios-friend-card {
+    flex-basis: 68px;
+    height: 68px;
+    min-height: 68px;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 7px;
+    padding: 6px;
+  }
+}
+
+/* Player için üstte yeterli alan kalmıyorsa dock panelini minimuma indir. */
+@media (max-height: 500px) {
+  .friends-listening-strip.is-docked-right {
+    height: 110px;
+  }
+}
+
+
