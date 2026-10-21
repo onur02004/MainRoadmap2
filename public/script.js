@@ -525,6 +525,18 @@ function initCliAuth() {
           '  List commands and usage.',
           '/help <command>',
           '  Show arguments, requirements and examples for a command. Example: /help login'
+        ],
+        quick: [
+          'quick | qa | quick actions',
+          '  Open the Quick Actions side panel next to the CLI.',
+          '  Available actions: backend health, services API, my session, debug ping, recent logs, run all checks.',
+          'quick actions close',
+          '  Close the side panel.'
+        ],
+        qa: [
+          'qa | quick | quick actions',
+          '  Open the Quick Actions side panel next to the CLI.',
+          '  Use the buttons to run read-only backend diagnostics.'
         ]
       };
 
@@ -559,8 +571,14 @@ function initCliAuth() {
         appendTerminalLog('  logs                         Start live server logs (admin only)');
         appendTerminalLog('  logs stop                    Stop live server logs');
         appendTerminalLog('  clear                        Clear terminal output');
+        appendTerminalLog('');
+        appendTerminalLog('QUICK ACTIONS PANEL');
+        appendTerminalLog('  quick | qa | quick actions   Open the side panel next to the CLI');
+        appendTerminalLog('  quick actions close          Close the side panel');
+        appendTerminalLog('');
+        appendTerminalLog('HELP');
         appendTerminalLog('  /help <command>              Show detailed usage, args and requirements');
-        appendTerminalLog('Examples: /help login · /help logs · /help api test');
+        appendTerminalLog('Examples: /help login · /help logs · /help api test · /help quick');
       }
     }
     else if (action === 'whoami') {
