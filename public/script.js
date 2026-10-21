@@ -420,7 +420,13 @@ function initCliAuth() {
     if (!rawCmd) return;
     input.value = '';
 
-    appendTerminalLog(`$ ${rawCmd}`);
+    const safeCommand = /^login\s+\S+\s+/i.test(rawCmd)
+      ? rawCmd.replace(/^(\s*login\s+\S+\s+).+$/i, '$1********')
+      : rawCmd;
+    appendTerminalLog('$ ' + safeCommand);
+
+    // New diagnostic commands are allow-listed in cli-debug.js.
+    if (window.MainRoadmapCliDebug?.run(rawCmd)) return;
 
     const parts = rawCmd.split(' ').filter(Boolean);
     const action = parts[0].toLowerCase();
@@ -489,7 +495,14 @@ function initCliAuth() {
       appendTerminalLog(`  logout                       Terminate cluster session`);
       appendTerminalLog(`  clear                        Clear terminal screen`);
       appendTerminalLog(`  logs                         Start live server logs (admin only)`);
-      appendTerminalLog(`  logs stop                    Stop live server logs`);
+      appendTerminalLog(\`  logs stop                    Stop live server logs\`);
+      appendTerminalLog(\`  status                       Run backend/API diagnostics\`);
+      appendTerminalLog(\`  api test                     Test backend health + services API\`);
+      appendTerminalLog(\`  db test                      Test database connectivity\`);
+      appendTerminalLog(\`  services                     Test the services API\`);
+      appendTerminalLog(\`  profile test                 Test the current login session\`);
+      appendTerminalLog(\`  debug test                   Ping the backend debug endpoint\`);
+      appendTerminalLog(\`  Tip: use the Quick Actions buttons below; commands are optional.\`);
     }
     else if (action === 'whoami') {
       appendTerminalLog(`USER: ${currentSession.username} | ROLE: ${currentSession.role} | NODE: ${currentSession.nodeId}`);
@@ -684,8 +697,17 @@ export function appendTerminalLog(text, isHighlight = false) {
   const now = new Date().toTimeString().split(' ')[0];
   const div = document.createElement('div');
   div.className = 'log-entry';
-  div.innerHTML = `<span class="log-time">${now}</span> ${isHighlight ? `<span class="highlight">${text}</span>` : text}`;
 
+  const time = document.createElement('span');
+  time.className = 'log-time';
+  time.textContent = now;
+
+  const message = document.createElement('span');
+  if (isHighlight) message.className = 'highlight';
+  // Terminal text may contain user input or backend messages; never interpret it as HTML.
+  message.textContent = String(text);
+
+  div.append(time, document.createTextNode(' '), message);
   history.appendChild(div);
   scrollToTerminalBottom();
 }
