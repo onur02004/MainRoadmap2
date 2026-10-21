@@ -299,31 +299,11 @@
 
           <form id="cliForm" class="cli-prompt-line" onsubmit="return false;">
             <span class="cli-prompt-sym" id="lblCliPrompt">guest@cluster:~$</span>
-            <input type="text" id="cliInput" class="cli-raw-input" placeholder="Try: help, status, api test, db test, services"
+            <input type="text" id="cliInput" class="cli-raw-input" placeholder="Type /help to list commands and arguments"
               spellcheck="false" autocomplete="off" />
           </form>
 
-          <section class="cli-debug-panel" id="cliDebugPanel" aria-label="Quick actions and backend diagnostics">
-            <div class="cli-debug-panel-header">
-              <div>
-                <span class="cli-debug-eyebrow">QUICK ACTIONS</span>
-                <p>Run real, read-only checks against this backend.</p>
-              </div>
-              <button type="button" class="cli-debug-clear" id="cliDebugClearBtn">Clear output</button>
-            </div>
-
-            <div class="cli-debug-actions">
-              <button type="button" data-cli-check="health"><span class="cli-action-icon">⌁</span><span><strong>Backend health</strong><small>API + database</small></span></button>
-              <button type="button" data-cli-check="services"><span class="cli-action-icon">▦</span><span><strong>Test services API</strong><small>GET /api/services</small></span></button>
-              <button type="button" data-cli-check="session"><span class="cli-action-icon">◎</span><span><strong>Check my session</strong><small>Login required</small></span></button>
-              <button type="button" data-cli-check="debug"><span class="cli-action-icon">⌘</span><span><strong>Debug ping</strong><small>Backend response</small></span></button>
-              <button type="button" data-cli-check="logs"><span class="cli-action-icon">≋</span><span><strong>Recent server logs</strong><small>Admin only</small></span></button>
-              <button type="button" data-cli-check="all"><span class="cli-action-icon">▶</span><span><strong>Run all checks</strong><small>Quick diagnostics</small></span></button>
-            </div>
-
-            <div class="cli-debug-output" id="cliDebugOutput" role="log" aria-live="polite" aria-label="Diagnostic output"></div>
-            <p class="cli-debug-note">Checks are read-only. Protected tests use your current session; no test data is created or changed.</p>
-          </section>
+          
         </div>
 
       </div>
