@@ -495,14 +495,14 @@ function initCliAuth() {
       appendTerminalLog(`  logout                       Terminate cluster session`);
       appendTerminalLog(`  clear                        Clear terminal screen`);
       appendTerminalLog(`  logs                         Start live server logs (admin only)`);
-      appendTerminalLog(\`  logs stop                    Stop live server logs\`);
-      appendTerminalLog(\`  status                       Run backend/API diagnostics\`);
-      appendTerminalLog(\`  api test                     Test backend health + services API\`);
-      appendTerminalLog(\`  db test                      Test database connectivity\`);
-      appendTerminalLog(\`  services                     Test the services API\`);
-      appendTerminalLog(\`  profile test                 Test the current login session\`);
-      appendTerminalLog(\`  debug test                   Ping the backend debug endpoint\`);
-      appendTerminalLog(\`  Tip: use the Quick Actions buttons below; commands are optional.\`);
+      appendTerminalLog('  logs stop                    Stop live server logs');
+      appendTerminalLog('  status                       Run backend/API diagnostics');
+      appendTerminalLog('  api test                     Test backend health + services API');
+      appendTerminalLog('  db test                      Test database connectivity');
+      appendTerminalLog('  services                     Test the services API');
+      appendTerminalLog('  profile test                 Test the current login session');
+      appendTerminalLog('  debug test                   Ping the backend debug endpoint');
+      appendTerminalLog('  Tip: use the Quick Actions buttons below; commands are optional.');
     }
     else if (action === 'whoami') {
       appendTerminalLog(`USER: ${currentSession.username} | ROLE: ${currentSession.role} | NODE: ${currentSession.nodeId}`);
