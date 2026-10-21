@@ -1,135 +1,111 @@
 // public/cli-debug.js
-// Friendly command shortcuts and read-only diagnostics for the MainRoadmap2 console.
+// Allow-listed read-only diagnostics integrated into the existing CLI output.
 (() => {
-  const $ = (id) => document.getElementById(id);
-  const output = () => $('cliDebugOutput');
+  function log(message, highlight = false) {
+    if (typeof window.appendTerminalLog === 'function') {
+      window.appendTerminalLog(String(message), highlight);
+      return;
+    }
+    document.dispatchEvent(new CustomEvent('mainroadmap-cli-output', { detail: { message: String(message), highlight } }));
+  }
 
   function getToken() {
     const value = (localStorage.getItem('token') || '').replace(/^["']|["']$/g, '').trim();
     return value.startsWith('Bearer ') ? value.slice(7).trim() : value;
   }
 
-  function write(message, type = 'info') {
-    const target = output();
-    if (!target) return;
-    const row = document.createElement('div');
-    row.className = `cli-debug-line is-${type}`;
-    row.textContent = message;
-    target.appendChild(row);
-    target.scrollTop = target.scrollHeight;
-  }
-
-  function pretty(value) {
-    try { return JSON.stringify(value, null, 2); }
-    catch { return String(value); }
-  }
-
   async function request(label, path) {
     const started = performance.now();
     const headers = { Accept: 'application/json' };
     const jwt = getToken();
-    if (jwt) headers.Authorization = `Bearer ${jwt}`;
+    if (jwt) headers.Authorization = 'Bearer ' + jwt;
 
-    write(`▶ ${label} · GET ${path}`, 'info');
+    log('[TEST] ' + label + ' → GET ' + path);
     try {
       const response = await fetch(path, {
         method: 'GET',
         headers,
+        cache: 'no-store',
         signal: AbortSignal.timeout(10000)
       });
       const elapsed = Math.round(performance.now() - started);
-      const contentType = response.headers.get('content-type') || '';
+      const type = response.headers.get('content-type') || '';
       let body;
-      if (contentType.includes('application/json')) {
-        body = await response.json();
-      } else {
+      if (type.includes('application/json')) body = await response.json();
+      else {
         body = await response.text();
-        if (body.length > 1800) body = body.slice(0, 1800) + '\n… (response truncated)';
+        if (body.length > 1600) body = body.slice(0, 1600) + '\\n… response truncated';
       }
 
-      write(`${response.ok ? '✓' : '!'} HTTP ${response.status} · ${elapsed} ms · ${label}`,
-        response.ok ? 'success' : 'warn');
-      const detail = document.createElement('pre');
-      detail.className = 'cli-debug-json';
-      detail.textContent = pretty(body);
-      output()?.appendChild(detail);
-      if (output()) output().scrollTop = output().scrollHeight;
-      return { ok: response.ok, status: response.status, elapsed, body };
+      log('[' + (response.ok ? 'PASS' : 'FAIL') + '] HTTP ' + response.status + ' · ' + elapsed + ' ms · ' + label, !response.ok);
+      const pretty = typeof body === 'string' ? body : JSON.stringify(body, null, 2);
+      String(pretty).split('\\n').forEach(line => log('  ' + line));
+      return response.ok;
     } catch (error) {
-      const elapsed = Math.round(performance.now() - started);
-      const message = error.name === 'TimeoutError'
-        ? 'Request timed out after 10 seconds.'
-        : (error.message || 'Network request failed.');
-      write(`✕ ${label} · ${message} · ${elapsed} ms`, 'error');
-      return { ok: false, elapsed, error: message };
+      const reason = error.name === 'TimeoutError' ? 'Timed out after 10 seconds' : (error.message || 'Network error');
+      log('[FAIL] ' + label + ' · ' + reason, true);
+      return false;
     }
   }
 
-  async function runCheck(id) {
-    if (id === 'health') {
-      await request('Backend + database health', '/api/debug/health');
-    } else if (id === 'services') {
-      await request('Services API (read-only)', '/api/services');
-    } else if (id === 'session') {
-      if (!getToken()) {
-        write('Profile check skipped: sign in first to test the protected endpoint.', 'warn');
-        return;
+  async function check(name) {
+    switch (name) {
+      case 'health':
+      case 'db':
+        return request(name === 'db' ? 'Database connectivity' : 'Backend and database health', '/api/debug/health');
+      case 'services':
+        return request('Services API', '/api/services');
+      case 'profile':
+        if (!getToken()) {
+          log('[SKIP] Sign in first to test /api/users/profile.', true);
+          return false;
+        }
+        return request('Current user profile', '/api/users/profile');
+      case 'debug':
+        if (!getToken()) {
+          log('[SKIP] Sign in first to test /api/debug.', true);
+          return false;
+        }
+        return request('Authenticated debug endpoint', '/api/debug');
+      case 'logs':
+        if (!getToken()) {
+          log('[SKIP] Server logs require an administrator session.', true);
+          return false;
+        }
+        return request('Recent server logs (admin only)', '/api/admin/logs?limit=30');
+      case 'all': {
+        let ok = true;
+        ok = await check('health') && ok;
+        ok = await check('services') && ok;
+        if (getToken()) {
+          ok = await check('profile') && ok;
+          ok = await check('debug') && ok;
+        } else log('[INFO] Profile/debug checks skipped: no active token.');
+        log(ok ? '[DONE] Diagnostic checks completed.' : '[DONE] One or more checks failed; inspect output above.', !ok);
+        return ok;
       }
-      await request('Current user profile', '/api/users/profile');
-    } else if (id === 'debug') {
-      await request('Debug ping', '/api/debug');
-    } else if (id === 'logs') {
-      if (!getToken()) {
-        write('Server logs require an administrator session.', 'warn');
-        return;
-      }
-      await request('Recent server logs (admin only)', '/api/admin/logs?limit=30');
-    } else if (id === 'all') {
-      await request('Backend + database health', '/api/debug/health');
-      await request('Services API (read-only)', '/api/services');
-      await request('Debug ping', '/api/debug');
-      if (getToken()) await request('Current user profile', '/api/users/profile');
-      else write('Profile check skipped: no active login token.', 'warn');
+      default:
+        return false;
     }
   }
 
-  // Only add commands that are not already handled by the original console.
-  const commandMap = {
-    status: () => runCheck('all'),
-    'api test': async () => {
-      await runCheck('health');
-      await runCheck('services');
-    },
-    'db test': () => runCheck('health'),
-    services: () => runCheck('services'),
-    'profile test': () => runCheck('session'),
-    'debug test': () => runCheck('debug')
+  const commands = {
+    status: () => check('all'),
+    'api test': async () => { await check('health'); await check('services'); },
+    'db test': () => check('db'),
+    services: () => check('services'),
+    'profile test': () => check('profile'),
+    'debug test': () => check('debug'),
+    'logs test': () => check('logs')
   };
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const panel = $('cliDebugPanel');
-    if (!panel) return;
-
-    panel.querySelectorAll('[data-cli-check]').forEach((button) => {
-      button.addEventListener('click', () => runCheck(button.dataset.cliCheck));
-    });
-
-    $('cliDebugClearBtn')?.addEventListener('click', () => {
-      if (output()) output().replaceChildren();
-      write('Debug output cleared.', 'info');
-    });
-
-    write('Console ready. Use a quick action or type “help” for commands.', 'success');
-  });
-
-  // Small allow-listed bridge; never evaluates arbitrary user input.
   window.MainRoadmapCliDebug = {
     run(command) {
-      const handler = commandMap[String(command || '').trim().toLowerCase()];
-      if (!handler) return false;
-      void handler();
+      const normalized = String(command || '').trim().toLowerCase().replace(/\\s+/g, ' ');
+      if (!Object.prototype.hasOwnProperty.call(commands, normalized)) return false;
+      void commands[normalized]();
       return true;
     },
-    check: runCheck
+    check
   };
 })();
