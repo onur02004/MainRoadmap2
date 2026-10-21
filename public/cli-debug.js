@@ -34,12 +34,12 @@
       if (type.includes('application/json')) body = await response.json();
       else {
         body = await response.text();
-        if (body.length > 1600) body = body.slice(0, 1600) + '\\n… response truncated';
+        if (body.length > 1600) body = body.slice(0, 1600) + '\n… response truncated';
       }
 
       log('[' + (response.ok ? 'PASS' : 'FAIL') + '] HTTP ' + response.status + ' · ' + elapsed + ' ms · ' + label, !response.ok);
       const pretty = typeof body === 'string' ? body : JSON.stringify(body, null, 2);
-      String(pretty).split('\\n').forEach(line => log('  ' + line));
+      String(pretty).split('\n').forEach(line => log('  ' + line));
       return response.ok;
     } catch (error) {
       const reason = error.name === 'TimeoutError' ? 'Timed out after 10 seconds' : (error.message || 'Network error');
