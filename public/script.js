@@ -409,6 +409,12 @@ async function renderServicesFromBackend() {
 }
 
 // Terminal Komut Yöneticisi
+window.appendTerminalLog = appendTerminalLog;
+
+document.addEventListener('mainroadmap-cli-output', (event) => {
+  appendTerminalLog(event.detail?.message || '', Boolean(event.detail?.highlight));
+});
+
 function initCliAuth() {
   const form = document.getElementById('cliForm');
   const input = document.getElementById('cliInput');
@@ -486,23 +492,76 @@ function initCliAuth() {
       if (history) history.innerHTML = '';
       appendTerminalLog(`[TERMINAL] Buffer cleared.`);
     }
-    else if (action === 'help') {
-      appendTerminalLog(`COMMANDS:`);
-      appendTerminalLog(`  login <username> <password>  Direct terminal authentication`);
-      appendTerminalLog(`  login -a                     Open graphical login portal`);
-      appendTerminalLog(`  account                      Open account settings`);
-      appendTerminalLog(`  whoami                       Display current node session`);
-      appendTerminalLog(`  logout                       Terminate cluster session`);
-      appendTerminalLog(`  clear                        Clear terminal screen`);
-      appendTerminalLog(`  logs                         Start live server logs (admin only)`);
-      appendTerminalLog('  logs stop                    Stop live server logs');
-      appendTerminalLog('  status                       Run backend/API diagnostics');
-      appendTerminalLog('  api test                     Test backend health + services API');
-      appendTerminalLog('  db test                      Test database connectivity');
-      appendTerminalLog('  services                     Test the services API');
-      appendTerminalLog('  profile test                 Test the current login session');
-      appendTerminalLog('  debug test                   Ping the backend debug endpoint');
-      appendTerminalLog('  Tip: use the Quick Actions buttons below; commands are optional.');
+    else if (action === 'help' || action === '/help') {
+      const topic = parts.slice(1).join(' ').toLowerCase();
+      const help = {
+        login: [
+          'login <username> <password>',
+          '  Sign in from the terminal. Example: login myuser ********',
+          'login -a | login --auto',
+          '  Open the graphical login page. Password is required only for direct login.'
+        ],
+        account: ['account', '  Open account settings. Requires an active session.'],
+        whoami: ['whoami', '  Show the current username, role and session/node.'],
+        logout: ['logout', '  Remove the local session token and reload the page.'],
+        clear: ['clear', '  Clear the existing terminal output.'],
+        logs: [
+          'logs',
+          '  Start the existing live server log stream (admin only).',
+          'logs stop',
+          '  Stop the live server log stream.',
+          'logs test',
+          '  Fetch recent logs once via the read-only diagnostic request (admin only).'
+        ],
+        status: ['status', '  Run backend health, services API and available authenticated checks.'],
+        'api test': ['api test', '  Test backend health/database and GET /api/services.'],
+        'db test': ['db test', '  Test PostgreSQL connectivity through GET /api/debug/health.'],
+        services: ['services', '  Test GET /api/services and print HTTP status, latency and response.'],
+        'profile test': ['profile test', '  Test GET /api/users/profile. Requires login.'],
+        'debug test': ['debug test', '  Test GET /api/debug. Requires login.'],
+        'logs test': ['logs test', '  Test GET /api/admin/logs?limit=30. Requires admin role.'],
+        help: [
+          '/help | help',
+          '  List commands and usage.',
+          '/help <command>',
+          '  Show arguments, requirements and examples for a command. Example: /help login'
+        ]
+      };
+
+      if (topic) {
+        const entry = help[topic] || (topic === '/help' ? help.help : null);
+        if (entry) entry.forEach(line => appendTerminalLog(line, true));
+        else {
+          appendTerminalLog('No detailed help for: ' + topic, true);
+          appendTerminalLog('Try /help to list available commands.');
+        }
+      } else {
+        appendTerminalLog('MAINROADMAP2 CLI · COMMAND REFERENCE', true);
+        appendTerminalLog('Usage: <command> [arguments]');
+        appendTerminalLog('');
+        appendTerminalLog('AUTH & ACCOUNT');
+        appendTerminalLog('  login <username> <password>  Sign in directly');
+        appendTerminalLog('  login -a | login --auto      Open graphical login');
+        appendTerminalLog('  account                      Open account settings (login required)');
+        appendTerminalLog('  whoami                       Show current user / role / session');
+        appendTerminalLog('  logout                       Sign out');
+        appendTerminalLog('');
+        appendTerminalLog('DEBUG & API TESTS (read-only)');
+        appendTerminalLog('  status                       Run all available checks');
+        appendTerminalLog('  api test                     Backend health + services API');
+        appendTerminalLog('  db test                      Database connectivity');
+        appendTerminalLog('  services                     Test services API');
+        appendTerminalLog('  profile test                 Test current-user endpoint (login required)');
+        appendTerminalLog('  debug test                   Test debug endpoint (login required)');
+        appendTerminalLog('  logs test                    Fetch recent server logs (admin only)');
+        appendTerminalLog('');
+        appendTerminalLog('LOGS & TERMINAL');
+        appendTerminalLog('  logs                         Start live server logs (admin only)');
+        appendTerminalLog('  logs stop                    Stop live server logs');
+        appendTerminalLog('  clear                        Clear terminal output');
+        appendTerminalLog('  /help <command>              Show detailed usage, args and requirements');
+        appendTerminalLog('Examples: /help login · /help logs · /help api test');
+      }
     }
     else if (action === 'whoami') {
       appendTerminalLog(`USER: ${currentSession.username} | ROLE: ${currentSession.role} | NODE: ${currentSession.nodeId}`);
