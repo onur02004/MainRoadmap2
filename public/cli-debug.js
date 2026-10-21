@@ -89,7 +89,38 @@
     }
   }
 
+  function setQuickActions(open) {
+    const panel = document.getElementById('cliQuickActions');
+    if (!panel) {
+      log('[CLI] Quick Actions panel is not available.');
+      return;
+    }
+    panel.hidden = !open;
+    if (open) {
+      log('[CLI] Quick Actions opened. Choose an action from the side panel.');
+      document.getElementById('cliInput')?.focus();
+    } else {
+      log('[CLI] Quick Actions closed.');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('cliQuickClose')?.addEventListener('click', () => setQuickActions(false));
+    document.querySelectorAll('[data-cli-quick]').forEach(button => {
+      button.addEventListener('click', () => {
+        const action = button.dataset.cliQuick;
+        setQuickActions(false);
+        if (action === 'all') void check('all');
+        else void check(action);
+      });
+    });
+  });
+
   const commands = {
+    'quick actions': () => setQuickActions(true),
+    'quick': () => setQuickActions(true),
+    'qa': () => setQuickActions(true),
+    'quick actions close': () => setQuickActions(false),
     status: () => check('all'),
     'api test': async () => { await check('health'); await check('services'); },
     'db test': () => check('db'),
