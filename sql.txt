@@ -182,3 +182,12 @@ CREATE INDEX idx_song_comments_user_id
 
 CREATE INDEX idx_song_comments_created_at
     ON song_comments(created_at);
+
+
+    -- İsteğe bağlı: service tabloyu otomatik oluşturur; istersen PostgreSQL'de önceden çalıştır.
+CREATE TABLE IF NOT EXISTS song_recommendation_cache (
+  id SMALLINT PRIMARY KEY CHECK (id = 1),
+  tracks JSONB NOT NULL DEFAULT '[]'::jsonb,
+  fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_error TEXT
+);

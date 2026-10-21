@@ -195,6 +195,22 @@ export function applyUserSession(user) {
         size: 64
       });
     }
+
+    const guestActions = document.getElementById('cliGuestActions');
+    const userStream = document.querySelector('.cli-user-stream-line');
+    const avatarContainer = document.getElementById('cliAvatarContainer');
+
+    if (guestActions) {
+      guestActions.hidden = user.isLoggedIn;
+    }
+
+    if (userStream) {
+      userStream.classList.toggle('is-guest', !user.isLoggedIn);
+    }
+
+    if (avatarContainer) {
+      avatarContainer.style.display = user.isLoggedIn ? '' : 'none';
+    }
   }
 
   if (!user.isLoggedIn) {
@@ -227,29 +243,62 @@ export function applyUserSession(user) {
   if (guiSession) guiSession.textContent = user.nodeId;
 
   if (!user.isLoggedIn) {
-    if (guiName) guiName.textContent = 'AUTHENTICATION_REQUIRED';
-    if (guiStatus) guiStatus.textContent = 'UNAUTHENTICATED';
+    if (guiName) guiName.textContent = 'GUEST ACCESS';
+    if (guiRole) guiRole.textContent = 'GUEST';
+    if (guiStatus) guiStatus.textContent = 'LOGIN REQUIRED';
     if (guiDot) guiDot.className = 'gui-status-indicator offline';
+
+    const guiPanel = document.getElementById('guiUserPanel');
+    guiPanel?.classList.add('is-guest');
+
+    const sessionText = document.getElementById('guiSessionText');
+    if (sessionText) {
+      sessionText.textContent = 'Sign in to access your account and services.';
+    }
 
     if (guiActionsBar) {
       guiActionsBar.innerHTML = `
-        <button type="button" class="gui-action-btn primary" id="btnGuiGoLogin">🔑 Login to Node</button>
-        <button type="button" class="gui-action-btn" id="btnGuiGoRegister">Register Account</button>
-      `;
-      document.getElementById('btnGuiGoLogin')?.addEventListener('click', () => window.location.href = '/login');
-      document.getElementById('btnGuiGoRegister')?.addEventListener('click', () => window.location.href = '/login#register');
+      <button type="button" class="gui-action-btn primary" id="btnGuiGoLogin">
+        Login
+      </button>
+      <button type="button" class="gui-action-btn" id="btnGuiGoRegister">
+        Create account
+      </button>
+    `;
+
+      document.getElementById('btnGuiGoLogin')
+        ?.addEventListener('click', () => window.location.href = '/login');
+
+      document.getElementById('btnGuiGoRegister')
+        ?.addEventListener('click', () => window.location.href = '/login#register');
     }
   } else {
+    document.getElementById('guiUserPanel')?.classList.remove('is-guest');
+
     if (guiName) guiName.textContent = user.username;
     if (guiStatus) guiStatus.textContent = 'ACTIVE';
     if (guiDot) guiDot.className = 'gui-status-indicator online';
 
+    const sessionText = document.getElementById('guiSessionText');
+    if (sessionText) {
+      sessionText.innerHTML =
+        'SESSION ID: <strong id="guiLblSession">#NO-SESSION</strong>';
+      document.getElementById('guiLblSession').textContent = user.nodeId;
+    }
+
     if (guiActionsBar) {
       guiActionsBar.innerHTML = `
-        <button type="button" class="gui-action-btn primary" id="btnGuiGoAccount">⚙️ Account Console</button>
-        <button type="button" class="gui-action-btn logout" id="btnGuiLogout">Logout</button>
-      `;
-      document.getElementById('btnGuiGoAccount')?.addEventListener('click', () => window.location.href = '/account');
+      <button type="button" class="gui-action-btn primary" id="btnGuiGoAccount">
+        Account Console
+      </button>
+      <button type="button" class="gui-action-btn logout" id="btnGuiLogout">
+        Logout
+      </button>
+    `;
+
+      document.getElementById('btnGuiGoAccount')
+        ?.addEventListener('click', () => window.location.href = '/account');
+
       document.getElementById('btnGuiLogout')?.addEventListener('click', () => {
         localStorage.removeItem('token');
         clearServicesCache();

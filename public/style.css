@@ -3012,3 +3012,230 @@ svg.blobatar-global
         transition-duration: 0.01ms !important;
     }
 }
+
+/* Guest login state */
+.gui-user-card-panel.is-guest #guiUserAvatar {
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.035);
+  border-color: var(--border-color);
+}
+
+.gui-user-card-panel.is-guest #guiUserAvatar::after {
+  content: '>';
+  color: var(--accent-action);
+  font-family: monospace;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.gui-user-card-panel.is-guest .gui-session-text {
+  line-height: 1.5;
+}
+
+.gui-user-card-panel.is-guest #btnGuiGoLogin {
+  min-width: 110px;
+}
+
+.gui-user-card-panel.is-guest #btnGuiGoRegister {
+  background: transparent;
+}
+
+@media (max-width: 480px) {
+  .gui-user-card-panel {
+    padding: 16px;
+  }
+
+  .gui-card-body {
+    gap: 14px;
+  }
+
+  .gui-name-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .gui-actions-bar .gui-action-btn {
+    flex: 1;
+  }
+}
+
+.cli-guest-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.cli-guest-actions[hidden] {
+  display: none;
+}
+
+.cli-guest-actions a {
+  text-decoration: none;
+}
+
+.cli-guest-actions a:hover {
+  color: var(--accent-action);
+}
+
+.cli-user-stream-line.is-guest {
+  align-items: flex-start;
+}
+
+.cli-guest-actions {
+  flex: 1;
+  min-width: 0;
+}
+
+.cli-guest-actions[hidden] {
+  display: none;
+}
+
+.cli-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  box-sizing: border-box;
+  padding: 14px 22px;
+  background: var(--accent-action);
+  border: 1px solid var(--accent-action);
+  border-radius: 4px;
+  color: #07120d;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cli-login-btn span {
+  font-size: 1.3rem;
+}
+
+.cli-login-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+@media (max-width: 480px) {
+  .cli-user-stream-line.is-guest {
+    width: 100%;
+  }
+
+  .cli-guest-actions {
+    width: 100%;
+  }
+}
+
+/* Guest layout */
+.cli-bottom-anchor:has(.cli-user-stream-line.is-guest) {
+  width: 100%;
+}
+
+.cli-user-stream-line.is-guest {
+  width: 100%;
+}
+
+.cli-user-stream-line.is-guest .cli-guest-actions {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+.cli-user-stream-line.is-guest .cli-login-btn {
+  width: 100%;
+  min-height: 58px;
+  box-sizing: border-box;
+}
+
+/* Hide terminal input for guests */
+.cli-bottom-anchor:has(.cli-user-stream-line.is-guest) #cliForm {
+  display: none;
+}
+
+/* Full-width guest login button */
+.cli-bottom-anchor:has(.cli-user-stream-line.is-guest) {
+  width: 100%;
+}
+
+.cli-user-stream-line.is-guest {
+  display: block;
+  width: 100%;
+}
+
+.cli-user-stream-line.is-guest .cli-guest-actions {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cli-user-stream-line.is-guest .cli-login-btn {
+  display: flex;
+  width: 100%;
+  min-height: 64px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.cli-bottom-anchor:has(.cli-user-stream-line.is-guest) #cliForm {
+  display: none;
+}
+
+/* Full-width login view for guests */
+.cli-user-stream-line:has(#cliGuestActions:not([hidden])) {
+  display: block !important;
+  width: 100%;
+}
+
+.cli-user-stream-line:has(#cliGuestActions:not([hidden])) .cli-avatar-badge,
+.cli-user-stream-line:has(#cliGuestActions:not([hidden])) .cli-user-meta-stack {
+  display: none !important;
+}
+
+#cliGuestActions:not([hidden]) {
+  display: flex !important;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+#cliGuestActions[hidden] {
+  display: none !important;
+}
+
+#cliGuestActions > span,
+#cliGuestActions > a[href*="register"] {
+  display: none !important;
+}
+
+#cliGuestActions > a[href="/login"] {
+  display: flex !important;
+  width: 100%;
+  min-height: 64px;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
+  background: var(--accent-action);
+  border: 1px solid var(--accent-action);
+  border-radius: 4px;
+  color: #07120d;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+#cliGuestActions > a[href="/login"]:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 0 16px var(--accent-glow);
+}

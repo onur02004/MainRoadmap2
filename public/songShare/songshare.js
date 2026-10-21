@@ -1,5 +1,25 @@
 import { getCurrentUser, renderAvatar } from '/avatarRenderer.js';
 
+
+// Geçici geliştirme bildirimi: modal/alert kullanmadan kısa süre gösterilir.
+let developmentNoticeTimer = null;
+window.showDevelopmentNotice = function (event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  let toast = document.getElementById('songShareDevToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'songShareDevToast';
+    toast.className = 'songshare-dev-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    document.body.appendChild(toast);
+  }
+  toast.textContent = 'Bu özellik şu anda geliştirme aşamasında.';
+  toast.classList.add('is-visible');
+  clearTimeout(developmentNoticeTimer);
+  developmentNoticeTimer = setTimeout(() => toast.classList.remove('is-visible'), 2200);
+};
+
 async function initSongShareCurrentUser() {
   const user = await getCurrentUser();
 
@@ -272,7 +292,7 @@ function startLyricsPlaybackSync() {
 
     updateActiveLyricByTime(position);
 
-  }, 100);
+  }, 200);
 
 
   // Her 3 saniyede bir Spotify'dan gerçek pozisyonu tekrar al
@@ -602,8 +622,82 @@ window.playToDock = function (title, artist, coverUrl, key = '') {
 };
 
 // ----------------------------------------------------
-// MÜZİK ÖNERİLERİ
+// MÜZİK ÖNERİLERİ + PAYLAŞ SAYFASI ÖNERİLERİ
+// Aynı API cevabını iki yerde kullanır; ekstra request atmaz.
 // ----------------------------------------------------
+
+window.songShareRecommendationTracks = [];
+
+function renderShareRecommendationTiles(tracks, { loading = false, emptyMessage = '' } = {}) {
+  const grid = document.getElementById('wizardSongGrid');
+  if (!grid) return;
+
+  if (loading) {
+    grid.innerHTML = Array.from({ length: 4 }, (_, i) => `
+      <div class="selector-tile selector-tile-skeleton" style="--tile-index:${i}">
+        <span class="selector-skeleton-cover"></span>
+        <span class="selector-skeleton-copy">
+          <i></i><i></i>
+        </span>
+      </div>
+    `).join('');
+    return;
+  }
+
+  if (!Array.isArray(tracks) || tracks.length === 0) {
+    grid.innerHTML = `
+      <div class="selector-empty-state">
+        <i class="fa-solid fa-music"></i>
+        <span>${escapeHtml(emptyMessage || 'Öneriler şu anda kullanılamıyor.')}</span>
+      </div>`;
+    return;
+  }
+
+  // Coverflow için alınmış aynı listeyi kullanıyoruz; burada yeni API çağrısı yok.
+  const picks = [...tracks]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, Math.min(4, tracks.length));
+
+  window.songShareRecommendationTracks = picks;
+
+  grid.innerHTML = picks.map((song, index) => {
+    const title = song.title || song.name || 'Bilinmeyen Şarkı';
+    const artist = song.artist || 'Bilinmeyen Sanatçı';
+    const cover = song.coverUrl || song.imageUrl || song.cover || '';
+    const uri = song.spotifyUri || (song.id ? `spotify:track:${song.id}` : '');
+    return `
+      <button type="button"
+        class="selector-tile selector-tile-enter ${index === 0 ? 'selected' : ''}"
+        data-recommendation-index="${index}"
+        style="--tile-index:${index}"
+        aria-label=" ${escapeHtml(title)} — ${escapeHtml(artist)} seç">
+        <img src="${escapeHtml(cover || 'https://placehold.co/80x80?text=Music')}"
+             alt="${escapeHtml(title)}" loading="lazy" />
+        <span class="selector-tile-meta">
+          <strong>${escapeHtml(title)}</strong>
+          <span>${escapeHtml(artist)}</span>
+        </span>
+        <span class="selector-tile-play"><i class="fa-solid fa-play"></i></span>
+      </button>`;
+  }).join('');
+
+  grid.querySelectorAll('[data-recommendation-index]').forEach(tile => {
+    tile.addEventListener('click', () => {
+      const index = Number(tile.dataset.recommendationIndex);
+      const song = window.songShareRecommendationTracks[index];
+      if (!song) return;
+
+      grid.querySelectorAll('.selector-tile').forEach(el => el.classList.remove('selected'));
+      tile.classList.add('selected');
+
+      const title = song.title || song.name || 'Bilinmeyen Şarkı';
+      const artist = song.artist || 'Bilinmeyen Sanatçı';
+      const cover = song.coverUrl || song.imageUrl || song.cover || '';
+      const uri = song.spotifyUri || (song.id ? `spotify:track:${song.id}` : '');
+      window.selectCustomTrack(title, artist, cover, uri, song.durationMs || song.duration_ms || 180000);
+    });
+  });
+}
 
 async function loadRecommendations() {
 
@@ -612,10 +706,31 @@ async function loadRecommendations() {
 
   if (!stage) return;
 
-  stage.classList.add(
-    'recommendations-loading'
-  );
+  stage.classList.add('recommendations-loading');
 
+  stage.innerHTML = `
+    <div class="recommendation-loading-skeleton" id="recommendationLoadingSkeleton">
+
+        <div class="recommendation-skeleton-status">
+            <span class="recommendation-skeleton-status-dot"></span>
+            ÖNERİLER YÜKLENİYOR
+        </div>
+
+        <div class="recommendation-skeleton-card left"></div>
+
+        <div class="recommendation-skeleton-card center"></div>
+
+        <div class="recommendation-skeleton-card right"></div>
+
+        <div class="recommendation-skeleton-meta">
+            <span class="recommendation-skeleton-line title"></span>
+            <span class="recommendation-skeleton-line artist"></span>
+        </div>
+
+    </div>
+`;
+
+  renderShareRecommendationTiles([], { loading: true });
 
   if (!stage) return;
 
@@ -642,8 +757,15 @@ async function loadRecommendations() {
 
     if (!Array.isArray(recommendations) || recommendations.length === 0) {
       console.warn('Öneri bulunamadı.');
+      renderShareRecommendationTiles([], {
+        emptyMessage: 'Öneriler bulunamadı. Bir şarkı bulmak için aramayı kullanabilirsin.'
+      });
+      stage.classList.remove('recommendations-loading');
       return;
     }
+
+    // Aynı API cevabını paylaş sayfasındaki öneri kartlarında da kullan.
+    renderShareRecommendationTiles(recommendations);
 
     // Backend'den gelen şarkıları Coverflow'a aktar
     stage.innerHTML = recommendations.map(song => {
@@ -706,10 +828,13 @@ async function loadRecommendations() {
       'Müzik önerileri alınamadı:',
       err.message
     );
+    renderShareRecommendationTiles([], {
+      emptyMessage: 'Öneriler yüklenemedi. Bir şarkı bulmak için aramayı kullanabilirsin.'
+    });
 
     /*
-     * Endpoint çalışmazsa HTML'deki
-     * mevcut şarkılar kullanılmaya devam eder.
+     * Öneri isteği başarısızsa ekstra bir istek atmayız.
+     * Arama alanı kullanıcı tarafından kullanılabilir.
      */
   }
 
@@ -870,6 +995,13 @@ document.addEventListener('DOMContentLoaded', () => {
   window.handleYTStateChange = onYTStateChange;
 
   window.currentSelectedTrack = null;
+
+  // Paylaşım türü seçici: müzik paylaşımı aktif, lyrics kesiti şimdilik kapalı.
+  const lyricsModeButton = document.getElementById('shareModeLyrics');
+  lyricsModeButton?.addEventListener('click', (event) => {
+    event.preventDefault();
+    window.showDevelopmentNotice(event);
+  });
 
   // ----------------------------------------------------
   // 3. SPA VIEW & SAYFA GEÇİŞ YÖNETİMİ
@@ -1770,7 +1902,7 @@ ${!isLive
       if (lTimeline) lTimeline.max = duration;
 
       clearInterval(lyricsTimer);
-      lyricsTimer = setInterval(syncLyricsUI, 100);
+      lyricsTimer = setInterval(syncLyricsUI, 200);
     } else {
       if (btn) btn.innerHTML = '<i class="fas fa-play"></i>';
       clearInterval(lyricsTimer);
@@ -1832,14 +1964,29 @@ ${!isLive
           if (!grid) return;
 
           grid.innerHTML = json.tracks.map((t, idx) => `
-            <div class="selector-tile ${idx === 0 ? 'selected' : ''}" onclick="selectCustomTrack('${escapeHtml(t.title)}', '${escapeHtml(t.artist)}', '${t.coverUrl}', '${t.spotifyUri}')">
-              <img src="${t.coverUrl || 'https://placehold.co/44'}" alt="${escapeHtml(t.title)}" />
-              <div class="selector-tile-meta">
+            <button type="button"
+              class="selector-tile selector-tile-enter ${idx === 0 ? 'selected' : ''}"
+              style="--tile-index:${idx}"
+              data-search-index="${idx}"
+              aria-label="${escapeHtml(t.title)} — ${escapeHtml(t.artist)} seç">
+              <img src="${escapeHtml(t.coverUrl || 'https://placehold.co/80x80?text=Music')}" alt="${escapeHtml(t.title)}" loading="lazy" />
+              <span class="selector-tile-meta">
                 <strong>${escapeHtml(t.title)}</strong>
                 <span>${escapeHtml(t.artist)}</span>
-              </div>
-            </div>
+              </span>
+              <span class="selector-tile-play"><i class="fa-solid fa-play"></i></span>
+            </button>
           `).join('');
+
+          grid.querySelectorAll('[data-search-index]').forEach(tile => {
+            tile.addEventListener('click', () => {
+              const track = json.tracks[Number(tile.dataset.searchIndex)];
+              if (!track) return;
+              grid.querySelectorAll('.selector-tile').forEach(el => el.classList.remove('selected'));
+              tile.classList.add('selected');
+              selectCustomTrack(track.title, track.artist, track.coverUrl, track.spotifyUri, track.durationMs || track.duration_ms || 180000);
+            });
+          });
 
           const first = json.tracks[0];
           selectCustomTrack(first.title, first.artist, first.coverUrl, first.spotifyUri);
@@ -2608,6 +2755,8 @@ ${!isLive
         ? Number(raw.my_rating)
         : null;
 
+    const ratings = Array.isArray(raw.ratings) ? raw.ratings : [];
+
 
     /*
      * ====================================================
@@ -2761,6 +2910,8 @@ ${!isLive
       communityRatingCount,
 
       myRating,
+
+      ratings,
 
       /*
        * Owner content
@@ -3112,37 +3263,81 @@ ${!isLive
     popup.classList.toggle('active');
   };
 
+
   window.updateMiniScore = function (shareId, value) {
-    const val = Math.max(0, Math.min(10, Number(value) || 0));
+    const val = Math.max(0, Math.min(100, Number(value) || 0));
+
     const valueLabel = document.getElementById(`rangeVal-${shareId}`);
     const moodLabel = document.getElementById(`ratingMood-${shareId}`);
     const slider = document.getElementById(`rangeInput-${shareId}`);
-    const stage = document.getElementById(`ratingStage-${shareId}`);
-    const popup = document.getElementById(`ratePopup-${shareId}`);
 
-    const moods = [
-      'Hiç sarmadı', 'Olmadı', 'Zayıf', 'Eh işte', 'Fena değil',
-      'Güzel', 'Gayet iyi', 'Çok iyi!', 'Favorilerimden', 'Başyapıt!', 'Efsane ✨'
-    ];
-    const hue = val <= 3 ? 258 + val * 8 : val <= 6 ? 205 - (val - 3) * 18 : 145 - (val - 6) * 5;
-    const accent = val <= 3 ? '#a78bfa' : val <= 6 ? '#60a5fa' : '#55e6a5';
-
+    // Daha sade, sabit renkli puan göstergesi
     if (valueLabel) valueLabel.textContent = val;
-    if (moodLabel) moodLabel.textContent = moods[val];
+
+    if (moodLabel) {
+      moodLabel.textContent =
+        val < 40 ? 'Beğenmedim' :
+          val < 60 ? 'Ortalama' :
+            val < 75 ? 'Güzel' :
+              val < 90 ? 'Çok iyi' :
+                'Favorilerimden';
+    }
+
     if (slider) {
-      slider.style.setProperty('--rating-progress', `${val * 10}%`);
-      slider.style.setProperty('--rating-accent', accent);
+      slider.style.setProperty('--rating-progress', `${val}%`);
     }
-    if (stage) {
-      stage.style.setProperty('--rating-accent', accent);
-      stage.style.setProperty('--rating-hue', hue);
-      stage.classList.remove('score-pop');
-      void stage.offsetWidth;
-      stage.classList.add('score-pop');
-    }
-    if (popup) popup.style.setProperty('--rating-accent', accent);
   };
 
+
+
+  // Popup dışına tıklanınca kapat; popup içindeki slider ve butonlar etkilenmez.
+  document.addEventListener('click', (event) => {
+    if (event.target.closest('.rate-mini-popup, .btn-rate-trigger')) return;
+    document.querySelectorAll('.rate-mini-popup.active').forEach(popup => popup.classList.remove('active'));
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      document.querySelectorAll('.rate-mini-popup.active').forEach(popup => popup.classList.remove('active'));
+    }
+  });
+
+  window.submitRate = async function (shareId) {
+    const slider = document.getElementById(`rangeInput-${shareId}`);
+    const popup = document.getElementById(`ratePopup-${shareId}`);
+    const button = popup?.querySelector('.btn-submit-mini');
+    if (!slider || !button) return;
+    const rating = Number(slider.value);
+    const original = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<span>Kaydediliyor…</span>';
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/songshare/rate/${encodeURIComponent(shareId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ rating })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.message || 'Puan kaydedilemedi.');
+      button.innerHTML = '<span>Kaydedildi</span><i class="fa-solid fa-check"></i>';
+      const card = popup.closest('.feed-card') || popup.parentElement?.parentElement;
+      const score = card?.querySelector('.compact-rating-badge .cr-label');
+      if (score && payload.data) score.textContent = `Genel Puan ${Number(payload.data.average).toFixed(1)} (${payload.data.count} Oy)`;
+      const votersList = document.getElementById(`ratingVoters-${shareId}`);
+      const voters = Array.isArray(payload.data?.ratings) ? payload.data.ratings : [];
+      const headingCount = popup.querySelector('.rating-voters-heading span:last-child');
+      if (headingCount) headingCount.textContent = `${voters.length} kişi`;
+      if (votersList) votersList.innerHTML = voters.length ? voters.map(voter => `
+        <div class="rating-voter-row"><div class="rating-voter-avatar">${escapeHtml((voter.username || 'U').slice(0, 1).toUpperCase())}</div><span class="rating-voter-name">${escapeHtml(voter.username || 'Kullanıcı')}</span><strong class="rating-voter-score">${(Number(voter.rating) / 10).toFixed(1)}<small>/10</small></strong></div>
+      `).join('') : '<div class="rating-voters-empty">Henüz puan veren yok.</div>';
+      setTimeout(() => popup.classList.remove('active'), 650);
+    } catch (error) {
+      button.innerHTML = original;
+      alert(error.message || 'Puan kaydedilemedi.');
+    } finally {
+      button.disabled = false;
+    }
+  };
 
   /*
    * ====================================================
@@ -3161,6 +3356,9 @@ ${!isLive
     const avatar = escapeHtml(feedAvatarUrl(item));
     const cover = escapeHtml(item.cover);
     const artistCover = escapeHtml(item.artistCover || '');
+    const artistGenresRaw = feedValue(item.raw, 'artist_genres', 'artistGenres', 'genres', 'song_artist_genre', 'songArtistGenre') || [];
+    const artistGenres = Array.isArray(artistGenresRaw) ? artistGenresRaw.join(', ') : String(artistGenresRaw || '');
+    const artistDescription = feedValue(item.raw, 'artist_description', 'artistDescription', 'artist_bio', 'artistBio', 'description') || '';
     const spotify = escapeHtml(spotifyTrackUrl(item));
 
     const cardId =
@@ -3193,6 +3391,8 @@ ${!isLive
         item.myRating !== undefined
         ? Number(item.myRating)
         : 0;
+
+    const ratings = Array.isArray(item.ratings) ? item.ratings : [];
 
     // ----------------------------------------------------
     // HIGHLIGHT
@@ -3424,6 +3624,15 @@ ${!isLive
       "
       id="${cardId}"
       data-feed-id="${escapeHtml(String(item.id))}"
+      data-preview-title="${safeTitle}"
+data-preview-artist="${safeArtist}"
+data-preview-cover="${cover}"
+data-preview-url="${spotify}"
+data-preview-uri="${escapeHtml(item.uri || '')}"
+data-preview-comment="${escapeHtml(item.comment || '')}"
+data-preview-rating="${Number(item.sharerRating || 0)}"
+      data-preview-genres="${escapeHtml(artistGenres)}"
+      data-preview-bio="${escapeHtml(String(artistDescription))}"
     >
 
       ${cover
@@ -3553,13 +3762,10 @@ ${!isLive
   <div class="cover-gloss"></div>
 
   <button
+    type="button"
     class="cover-play-cta"
-    onclick='playToDock(
-      ${JSON.stringify(item.title)},
-      ${JSON.stringify(item.artist)},
-      ${JSON.stringify(item.cover)},
-      ${JSON.stringify(String(item.id))}
-    )'
+    data-preview-play
+    aria-label="Şarkıyı dinle: ${safeTitle} — ${safeArtist}"
   >
     <svg
       width="22"
@@ -3668,7 +3874,7 @@ ${!isLive
     <polyline points="12 6 12 12 16 14"></polyline>
   </svg>
 
-  <span style="color: var(--text-dim); font-weight: 700; fonst-size: 0.75rem; margin-left: 4px;">
+  <span style="color: var(--text-dim); font-weight: 700; font-size: 0.75rem; margin-left: 4px;">
     ${escapeHtml(shareTime)}
   </span>
 </div>
@@ -3748,35 +3954,49 @@ ${!isLive
                 <div class="rating-popup-icon"><i class="fa-solid fa-wave-square"></i></div>
                 <div class="rating-popup-heading-copy">
                   <span class="rating-popup-eyebrow">YOUR TAKE</span>
-                  <span class="mini-popup-title">Bu parça kaç puan?</span>
+                  <span class="mini-popup-title">Rate this song</span>
                 </div>
-                <span class="rating-popup-outof">/ 10</span>
+                <span class="rating-popup-outof">/ 1-0</span>
               </div>
 
               <div class="rating-score-stage" id="ratingStage-${escapeHtml(String(item.id))}">
-                <div class="rating-score-orbit"></div>
-                <div class="rating-score-number" id="rangeVal-${escapeHtml(String(item.id))}">${(myRating / 100).toFixed(1)}</div>
-                <div class="rating-score-caption" id="ratingMood-${escapeHtml(String(item.id))}">Fena değil</div>
+                <div class="rating-score-number" id="rangeVal-${escapeHtml(String(item.id))}">${myRating ?? 50}</div>
+                <span class="rating-score-caption" id="ratingMood-${escapeHtml(String(item.id))}">Ortalama</span>
               </div>
 
               <div class="rating-slider-area">
                 <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    step="1"
-                    value="${myRating > 0 ? myRating / 100 : 5}"
-                    class="mini-range-slider"
-                    id="rangeInput-${escapeHtml(String(item.id))}"
-                    data-share-id="${escapeHtml(String(item.id))}"
-                    oninput="window.updateMiniScore(this.dataset.shareId, this.value)"
-                    aria-label="0 ile 10 arasında puan"
-                >
-                <div class="rating-slider-labels"><span>Skip</span><span>Güzel</span><span>Favorim</span></div>
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="${myRating ?? 50}"
+                  class="mini-range-slider"
+                  id="rangeInput-${escapeHtml(String(item.id))}"
+                  data-share-id="${escapeHtml(String(item.id))}"
+                  oninput="window.updateMiniScore(this.dataset.shareId, this.value)"
+                  aria-label="0 ile 100 arasında puan"
+                />
+
+                <div class="rating-slider-labels">
+                  <span>Beğenmedim</span>
+                  <span>İyi</span>
+                  <span>Çok iyi</span>
+                </div>
               </div>
 
               <div class="rating-popup-footer">
-                <span class="rating-save-hint"><i class="fa-regular fa-circle-check"></i> Puanın topluluk ortalamasına katkı sağlar</span>
+                <div class="rating-voters-heading"><span>Kimler puanladı</span><span>${ratings.length} kişi</span></div>
+                <div class="rating-voters-list" id="ratingVoters-${escapeHtml(String(item.id))}">
+                  ${ratings.length ? ratings.map(voter => `
+                    <div class="rating-voter-row">
+                      <div class="rating-voter-avatar">${escapeHtml((voter.username || 'U').slice(0, 1).toUpperCase())}</div>
+                      <span class="rating-voter-name">${escapeHtml(voter.username || 'Kullanıcı')}</span>
+                      <strong class="rating-voter-score">${Number(voter.rating)}<small>/100</small></strong>
+                    </div>
+                  `).join('') : '<div class="rating-voters-empty">Henüz puan veren yok.</div>'}
+                </div>
+                <span class="rating-save-hint"><i class="fa-regular fa-circle-check"></i> Puanını daha sonra değiştirebilirsin.</span>
                 <button
                     type="button"
                     class="btn-submit-mini"
@@ -3790,11 +4010,11 @@ ${!isLive
             <!-- REPOST -->
 
             <button
-              class="btn-secondary-action"
+              class="btn-secondary-action is-development-disabled" aria-disabled="true"
               onclick='
-                toggleRepost(
+                showDevelopmentNotice(event); /* toggleRepost(
                   ${JSON.stringify(String(item.id))}
-                )
+                ) */
               '
             >
               Repostla
@@ -3826,11 +4046,11 @@ ${!isLive
             <!-- IMMERSIVE -->
 
             <button
-              class="btn-secondary-action"
+              class="btn-secondary-action is-development-disabled" aria-disabled="true"
               onclick='
-                openFullscreenCompanion(
+                showDevelopmentNotice(event); /* openFullscreenCompanion(
                   ${JSON.stringify(String(item.id))}
-                )
+                ) */
               '
             >
               Immersive
@@ -5041,12 +5261,34 @@ function undockFriendsStrip() {
 }
 
 if (feedScroll && friendsStrip) {
-  feedScroll.addEventListener('scroll', () => {
-    if (feedScroll.scrollTop > 70) {
-      dockFriendsStrip();
-    } else {
+  const isMobileFriendsBubbleMode = () => window.matchMedia('(max-width: 700px)').matches;
+
+  const updateFriendsOnScroll = () => {
+    if (isMobileFriendsBubbleMode()) {
+      // Mobilde arkadaşları DOM'dan çıkarma: üstteki alan scroll ile kaybolur,
+      // aynı kartlar ekranın alt tarafında küçük avatar bubble'larına dönüşür.
       undockFriendsStrip();
+      document.body.classList.toggle('mobile-feed-scrolled', feedScroll.scrollTop > 70);
+      return;
     }
+
+    document.body.classList.remove('mobile-feed-scrolled');
+    if (feedScroll.scrollTop > 70) dockFriendsStrip();
+    else undockFriendsStrip();
+  };
+
+  feedScroll.addEventListener('scroll', updateFriendsOnScroll, { passive: true });
+  window.addEventListener('resize', updateFriendsOnScroll);
+  updateFriendsOnScroll();
+}
+
+// Mobilde sağ alttaki albüm bubble'ına dokununca companion panelini aç/kapat.
+const mobilePlayerDock = document.getElementById('mainPlayerDock');
+if (mobilePlayerDock) {
+  mobilePlayerDock.addEventListener('click', (event) => {
+    if (!window.matchMedia('(max-width: 700px)').matches) return;
+    if (event.target.closest('button, a, iframe')) return;
+    mobilePlayerDock.classList.toggle('mobile-player-expanded');
   });
 }
 
@@ -5094,3 +5336,565 @@ function prepareImage(img) {
     img.classList.add("image-loaded");
   }, { once: true });
 }
+
+
+/* =========================================================
+   SONG PREVIEW — SPOTIFY + YOUTUBE SYNCED LYRICS
+   ========================================================= */
+
+(() => {
+  const modal = document.getElementById('songPreviewModal');
+  if (!modal || modal.dataset.initialized === 'true') return;
+  modal.dataset.initialized = 'true';
+
+  const $ = id => document.getElementById(id);
+
+  const cover = $('spCover');
+  const ambient = $('spAmbient');
+  const title = $('spTitle');
+  const artist = $('spArtist');
+  const comment = $('spComment');
+  const rating = $('spRating');
+  const artistBio = $('spArtistBio');
+  const artistFacts = $('spArtistFacts');
+  const artistSearch = $('spArtistSearch');
+  const spotifyEmbed = $('spSpotifyEmbed');
+  const spotifyOpen = $('spSpotifyOpen');
+  const spotifyConnect = $('spSpotifyConnect');
+
+  const lyricsStatus = $('spLyricsStatus');
+  const lyricsLines = $('spLyricsLines');
+  const lyricsViewport = $('spLyricsViewport');
+  const timeline = $('spTimeline');
+  const currentTime = $('spCurrentTime');
+  const durationLabel = $('spDuration');
+  const playButton = $('spYoutubePlay');
+
+  let activeTrack = null;
+  let lyrics = [];
+  let syncTimer = null;
+  let requestId = 0;
+  let lastActiveIndex = -1;
+  let seeking = false;
+
+  const formatTime = seconds => {
+    const value = Math.max(0, Math.floor(Number(seconds) || 0));
+    return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
+  };
+
+  function getTrackId(track) {
+    const uriMatch = track.uri.match(/^spotify:track:([a-zA-Z0-9]+)$/);
+    if (uriMatch) return uriMatch[1];
+
+    try {
+      const url = new URL(track.url);
+      const match = url.pathname.match(/\/track\/([a-zA-Z0-9]+)/);
+      return match ? match[1] : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function setTab(name) {
+    modal.querySelectorAll('[data-sp-tab]').forEach(button => {
+      const selected = button.dataset.spTab === name;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-selected', String(selected));
+    });
+
+    modal.querySelectorAll('[data-sp-pane]').forEach(pane => {
+      const selected = pane.dataset.spPane === name;
+      pane.classList.toggle('is-active', selected);
+      pane.hidden = !selected;
+    });
+
+    if (name === 'spotify' && isYTReady && ytPlayer?.pauseVideo) {
+      ytPlayer.pauseVideo();
+    }
+  }
+
+  function openModal() {
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    ++requestId;
+
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+
+    clearInterval(syncTimer);
+    syncTimer = null;
+
+    if (isYTReady && ytPlayer?.pauseVideo) {
+      ytPlayer.pauseVideo();
+    }
+
+    // Spotify iframe kaldırılınca önizleme sesi de durur.
+    spotifyEmbed.replaceChildren();
+    activeTrack = null;
+  }
+
+  async function checkSpotifyConnection(trackId, id) {
+    spotifyOpen.hidden = true;
+    spotifyConnect.hidden = true;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/spotify/now-playing', {
+        credentials: 'include',
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
+          : {}
+      });
+
+      if (id !== requestId) return;
+
+      if (response.ok) {
+        spotifyOpen.href =
+          `https://open.spotify.com/track/${trackId}`;
+        spotifyOpen.hidden = false;
+      } else if (response.status === 401 ||
+        response.status === 403) {
+        spotifyConnect.hidden = false;
+      }
+    } catch (error) {
+      console.warn('Spotify bağlantı durumu alınamadı:', error);
+    }
+  }
+
+  function renderLyrics(items) {
+    lyricsLines.replaceChildren();
+
+    items.forEach((line, index) => {
+      const element = document.createElement('div');
+      element.className = 'sp-lyric-line';
+      element.textContent = line.words || '';
+      element.dataset.index = String(index);
+      element.dataset.time = String(Number(line.time) || 0);
+
+      element.addEventListener('click', () => {
+        if (!isYTReady || !ytPlayer?.seekTo) return;
+
+        ytPlayer.seekTo(Number(line.time) || 0, true);
+        if (ytPlayer.playVideo) ytPlayer.playVideo();
+      });
+
+      lyricsLines.appendChild(element);
+    });
+
+    lastActiveIndex = -1;
+  }
+
+  function updateLyrics() {
+    if (!isYTReady || !ytPlayer?.getCurrentTime) return;
+
+    const time = ytPlayer.getCurrentTime();
+    const duration = ytPlayer.getDuration() || 0;
+
+    if (!seeking) timeline.value = String(time);
+
+    timeline.max = String(Math.max(duration, 1));
+    currentTime.textContent = formatTime(time);
+    durationLabel.textContent = formatTime(duration);
+
+    let index = -1;
+
+    for (let i = 0; i < lyrics.length; i++) {
+      if ((Number(lyrics[i].time) || 0) <= time + 0.05) {
+        index = i;
+      } else {
+        break;
+      }
+    }
+
+    if (index === lastActiveIndex) return;
+    lastActiveIndex = index;
+
+    lyricsLines.querySelectorAll('.sp-lyric-line').forEach((line, i) => {
+      line.classList.toggle('is-active', i === index);
+    });
+
+    const activeLine = lyricsLines.children[index];
+
+    if (activeLine) {
+      const target = activeLine.offsetTop -
+        lyricsViewport.clientHeight / 2 +
+        activeLine.offsetHeight / 2;
+
+      lyricsViewport.scrollTo({
+        top: Math.max(0, target),
+        behavior: 'smooth'
+      });
+    }
+  }
+
+  function startSync() {
+    clearInterval(syncTimer);
+    syncTimer = setInterval(updateLyrics, 150);
+  }
+
+  async function loadLyrics(track, id) {
+    lyricsStatus.textContent = 'Senkronize sözler aranıyor…';
+    lyricsLines.replaceChildren();
+    playButton.disabled = true;
+    playButton.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor';
+
+    try {
+      const response = await fetch(
+        `/api/auto-sync?track=${encodeURIComponent(track.title)}` +
+        `&artist=${encodeURIComponent(track.artist)}`,
+        { credentials: 'include' }
+      );
+
+      if (!response.ok) throw new Error('Lyrics request failed');
+
+      const data = await response.json();
+
+      if (id !== requestId || !modal.classList.contains('is-open')) {
+        return;
+      }
+
+      if (!data.videoId) {
+        lyricsStatus.textContent =
+          'Bu şarkı için senkronize video bulunamadı.';
+        playButton.disabled = true;
+        playButton.innerHTML =
+          '<i class="fa-solid fa-circle-info"></i> Video bulunamadı';
+        return;
+      }
+
+      lyrics = Array.isArray(data.lyrics) ? data.lyrics : [];
+      renderLyrics(lyrics);
+
+      lyricsStatus.textContent = lyrics.length
+        ? 'Zaman damgalı sözler hazır'
+        : 'Söz bulunamadı. Videoyu yine de dinleyebilirsin.';
+
+      // YouTube API henüz hazır değilse sınırlı süre bekle.
+      let attempts = 0;
+
+      const cueWhenReady = () => {
+        if (id !== requestId) return;
+
+        if (isYTReady && ytPlayer?.cueVideoById) {
+          ytPlayer.cueVideoById(data.videoId);
+
+          playButton.disabled = false;
+          playButton.innerHTML =
+            '<i class="fa-solid fa-play"></i> YouTube ile dinle';
+
+          startSync();
+          return;
+        }
+
+        if (++attempts < 40) {
+          setTimeout(cueWhenReady, 250);
+        } else {
+          lyricsStatus.textContent =
+            'YouTube oynatıcı başlatılamadı. Sayfayı yenileyip tekrar dene.';
+        }
+      };
+
+      cueWhenReady();
+    } catch (error) {
+      if (id !== requestId) return;
+
+      console.error('Senkronize sözler yüklenemedi:', error);
+      lyricsStatus.textContent =
+        'Sözler şu anda yüklenemiyor. Daha sonra tekrar dene.';
+    }
+  }
+
+  window.openSongPreview = async function (track) {
+    const id = ++requestId;
+
+    activeTrack = track;
+    lyrics = [];
+    lastActiveIndex = -1;
+
+    clearInterval(syncTimer);
+    syncTimer = null;
+
+    if (isYTReady && ytPlayer?.pauseVideo) {
+      ytPlayer.pauseVideo();
+    }
+
+    const trackId = getTrackId(track);
+    if (!trackId) {
+      console.warn('Şarkının Spotify track ID bilgisi eksik.');
+      return;
+    }
+
+    title.textContent = track.title;
+    artist.textContent = track.artist;
+    comment.textContent = track.comment || 'Bu parça toplulukla paylaşıldı.';
+    rating.textContent = `${track.rating}/100`;
+
+    const genreList = String(track.genres || '')
+      .split(',')
+      .map(value => value.trim())
+      .filter(Boolean)
+      .slice(0, 5);
+
+    artistFacts.replaceChildren();
+    const factItems = [
+      `Parça: ${track.title}`,
+      ...genreList
+    ];
+    factItems.forEach((value, index) => {
+      const fact = document.createElement('span');
+      fact.className = 'sp-artist-fact';
+      fact.textContent = index === 0 ? value : value;
+      artistFacts.appendChild(fact);
+    });
+
+    artistBio.textContent = track.bio ||
+      (genreList.length
+        ? `${track.artist}, bu paylaşımda ${genreList.join(', ')} türleriyle ilişkilendiriliyor. Sanatçı hakkında daha fazla bilgi için Spotify sanatçı aramasını açabilirsin.`
+        : `${track.artist} hakkında bu paylaşımın verilerinde doğrulanmış bir biyografi bulunmuyor. Sanatçının müzikleri ve profili için Spotify'da keşfedebilirsin.`);
+
+    artistSearch.href =
+      `https://open.spotify.com/search/${encodeURIComponent(track.artist)}/artists`;
+
+    cover.src = track.cover || '';
+    cover.alt = `${track.title} albüm kapağı`;
+    ambient.style.backgroundImage = track.cover
+      ? `url("${track.cover.replace(/["\\]/g, '')}")`
+      : 'none';
+
+    spotifyEmbed.replaceChildren();
+
+    const iframe = document.createElement('iframe');
+    iframe.title = `${track.title} Spotify önizlemesi`;
+    iframe.src =
+      `https://open.spotify.com/embed/track/${trackId}?theme=0`;
+    iframe.loading = 'lazy';
+    iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    iframe.style.height = '152px';
+    spotifyEmbed.appendChild(iframe);
+
+    timeline.value = '0';
+    currentTime.textContent = '0:00';
+    durationLabel.textContent = '0:00';
+
+    setTab('spotify');
+    openModal();
+
+    // Bu iki istek birbirinden bağımsız çalışır.
+    await Promise.allSettled([
+      checkSpotifyConnection(trackId, id),
+      loadLyrics(track.title, id)
+    ]);
+  };
+
+  document.addEventListener('click', event => {
+    const closeTarget = event.target.closest('[data-preview-close]');
+
+    if (closeTarget) {
+      closeModal();
+      return;
+    }
+
+    const tab = event.target.closest('[data-sp-tab]');
+    if (tab) {
+      setTab(tab.dataset.spTab);
+      return;
+    }
+
+    const playTrigger = event.target.closest('.cover-play-cta[data-preview-play]');
+    if (playTrigger) {
+      event.preventDefault();
+      event.stopPropagation();
+      const playCard = playTrigger.closest('.feed-card[data-preview-title]');
+      if (!playCard) return;
+
+      window.openSongPreview({
+        title: playCard.dataset.previewTitle || '',
+        artist: playCard.dataset.previewArtist || '',
+        cover: playCard.dataset.previewCover || '',
+        url: playCard.dataset.previewUrl || '',
+        uri: playCard.dataset.previewUri || '',
+        comment: playCard.dataset.previewComment || '',
+        rating: Math.max(0, Math.min(100, Number(playCard.dataset.previewRating) || 0)),
+        genres: playCard.dataset.previewGenres || '',
+        bio: playCard.dataset.previewBio || ''
+      });
+      return;
+    }
+
+    const card = event.target.closest('.feed-card[data-preview-title]');
+    if (!card) return;
+
+    // Kart içindeki puanlama, menü, profil ve bağlantılar normal çalışsın.
+    if (event.target.closest(
+      'button, a, input, textarea, select, label, ' +
+      '.rate-mini-popup, [data-no-preview]'
+    )) return;
+
+    window.openSongPreview({
+      title: card.dataset.previewTitle || '',
+      artist: card.dataset.previewArtist || '',
+      cover: card.dataset.previewCover || '',
+      url: card.dataset.previewUrl || '',
+      uri: card.dataset.previewUri || '',
+      comment: card.dataset.previewComment || '',
+      rating: Math.max(
+        0,
+        Math.min(100, Number(card.dataset.previewRating) || 0)
+      ),
+      genres: card.dataset.previewGenres || '',
+      bio: card.dataset.previewBio || ''
+    });
+  });
+
+  playButton.addEventListener('click', () => {
+    if (!isYTReady || !ytPlayer) return;
+
+    const state = ytPlayer.getPlayerState();
+
+    if (state === YT.PlayerState.PLAYING) {
+      ytPlayer.pauseVideo();
+      playButton.innerHTML =
+        '<i class="fa-solid fa-play"></i> Devam et';
+    } else {
+      ytPlayer.playVideo();
+      playButton.innerHTML =
+        '<i class="fa-solid fa-pause"></i> Duraklat';
+    }
+  });
+
+  timeline.addEventListener('input', () => {
+    seeking = true;
+    currentTime.textContent = formatTime(timeline.value);
+  });
+
+  timeline.addEventListener('change', () => {
+    if (isYTReady && ytPlayer?.seekTo) {
+      ytPlayer.seekTo(Number(timeline.value), true);
+    }
+    seeking = false;
+    updateLyrics();
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+      closeModal();
+    }
+  });
+
+  // Yalnızca YouTube gerçekten oynatılırken kontrol simgesini güncelle.
+  window.addEventListener('song-preview-unused', () => { });
+})();
+
+
+// ------------------------------------------------------------
+// FIRST-VISIT FEATURE TOUR — focused, one feature per step
+// ------------------------------------------------------------
+(function initSongShareFeatureTour() {
+  const STORAGE_KEY = 'songshare_feature_tour_dismissed_v1';
+  const SEEN_KEY = 'songshare_feature_tour_seen_v1';
+  const steps = [
+    { target: '.nav-menu-list', title: 'Gezinme menüsü', text: 'Home akışına, şarkı paylaşımına, keşfetmeye ve arkadaşlarının alanına buradan geçebilirsin.' },
+    { target: '#friendsListeningStrip', title: 'Friend Activity', text: 'Arkadaşlarının şu anda dinlediği parçaları burada görürsün. Canlı bir karta tıklayarak parçayı mini oynatıcıda açabilirsin.' },
+    { target: '#spotlightPanel', title: 'Öne çıkanlar', text: 'Spotlight alanında öne çıkan parçaları kapaklarıyla keşfet; oklarla parçalar arasında gez.' },
+    { target: '#dynamicFeedItems', title: 'Müzik akışı', text: 'Arkadaşlarının paylaşımları burada görünür. Paylaşımlara göz atıp müzik keşfedebilirsin.' },
+    { target: '#navLinkShare', title: 'Parça paylaş', text: 'Share Track bölümünden Spotify’da arama yapabilir, bir parça seçip paylaşımını hazırlayabilirsin. Lyrics kesiti seçeneği şimdilik yakında.' },
+    { target: '.spotify-account-card', title: 'Spotify bağlantısı', text: 'Spotify hesabını bağlayarak dinlediğin parçayı paylaşma ve dinleme durumunu eşleştirme özelliklerinden yararlanabilirsin.' }
+  ];
+  let index = 0;
+  let currentTarget = null;
+  let resizeHandler = null;
+  const backdrop = document.getElementById('songShareTourBackdrop');
+  const card = document.getElementById('songShareTourCard');
+  const title = document.getElementById('songShareTourTitle');
+  const description = document.getElementById('songShareTourDescription');
+  const progress = document.getElementById('songShareTourProgress');
+  const next = document.getElementById('songShareTourNext');
+  const later = document.getElementById('songShareTourLater');
+  const never = document.getElementById('songShareTourNever');
+  if (!backdrop || !card || !title || !description || !progress || !next || !later || !never) return;
+
+  function clearTarget() {
+    if (currentTarget) currentTarget.classList.remove('songshare-tour-highlight');
+    currentTarget = null;
+  }
+  function closeTour({ remember = false } = {}) {
+    clearTarget();
+    backdrop.classList.remove('is-visible');
+    card.classList.remove('is-visible');
+    backdrop.hidden = true;
+    card.hidden = true;
+    document.body.classList.remove('songshare-tour-open');
+    if (remember) {
+      try { localStorage.setItem(STORAGE_KEY, '1'); } catch (_) { }
+    }
+    if (resizeHandler) window.removeEventListener('resize', resizeHandler);
+    resizeHandler = null;
+  }
+  function placeCard(target) {
+    if (window.matchMedia('(max-width: 760px)').matches) return;
+    const rect = target.getBoundingClientRect();
+    const cardWidth = Math.min(340, window.innerWidth - 32);
+    const cardHeight = card.offsetHeight || 210;
+    let left = rect.right + 18;
+    if (left + cardWidth > window.innerWidth - 16) left = rect.left - cardWidth - 18;
+    if (left < 16) left = Math.max(16, Math.min(window.innerWidth - cardWidth - 16, rect.left));
+    let top = rect.top + rect.height / 2 - cardHeight / 2;
+    top = Math.max(16, Math.min(window.innerHeight - cardHeight - 16, top));
+    card.style.left = `${left}px`;
+    card.style.top = `${top}px`;
+    card.style.right = 'auto';
+    card.style.bottom = 'auto';
+  }
+  function showStep() {
+    clearTarget();
+    const step = steps[index];
+    let target = document.querySelector(step.target);
+    // A hidden SPA section is not a useful target; use the share navigation item instead.
+    if (!target || target.getClientRects().length === 0) target = document.querySelector('#navLinkShare');
+    currentTarget = target;
+    currentTarget?.classList.add('songshare-tour-highlight');
+    title.textContent = step.title;
+    description.textContent = step.text;
+    progress.textContent = `${index + 1} / ${steps.length}`;
+    next.innerHTML = index === steps.length - 1 ? 'Bitir <span aria-hidden="true">✓</span>' : 'İleri <span aria-hidden="true">→</span>';
+    if (currentTarget) placeCard(currentTarget);
+    card.classList.remove('is-visible');
+    requestAnimationFrame(() => card.classList.add('is-visible'));
+  }
+  function startTour() {
+    if (localStorage.getItem(STORAGE_KEY) === '1') return;
+    index = 0;
+    backdrop.hidden = false;
+    card.hidden = false;
+    document.body.classList.add('songshare-tour-open');
+    requestAnimationFrame(() => backdrop.classList.add('is-visible'));
+    showStep();
+    resizeHandler = () => { if (currentTarget) placeCard(currentTarget); };
+    window.addEventListener('resize', resizeHandler);
+    try { localStorage.setItem(SEEN_KEY, '1'); } catch (_) { }
+  }
+  next.addEventListener('click', () => {
+    if (index >= steps.length - 1) { closeTour({ remember: true }); return; }
+    index += 1;
+    showStep();
+  });
+  later.addEventListener('click', () => closeTour());
+  never.addEventListener('click', () => closeTour({ remember: true }));
+  backdrop.addEventListener('click', () => closeTour());
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !card.hidden) closeTour();
+  });
+  // Re-open the tour from the brand mark whenever it has only been postponed.
+  document.querySelector('.brand-badge')?.addEventListener('dblclick', startTour);
+  window.addEventListener('load', () => {
+    if (localStorage.getItem(STORAGE_KEY) === '1') return;
+    window.setTimeout(startTour, 700);
+  }, { once: true });
+})();

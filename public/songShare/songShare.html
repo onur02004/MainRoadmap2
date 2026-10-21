@@ -182,6 +182,20 @@
       <div id="view-share" class="view-section">
         <div class="share-page-container">
 
+          <!-- PAYLAŞIM TÜRÜ: Şimdilik yalnızca müzik paylaşımı aktif -->
+          <div class="share-mode-switch" role="group" aria-label="Paylaşım türü">
+            <button type="button" class="share-mode-option is-active" id="shareModeMusic" aria-pressed="true">
+              <span class="share-mode-icon"><i class="fa-solid fa-music"></i></span>
+              <span class="share-mode-copy"><strong>Müzik paylaşma</strong><small>Bir parçayı arkadaşlarınla paylaş</small></span>
+              <i class="fa-solid fa-check share-mode-check" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="share-mode-option is-disabled" id="shareModeLyrics" aria-pressed="false" aria-disabled="true" title="Bu özellik yakında kullanılabilecek">
+              <span class="share-mode-icon"><i class="fa-solid fa-quote-right"></i></span>
+              <span class="share-mode-copy"><strong>Lyrics kesiti paylaşma</strong><small>Şarkı sözlerinden bir an paylaş</small></span>
+              <span class="share-mode-coming-soon">YAKINDA</span>
+            </button>
+          </div>
+
           <div class="share-stage-cluster" id="shareStageCluster">
 
             <!-- SOL BİLGİ PANELİ: SANATÇI VE SEÇİLEN PARÇA -->
@@ -300,37 +314,23 @@
 
                 <div class="form-group">
                   <label id="selectorListLabel">Kütüphane Önerileri & Sonuçlar</label>
-                  <div class="song-selector-grid" id="wizardSongGrid">
-                    <div class="selector-tile" onclick="selectWizardTrack('rebel', '4TIJ7zSBNejNuQIYKjKXNE')">
-                      <img src="https://i.scdn.co/image/ab67616d0000b273ed9554eeb17f7ffea9c81352" alt="Rebel Yell" />
-                      <div class="selector-tile-meta">
-                        <strong>Rebel Yell</strong>
-                        <span>Billy Idol</span>
-                      </div>
+                  <div class="song-selector-grid is-loading" id="wizardSongGrid" aria-live="polite"
+                    aria-label="Önerilen şarkılar">
+                    <div class="selector-tile selector-tile-skeleton" style="--tile-index:0">
+                      <span class="selector-skeleton-cover"></span><span
+                        class="selector-skeleton-copy"><i></i><i></i></span>
                     </div>
-                    <div class="selector-tile" onclick="selectWizardTrack('everlong', '1hZsDHzSlrWnKsbH47ajG1')">
-                      <img src="https://i1.sndcdn.com/artworks-000079984264-e8xxju-t500x500.jpg" alt="Everlong" />
-                      <div class="selector-tile-meta">
-                        <strong>Everlong</strong>
-                        <span>Foo Fighters</span>
-                      </div>
+                    <div class="selector-tile selector-tile-skeleton" style="--tile-index:1">
+                      <span class="selector-skeleton-cover"></span><span
+                        class="selector-skeleton-copy"><i></i><i></i></span>
                     </div>
-                    <div class="selector-tile" onclick="selectWizardTrack('skyfull', '3HvdBzTOyRzxraMPJ2PDHQ')">
-                      <img src="https://i.scdn.co/image/ab67616d00001e028ff7c3580d429c8212b9a3b6"
-                        alt="Sky Full of Stars" />
-                      <div class="selector-tile-meta">
-                        <strong>A Sky Full of Stars</strong>
-                        <span>Coldplay</span>
-                      </div>
+                    <div class="selector-tile selector-tile-skeleton" style="--tile-index:2">
+                      <span class="selector-skeleton-cover"></span><span
+                        class="selector-skeleton-copy"><i></i><i></i></span>
                     </div>
-                    <div class="selector-tile" onclick="selectWizardTrack('maraton', '0uLq12tY4vXnE7q12x5a1a')">
-                      <img
-                        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s"
-                        alt="Maraton" />
-                      <div class="selector-tile-meta">
-                        <strong>Maraton</strong>
-                        <span>Ati242</span>
-                      </div>
+                    <div class="selector-tile selector-tile-skeleton" style="--tile-index:3">
+                      <span class="selector-skeleton-cover"></span><span
+                        class="selector-skeleton-copy"><i></i><i></i></span>
                     </div>
                   </div>
                 </div>
@@ -439,7 +439,8 @@
 
                 <div class="wizard-footer-actions">
                   <button class="btn-share-cancel" onclick="goToWizardStep(1)">&larr; Geri Dön</button>
-                  <button class="btn-share-submit" onclick="submitWizardShare()">Feed'de Yayınla</button>
+                  <button class="btn-share-submit is-development-disabled" aria-disabled="true"
+                    onclick="showDevelopmentNotice(event)">Feed'de Yayınla</button>
                 </div>
               </div>
 
@@ -766,6 +767,136 @@
   <div id="yt-ghost-container" style="position: absolute; top: -9999px; left: -9999px;">
     <div id="player"></div>
   </div>
+
+
+  <div id="songPreviewModal" class="song-preview-modal" aria-hidden="true">
+    <div class="song-preview-backdrop" data-preview-close></div>
+
+    <section class="song-preview-window" role="dialog" aria-modal="true" aria-labelledby="spTitle">
+
+      <button class="sp-close" type="button" data-preview-close aria-label="Kapat">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="sp-ambient" id="spAmbient"></div>
+
+      <div class="sp-layout">
+        <div class="sp-art-column">
+          <div class="sp-art-frame">
+            <img id="spCover" src="" alt="Albüm kapağı">
+            <div class="sp-art-reflection"></div>
+          </div>
+
+          <div class="sp-track-info">
+            <span class="sp-eyebrow">SONG SHARE · NOW DISCOVERING</span>
+            <h2 id="spTitle">Şarkı adı</h2>
+            <p id="spArtist">Sanatçı</p>
+          </div>
+
+          <div class="sp-actions">
+            <a id="spSpotifyOpen" class="sp-spotify-button" href="#" target="_blank" rel="noopener noreferrer" hidden>
+              <i class="fa-brands fa-spotify"></i>
+              Spotify'da oynat
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+
+            <a id="spSpotifyConnect" class="sp-connect-button" href="/account" hidden>
+              <i class="fa-brands fa-spotify"></i>
+              Spotify'ı bağla
+            </a>
+          </div>
+
+          <div class="sp-share-note">
+            <span class="sp-note-label">PAYLAŞANIN NOTU</span>
+            <p id="spComment">Bu parça toplulukla paylaşıldı.</p>
+            <div class="sp-rating-line">
+              <span>Paylaşan puanı</span>
+              <strong id="spRating">—</strong>
+            </div>
+          </div>
+
+          <section class="sp-artist-about" aria-labelledby="spArtistAboutTitle">
+            <div class="sp-artist-about-heading">
+              <span class="sp-artist-icon"><i class="fa-solid fa-microphone-lines"></i></span>
+              <div>
+                <span class="sp-note-label">ARTIST SPOTLIGHT</span>
+                <h3 id="spArtistAboutTitle">Sanatçı hakkında</h3>
+              </div>
+            </div>
+            <p id="spArtistBio">Sanatçı bilgileri yükleniyor…</p>
+            <div class="sp-artist-facts" id="spArtistFacts"></div>
+            <a id="spArtistSearch" class="sp-artist-search" href="#" target="_blank" rel="noopener noreferrer">
+              Sanatçıyı keşfet <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+          </section>
+        </div>
+
+        <div class="sp-player-column">
+          <div class="sp-tabs" role="tablist">
+            <button type="button" class="sp-tab is-active" data-sp-tab="spotify" role="tab" aria-selected="true">
+              <i class="fa-brands fa-spotify"></i> Önizleme
+            </button>
+            <button type="button" class="sp-tab" data-sp-tab="lyrics" role="tab" aria-selected="false">
+              <i class="fa-solid fa-align-left"></i> Senkronize sözler
+            </button>
+          </div>
+
+          <section class="sp-pane is-active" data-sp-pane="spotify">
+            <div id="spSpotifyEmbed" class="sp-embed"></div>
+            <p class="sp-footnote">
+              Önizleme Spotify tarafından sağlanır.
+            </p>
+          </section>
+
+          <section class="sp-pane" data-sp-pane="lyrics" hidden>
+            <div class="sp-lyrics-heading">
+              <span class="sp-live-dot"></span>
+              <span>LYRICS COMPANION</span>
+            </div>
+
+            <div id="spLyricsStatus" class="sp-lyrics-status">
+              Senkronize sözler aranıyor…
+            </div>
+
+            <div id="spLyricsViewport" class="sp-lyrics-viewport">
+              <div id="spLyricsLines" class="sp-lyrics-lines"></div>
+            </div>
+
+            <div class="sp-timeline">
+              <span id="spCurrentTime">0:00</span>
+              <input id="spTimeline" type="range" min="0" max="100" step="0.1" value="0" aria-label="Şarkı konumu">
+              <span id="spDuration">0:00</span>
+            </div>
+
+            <button id="spYoutubePlay" class="sp-play-button" type="button" disabled>
+              <i class="fa-solid fa-play"></i>
+              YouTube ile dinle
+            </button>
+
+            <p class="sp-footnote">
+              YouTube oynatımı, mevcut otomatik senkronizasyon
+              servisi üzerinden sağlanır.
+            </p>
+          </section>
+        </div>
+      </div>
+    </section>
+  </div>
+
+
+
+  <!-- First-visit feature tour; content is populated one feature at a time. -->
+  <div id="songShareTourBackdrop" class="songshare-tour-backdrop" hidden></div>
+  <section id="songShareTourCard" class="songshare-tour-card" role="dialog" aria-modal="true" aria-labelledby="songShareTourTitle" aria-describedby="songShareTourDescription" hidden>
+    <div class="songshare-tour-kicker"><span>SONG SHARE · HIZLI TUR</span><span class="songshare-tour-progress" id="songShareTourProgress">1 / 5</span></div>
+    <h2 id="songShareTourTitle">Song Share'a hoş geldin</h2>
+    <p id="songShareTourDescription"></p>
+    <div class="songshare-tour-actions">
+      <button type="button" class="tour-never" id="songShareTourNever">Bir daha gösterme</button>
+      <button type="button" id="songShareTourLater">Bir dahaki sefere göster</button>
+      <button type="button" class="tour-next" id="songShareTourNext">İleri <span aria-hidden="true">→</span></button>
+    </div>
+  </section>
 
   <script src="https://www.youtube.com/iframe_api"></script>
   <script type="module" src="/avatarRenderer.js"></script>

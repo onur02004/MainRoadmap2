@@ -3,6 +3,7 @@ import AppError from '../utils/appError.js';
 import db from '../config/db.js';
 import logger from '../utils/logger.js';
 import * as spotifyService from '../services/spotifyService.js';
+import { getRandomRecommendations } from '../services/recommendationService.js';
 
 
 // LRCLIB API Yapılandırması
@@ -249,6 +250,9 @@ export const getFeed = catchAsync(async (req, res, next) => {
       /* BU KULLANICININ VERDİĞİ PUAN */
       my_rating.rating AS my_rating,
 
+      /* PUAN VEREN KULLANICILAR */
+      COALESCE(voters.ratings, '[]'::json) AS ratings,
+
       /* DİĞER KULLANICILARIN YORUMLARI */
       COALESCE(c.comments, '[]'::json) AS comments
 
@@ -275,6 +279,23 @@ export const getFeed = catchAsync(async (req, res, next) => {
         AND sr.user_id = $1
       LIMIT 1
     ) my_rating ON true
+
+    LEFT JOIN LATERAL (
+      SELECT json_agg(
+        json_build_object(
+          'user_id', sr.user_id,
+          'username', COALESCE(ru.user_name, 'Kullanıcı'),
+          'avatar', ru.profile_pic_path,
+          'avatar_type', ru.avatar_type,
+          'avatar_data', ru.avatar_data,
+          'rating', sr.rating,
+          'updated_at', sr.updated_at
+        ) ORDER BY sr.updated_at DESC NULLS LAST
+      ) AS ratings
+      FROM song_ratings sr
+      LEFT JOIN users ru ON ru.id = sr.user_id
+      WHERE sr.song_share_id = s.id
+    ) voters ON true
 
     /* COMMENTS */
     LEFT JOIN LATERAL (
@@ -393,7 +414,7 @@ export const rateSong = catchAsync(async (req, res, next) => {
   const numericRating = Number(rating);
 
   if (
-    !Number.isFinite(numericRating) ||
+    !Number.isInteger(numericRating) ||
     numericRating < 0 ||
     numericRating > 100
   ) {
@@ -472,6 +493,14 @@ export const rateSong = catchAsync(async (req, res, next) => {
   );
 
   const stats = result.rows[0];
+  const votersResult = await db.query(
+    `SELECT sr.rating, sr.updated_at, u.user_name AS username
+     FROM song_ratings sr
+     LEFT JOIN users u ON u.id = sr.user_id
+     WHERE sr.song_share_id = $1
+     ORDER BY sr.updated_at DESC NULLS LAST`,
+    [suggestionId]
+  );
 
   res.status(200).json({
     status: 'success',
@@ -481,7 +510,8 @@ export const rateSong = catchAsync(async (req, res, next) => {
       average: stats.average
         ? Number(stats.average)
         : 0,
-      count: Number(stats.count || 0)
+      count: Number(stats.count || 0),
+      ratings: votersResult.rows
     }
   });
 });
@@ -600,7 +630,7 @@ export const addComment = catchAsync(async (req, res, next) => {
 // GEÇİCİ - Daha sonra gerçek recommendation sistemi gelecek
 // ========================================================
 
-export const getRecommendations = catchAsync(async (req, res, next) => {
+export const getRecommendationsDEMO = catchAsync(async (req, res, next) => {
 
   const recommendations = [
 
@@ -674,5 +704,22 @@ export const getRecommendations = catchAsync(async (req, res, next) => {
     status: 'success',
     results: recommendations.length,
     data: recommendations
+  });
+});
+
+export const getRecommendations = catchAsync(async (req, res, next) => {
+  const limit = Math.min(Number.parseInt(req.query.limit, 10) || 10, 10);
+  const result = await getRandomRecommendations(limit);
+
+  res.status(200).json({
+    status: 'success',
+    results: result.tracks.length,
+    data: result.tracks,
+    meta: {
+      source: 'daily-chart-cache',
+      cachedAt: result.fetchedAt,
+      stale: result.stale,
+      regions: ['TR', 'US', 'DE', 'GB']
+    }
   });
 });

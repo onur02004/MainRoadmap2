@@ -362,21 +362,30 @@ export const getActiveFriendsNowPlaying = catchAsync(async (req, res, next) => {
 /**
  * Spotify Parça Arama Endpoint'i
  */
-export const searchSpotifyTracks = catchAsync(async (req, res, next) => {
-  const userId = req.user.id || req.user._id;
-  const query = req.query.q;
 
-  if (!query || query.trim() === '') {
-    return res.status(200).json({ status: 'success', tracks: [] });
+export const searchSpotifyTracks = catchAsync(async (req, res, next) => {
+  const query = req.query.q?.trim();
+
+  if (!query) {
+    return res.status(200).json({
+      status: 'success',
+      tracks: []
+    });
   }
 
-  const accessToken = await getValidAccessTokenForUser(userId);
+  const accessToken = await spotifyService.getAppAccessToken();
 
   if (!accessToken) {
-    return next(new AppError('Spotify hesabı bağlı değil veya oturum yenilenemedi.', 401));
+    return next(
+      new AppError('Spotify arama servisine şu anda ulaşılamıyor.', 503)
+    );
   }
 
-  const data = await spotifyService.searchTracks(accessToken, query, 6);
+  const data = await spotifyService.searchTracks(
+    accessToken,
+    query,
+    6
+  );
 
   const formattedTracks = data.tracks?.items?.map(item => ({
     id: item.id,
@@ -388,7 +397,7 @@ export const searchSpotifyTracks = catchAsync(async (req, res, next) => {
     externalUrl: item.external_urls.spotify
   })) || [];
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     tracks: formattedTracks
   });
