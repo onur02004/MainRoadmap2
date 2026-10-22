@@ -304,6 +304,8 @@ export const getFeed = catchAsync(async (req, res, next) => {
           json_build_object(
             'id', sc.id,
             'comment', sc.comment,
+            'parent_comment_id', sc.parent_comment_id,
+            'timestamp_seconds', sc.timestamp_seconds,
             'created_at', sc.created_at,
             'user_id', sc.user_id,
             'username', cu.user_name,
@@ -522,7 +524,7 @@ export const rateSong = catchAsync(async (req, res, next) => {
 export const addComment = catchAsync(async (req, res, next) => {
 
   const { id: suggestionId } = req.params;
-  const { comment } = req.body;
+  const { comment, parent_comment_id = null, timestamp_seconds = null } = req.body;
 
   const userId =
     req.user?.id ||
@@ -561,26 +563,34 @@ export const addComment = catchAsync(async (req, res, next) => {
     );
   }
 
+  const parentCommentId = parent_comment_id || null;
+  const timestampSeconds = timestamp_seconds === null || timestamp_seconds === '' || timestamp_seconds === undefined
+    ? null
+    : Number(timestamp_seconds);
+
+  if (timestampSeconds !== null && (!Number.isInteger(timestampSeconds) || timestampSeconds < 0 || timestampSeconds > 86400)) {
+    return next(new AppError('Şarkı zamanı 0 ile 86400 saniye arasında olmalıdır.', 400));
+  }
+
+  if (parentCommentId) {
+    const parentResult = await db.query(
+      `SELECT id FROM song_comments WHERE id = $1 AND song_share_id = $2`,
+      [parentCommentId, suggestionId]
+    );
+    if (parentResult.rows.length === 0) {
+      return next(new AppError('Yanıtlanacak yorum bulunamadı.', 404));
+    }
+  }
+
   const result = await db.query(
     `
       INSERT INTO song_comments (
-        song_share_id,
-        user_id,
-        comment
+        song_share_id, user_id, comment, parent_comment_id, timestamp_seconds
       )
-
-      VALUES ($1, $2, $3)
-
-      RETURNING
-        id,
-        comment,
-        created_at
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id, comment, created_at, parent_comment_id, timestamp_seconds
     `,
-    [
-      suggestionId,
-      userId,
-      cleanComment
-    ]
+    [suggestionId, userId, cleanComment, parentCommentId, timestampSeconds]
   );
 
   const commentRow = result.rows[0];
@@ -607,6 +617,8 @@ export const addComment = catchAsync(async (req, res, next) => {
       id: commentRow.id,
       comment: commentRow.comment,
       created_at: commentRow.created_at,
+      parent_comment_id: commentRow.parent_comment_id,
+      timestamp_seconds: commentRow.timestamp_seconds,
 
       user_id: userId,
 
