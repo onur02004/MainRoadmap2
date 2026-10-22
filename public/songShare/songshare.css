@@ -7887,3 +7887,27 @@ canvas {
     font-size: .9rem;
   }
 }
+
+/* Highlighted song moments and threaded replies */
+.comment-thread { margin-bottom: 10px; }
+.comment-inline-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:5px; }
+.comment-moment-chip, .comment-reply-trigger {
+  border:1px solid rgba(62,207,142,.24); background:rgba(62,207,142,.09);
+  color:var(--accent-action); border-radius:999px; padding:4px 8px;
+  font:inherit; font-size:.66rem; cursor:pointer;
+}
+.comment-reply-trigger { color:var(--text-dim); border-color:rgba(255,255,255,.12); background:rgba(255,255,255,.04); }
+.comment-reply-trigger:hover { color:var(--accent-action); border-color:rgba(62,207,142,.35); }
+.comment-replies { margin:4px 0 0 34px; padding-left:12px; border-left:2px solid rgba(62,207,142,.22); }
+.comment-bubble.comment-reply { margin-top:6px; }
+.comment-timestamp-input {
+  width:110px; flex:0 0 110px; min-width:0; background:rgba(0,0,0,.3);
+  border:1px solid rgba(255,255,255,.1); padding:6px 8px; border-radius:8px;
+  color:#fff; font:inherit; font-size:.68rem; outline:none;
+}
+.comment-timestamp-input:focus { border-color:var(--accent-action); }
+@media (max-width:600px) {
+  .comment-input-row { flex-wrap:wrap; }
+  .comment-timestamp-input { width:100%; flex:1 1 100%; }
+  .comment-replies { margin-left:18px; padding-left:8px; }
+}
