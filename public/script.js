@@ -409,6 +409,12 @@ async function renderServicesFromBackend() {
 }
 
 // Terminal Komut Yöneticisi
+window.appendTerminalLog = appendTerminalLog;
+
+document.addEventListener('mainroadmap-cli-output', (event) => {
+  appendTerminalLog(event.detail?.message || '', Boolean(event.detail?.highlight));
+});
+
 function initCliAuth() {
   const form = document.getElementById('cliForm');
   const input = document.getElementById('cliInput');
@@ -420,7 +426,13 @@ function initCliAuth() {
     if (!rawCmd) return;
     input.value = '';
 
-    appendTerminalLog(`$ ${rawCmd}`);
+    const safeCommand = /^login\s+\S+\s+/i.test(rawCmd)
+      ? rawCmd.replace(/^(\s*login\s+\S+\s+).+$/i, '$1********')
+      : rawCmd;
+    appendTerminalLog('$ ' + safeCommand);
+
+    // New diagnostic commands are allow-listed in cli-debug.js.
+    if (window.MainRoadmapCliDebug?.run(rawCmd)) return;
 
     const parts = rawCmd.split(' ').filter(Boolean);
     const action = parts[0].toLowerCase();
@@ -480,16 +492,94 @@ function initCliAuth() {
       if (history) history.innerHTML = '';
       appendTerminalLog(`[TERMINAL] Buffer cleared.`);
     }
-    else if (action === 'help') {
-      appendTerminalLog(`COMMANDS:`);
-      appendTerminalLog(`  login <username> <password>  Direct terminal authentication`);
-      appendTerminalLog(`  login -a                     Open graphical login portal`);
-      appendTerminalLog(`  account                      Open account settings`);
-      appendTerminalLog(`  whoami                       Display current node session`);
-      appendTerminalLog(`  logout                       Terminate cluster session`);
-      appendTerminalLog(`  clear                        Clear terminal screen`);
-      appendTerminalLog(`  logs                         Start live server logs (admin only)`);
-      appendTerminalLog(`  logs stop                    Stop live server logs`);
+    else if (action === 'help' || action === '/help') {
+      const topic = parts.slice(1).join(' ').toLowerCase();
+      const help = {
+        login: [
+          'login <username> <password>',
+          '  Sign in from the terminal. Example: login myuser ********',
+          'login -a | login --auto',
+          '  Open the graphical login page. Password is required only for direct login.'
+        ],
+        account: ['account', '  Open account settings. Requires an active session.'],
+        whoami: ['whoami', '  Show the current username, role and session/node.'],
+        logout: ['logout', '  Remove the local session token and reload the page.'],
+        clear: ['clear', '  Clear the existing terminal output.'],
+        logs: [
+          'logs',
+          '  Start the existing live server log stream (admin only).',
+          'logs stop',
+          '  Stop the live server log stream.',
+          'logs test',
+          '  Fetch recent logs once via the read-only diagnostic request (admin only).'
+        ],
+        status: ['status', '  Run backend health, services API and available authenticated checks.'],
+        'api test': ['api test', '  Test backend health/database and GET /api/services.'],
+        'db test': ['db test', '  Test PostgreSQL connectivity through GET /api/debug/health.'],
+        services: ['services', '  Test GET /api/services and print HTTP status, latency and response.'],
+        'profile test': ['profile test', '  Test GET /api/users/profile. Requires login.'],
+        'debug test': ['debug test', '  Test GET /api/debug. Requires login.'],
+        'logs test': ['logs test', '  Test GET /api/admin/logs?limit=30. Requires admin role.'],
+        help: [
+          '/help | help',
+          '  List commands and usage.',
+          '/help <command>',
+          '  Show arguments, requirements and examples for a command. Example: /help login'
+        ],
+        quick: [
+          'quick | qa | quick actions',
+          '  Open the Quick Actions side panel next to the CLI.',
+          '  Available actions: backend health, services API, my session, debug ping, recent logs, run all checks.',
+          'quick actions close',
+          '  Close the side panel.'
+        ],
+        qa: [
+          'qa | quick | quick actions',
+          '  Open the Quick Actions side panel next to the CLI.',
+          '  Use the buttons to run read-only backend diagnostics.'
+        ]
+      };
+
+      if (topic) {
+        const entry = help[topic] || (topic === '/help' ? help.help : null);
+        if (entry) entry.forEach(line => appendTerminalLog(line, true));
+        else {
+          appendTerminalLog('No detailed help for: ' + topic, true);
+          appendTerminalLog('Try /help to list available commands.');
+        }
+      } else {
+        appendTerminalLog('MAINROADMAP2 CLI · COMMAND REFERENCE', true);
+        appendTerminalLog('Usage: <command> [arguments]');
+        appendTerminalLog('');
+        appendTerminalLog('AUTH & ACCOUNT');
+        appendTerminalLog('  login <username> <password>  Sign in directly');
+        appendTerminalLog('  login -a | login --auto      Open graphical login');
+        appendTerminalLog('  account                      Open account settings (login required)');
+        appendTerminalLog('  whoami                       Show current user / role / session');
+        appendTerminalLog('  logout                       Sign out');
+        appendTerminalLog('');
+        appendTerminalLog('DEBUG & API TESTS (read-only)');
+        appendTerminalLog('  status                       Run all available checks');
+        appendTerminalLog('  api test                     Backend health + services API');
+        appendTerminalLog('  db test                      Database connectivity');
+        appendTerminalLog('  services                     Test services API');
+        appendTerminalLog('  profile test                 Test current-user endpoint (login required)');
+        appendTerminalLog('  debug test                   Test debug endpoint (login required)');
+        appendTerminalLog('  logs test                    Fetch recent server logs (admin only)');
+        appendTerminalLog('');
+        appendTerminalLog('LOGS & TERMINAL');
+        appendTerminalLog('  logs                         Start live server logs (admin only)');
+        appendTerminalLog('  logs stop                    Stop live server logs');
+        appendTerminalLog('  clear                        Clear terminal output');
+        appendTerminalLog('');
+        appendTerminalLog('QUICK ACTIONS PANEL');
+        appendTerminalLog('  quick | qa | quick actions   Open the side panel next to the CLI');
+        appendTerminalLog('  quick actions close          Close the side panel');
+        appendTerminalLog('');
+        appendTerminalLog('HELP');
+        appendTerminalLog('  /help <command>              Show detailed usage, args and requirements');
+        appendTerminalLog('Examples: /help login · /help logs · /help api test · /help quick');
+      }
     }
     else if (action === 'whoami') {
       appendTerminalLog(`USER: ${currentSession.username} | ROLE: ${currentSession.role} | NODE: ${currentSession.nodeId}`);
@@ -684,8 +774,17 @@ export function appendTerminalLog(text, isHighlight = false) {
   const now = new Date().toTimeString().split(' ')[0];
   const div = document.createElement('div');
   div.className = 'log-entry';
-  div.innerHTML = `<span class="log-time">${now}</span> ${isHighlight ? `<span class="highlight">${text}</span>` : text}`;
 
+  const time = document.createElement('span');
+  time.className = 'log-time';
+  time.textContent = now;
+
+  const message = document.createElement('span');
+  if (isHighlight) message.className = 'highlight';
+  // Terminal text may contain user input or backend messages; never interpret it as HTML.
+  message.textContent = String(text);
+
+  div.append(time, document.createTextNode(' '), message);
   history.appendChild(div);
   scrollToTerminalBottom();
 }

@@ -3239,3 +3239,91 @@ svg.blobatar-global
   filter: brightness(1.08);
   box-shadow: 0 0 16px var(--accent-glow);
 }
+
+
+/* Command-triggered quick actions: beside the CLI, never below it. */
+.cli-bottom-anchor { position: relative; }
+.cli-quick-popover[hidden] { display: none !important; }
+.cli-quick-popover {
+  position: absolute;
+  z-index: 50;
+  right: -354px;
+  bottom: 0;
+  width: 330px;
+  max-width: min(330px, calc(100vw - 40px));
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--panel-bg, #101412);
+  box-shadow: 0 18px 48px rgba(0,0,0,.42);
+  color: var(--text-main);
+}
+.cli-quick-popover-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+.cli-quick-popover-head strong {
+  color:var(--accent-action);
+  font-size:.75rem;
+  letter-spacing:.12em;
+}
+.cli-quick-popover-head p {
+  margin:5px 0 0;
+  color:var(--text-dim);
+  font-size:.7rem;
+  line-height:1.4;
+}
+.cli-quick-popover-head button {
+  flex:0 0 auto;
+  width:28px;height:28px;
+  border:1px solid var(--border-color);
+  border-radius:4px;
+  background:transparent;
+  color:var(--text-main);
+  cursor:pointer;
+  font-size:1.15rem;
+}
+.cli-quick-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+}
+.cli-quick-grid button {
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:5px;
+  padding:10px;
+  text-align:left;
+  border:1px solid var(--border-subtle);
+  border-radius:4px;
+  background:rgba(255,255,255,.025);
+  color:var(--text-main);
+  cursor:pointer;
+  font:inherit;
+}
+.cli-quick-grid button:hover,.cli-quick-grid button:focus-visible {
+  border-color:var(--accent-action);
+  outline:none;
+}
+.cli-quick-grid strong {font-size:.72rem;overflow-wrap:anywhere}
+.cli-quick-grid small {font-size:.63rem;color:var(--text-dim);overflow-wrap:anywhere}
+.cli-quick-hint {margin:10px 0 0;font-size:.64rem;line-height:1.4;color:var(--text-dim)}
+@media(max-width:1100px) {
+  .cli-quick-popover {
+    position:fixed;
+    right:12px;
+    bottom:12px;
+    width:330px;
+    max-height:70vh;
+    overflow:auto;
+  }
+}
+@media(max-width:420px) {
+  .cli-quick-popover {right:8px;bottom:8px;max-width:calc(100vw - 16px);padding:11px}
+}

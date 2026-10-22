@@ -299,9 +299,29 @@
 
           <form id="cliForm" class="cli-prompt-line" onsubmit="return false;">
             <span class="cli-prompt-sym" id="lblCliPrompt">guest@cluster:~$</span>
-            <input type="text" id="cliInput" class="cli-raw-input" placeholder="type 'login', 'account' or 'help'"
+            <input type="text" id="cliInput" class="cli-raw-input" placeholder="Type /help to list commands and arguments"
               spellcheck="false" autocomplete="off" />
           </form>
+          <aside id="cliQuickActions" class="cli-quick-popover" aria-label="CLI quick actions" hidden>
+            <div class="cli-quick-popover-head">
+              <div>
+                <strong>QUICK ACTIONS</strong>
+                <p>Run a diagnostic in this terminal</p>
+              </div>
+              <button type="button" id="cliQuickClose" aria-label="Close quick actions">×</button>
+            </div>
+            <div class="cli-quick-grid">
+              <button type="button" data-cli-quick="health"><strong>Backend health</strong><small>API + database</small></button>
+              <button type="button" data-cli-quick="services"><strong>Services API</strong><small>GET /api/services</small></button>
+              <button type="button" data-cli-quick="profile"><strong>My session</strong><small>Login required</small></button>
+              <button type="button" data-cli-quick="debug"><strong>Debug ping</strong><small>Login required</small></button>
+              <button type="button" data-cli-quick="logs"><strong>Recent logs</strong><small>Admin only</small></button>
+              <button type="button" data-cli-quick="all"><strong>Run all checks</strong><small>Read-only diagnostics</small></button>
+            </div>
+            <p class="cli-quick-hint">Results appear in the existing terminal output.</p>
+          </aside>
+
+          
         </div>
 
       </div>
@@ -386,6 +406,7 @@
 
   </section>
 
+  <script src="cli-debug.js"></script>
   <script type="module" src="script.js"></script>
 
   <script type="module" src="avatarRenderer.js">
