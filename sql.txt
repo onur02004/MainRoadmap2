@@ -159,6 +159,8 @@ CREATE INDEX idx_song_ratings_user_id
     user_id uuid NOT NULL,
 
     comment text NOT NULL,
+    parent_comment_id uuid NULL,
+    timestamp_seconds integer NULL CHECK (timestamp_seconds IS NULL OR timestamp_seconds >= 0),
 
     created_at timestamptz NOT NULL DEFAULT NOW(),
     updated_at timestamptz NOT NULL DEFAULT NOW(),
@@ -171,6 +173,11 @@ CREATE INDEX idx_song_ratings_user_id
     CONSTRAINT song_comments_user_fk
         FOREIGN KEY (user_id)
         REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT song_comments_parent_fk
+        FOREIGN KEY (parent_comment_id)
+        REFERENCES song_comments(id)
         ON DELETE CASCADE
 );
 
@@ -191,3 +198,11 @@ CREATE TABLE IF NOT EXISTS song_recommendation_cache (
   fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_error TEXT
 );
+
+
+-- Comment threads + song moment highlights (existing databases)
+ALTER TABLE song_comments
+    ADD COLUMN IF NOT EXISTS parent_comment_id uuid NULL REFERENCES song_comments(id) ON DELETE CASCADE,
+    ADD COLUMN IF NOT EXISTS timestamp_seconds integer NULL CHECK (timestamp_seconds IS NULL OR timestamp_seconds >= 0);
+
+CREATE INDEX IF NOT EXISTS idx_song_comments_parent_comment_id ON song_comments(parent_comment_id);
