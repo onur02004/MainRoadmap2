@@ -4198,8 +4198,8 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
   function parseCommentMoment(value) {
     const raw = String(value || '').trim();
     if (!raw) return null;
-    if (/^\\d+$/.test(raw)) return Number(raw);
-    const match = raw.match(/^(\\d{1,3}):(\\d{1,2})$/);
+    if (/^\d+$/.test(raw)) return Number(raw);
+    const match = raw.match(/^(\d{1,3}):(\d{1,2})$/);
     if (!match || Number(match[2]) > 59) throw new Error('Zamanı 01:42 biçiminde yaz.');
     return Number(match[1]) * 60 + Number(match[2]);
   }
