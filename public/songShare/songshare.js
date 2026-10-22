@@ -3503,6 +3503,7 @@ ${!isLive
 
     const commentHtml =
       comments
+        .filter(c => !c.parent_comment_id)
         .slice(0, 8)
         .map(c => {
 
@@ -3546,36 +3547,28 @@ ${!isLive
             ) ||
             `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`;
 
+          const moment = Number.isInteger(Number(c.timestamp_seconds)) && c.timestamp_seconds !== null
+            ? `<button class="comment-moment-chip" type="button" onclick="openCommentMoment('${escapeHtml(String(item.id))}', ${Number(c.timestamp_seconds)})"><i class="fa-solid fa-music"></i> ${escapeHtml(formatCommentMoment(Number(c.timestamp_seconds)))}</button>`
+            : '';
+          const replies = comments.filter(reply => String(reply.parent_comment_id) === String(c.id));
+          const repliesHtml = replies.map(reply => {
+            const replyName = feedValue(reply, 'username', 'name') || 'Kullanıcı';
+            const replyText = feedValue(reply, 'comment', 'text', 'content') || '';
+            const replyTime = feedTimeLabel(reply.created_at);
+            const replyAvatar = feedValue(reply, 'avatar', 'avatar_url') || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(replyName)}`;
+            return `<div class="comment-bubble comment-reply"><img src="${escapeHtml(replyAvatar)}" class="c-avatar" alt="${escapeHtml(replyName)}"><div class="c-content"><div class="c-top"><strong>${escapeHtml(replyName)}</strong><span class="c-time">${escapeHtml(replyTime)}</span></div><p>${escapeHtml(replyText)}</p></div></div>`;
+          }).join('');
           return `
-          <div class="comment-bubble">
-
-            <img
-              src="${escapeHtml(av)}"
-              class="c-avatar"
-              alt="${escapeHtml(name)}"
-              onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}'"
-            >
-
-            <div class="c-content">
-
-              <div class="c-top">
-
-                <strong>
-                  ${escapeHtml(name)}
-                </strong>
-
-                <span class="c-time">
-                  ${escapeHtml(time)}
-                </span>
-
+          <div class="comment-thread">
+            <div class="comment-bubble">
+              <img src="${escapeHtml(av)}" class="c-avatar" alt="${escapeHtml(name)}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}'">
+              <div class="c-content">
+                <div class="c-top"><strong>${escapeHtml(name)}</strong><span class="c-time">${escapeHtml(time)}</span></div>
+                <p>${escapeHtml(text)}</p>
+                <div class="comment-inline-actions">${moment}<button type="button" class="comment-reply-trigger" onclick="replyToComment('${escapeHtml(String(item.id))}', '${escapeHtml(String(c.id))}')"><i class="fa-solid fa-reply"></i> Yanıtla</button></div>
               </div>
-
-              <p>
-                ${escapeHtml(text)}
-              </p>
-
             </div>
-
+            <div class="comment-replies">${repliesHtml}</div>
           </div>
         `;
         })
@@ -4140,6 +4133,8 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
               '
             >
 
+            <input type="text" class="comment-timestamp-input" id="commentTimestamp-${escapeHtml(String(item.id))}" placeholder="01:42 (isteğe bağlı)" aria-label="Şarkı zamanı">
+
             <button
               class="btn-send-comment"
               onclick='
@@ -4194,6 +4189,51 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
   // ====================================================
   // COMMENTS SYSTEM
   // ====================================================
+
+  function formatCommentMoment(seconds) {
+    const value = Math.max(0, Math.floor(seconds || 0));
+    return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
+  }
+
+  function parseCommentMoment(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return null;
+    if (/^\\d+$/.test(raw)) return Number(raw);
+    const match = raw.match(/^(\\d{1,3}):(\\d{1,2})$/);
+    if (!match || Number(match[2]) > 59) throw new Error('Zamanı 01:42 biçiminde yaz.');
+    return Number(match[1]) * 60 + Number(match[2]);
+  }
+
+  window.openCommentMoment = function (shareId, seconds) {
+    const card = document.querySelector(`[data-feed-id="${CSS.escape(String(shareId))}"]`);
+    const uri = card?.dataset.previewUri || '';
+    const trackId = uri.match(/spotify:track:([^:]+)/)?.[1];
+    if (trackId) {
+      window.open(`https://open.spotify.com/track/${trackId}?t=${Math.floor(seconds)}`, '_blank', 'noopener');
+    } else {
+      alert(`Şarkı anı: ${formatCommentMoment(seconds)}`);
+    }
+  };
+
+  window.replyToComment = async function (songShareId, parentCommentId) {
+    const comment = window.prompt('Yanıtını yaz:');
+    if (!comment || !comment.trim()) return;
+    const token = localStorage.getItem('token');
+    if (!token) { alert('Yanıt vermek için giriş yapmalısın.'); return; }
+    try {
+      const response = await fetch(`/api/songshare/comment/${encodeURIComponent(songShareId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        credentials: 'include',
+        body: JSON.stringify({ comment: comment.trim(), parent_comment_id: parentCommentId })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Yanıt gönderilemedi.');
+      window.location.reload();
+    } catch (error) {
+      alert(error.message || 'Yanıt gönderilemedi.');
+    }
+  };
 
   window.toggleExtraComments = function (songShareId) {
 
@@ -4377,7 +4417,8 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
             credentials: 'include',
 
             body: JSON.stringify({
-              comment
+              comment,
+              timestamp_seconds: parseCommentMoment(document.getElementById(`commentTimestamp-${songShareId}`)?.value)
             })
           }
         );
@@ -4616,6 +4657,8 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
        */
 
       input.value = '';
+      const timestampInput = document.getElementById(`commentTimestamp-${songShareId}`);
+      if (timestampInput) timestampInput.value = '';
 
 
       /*
