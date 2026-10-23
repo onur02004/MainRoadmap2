@@ -192,6 +192,111 @@ export const getArtistDetailsByName = async (artistName) => {
 };
 
 
+
+/**
+ * Sanatçı adına göre Spotify'dan sanatçı bilgilerini ve albüm/single kapaklarını getirir.
+ * Uygulama token'ı kullanır; kullanıcı hesabı bağlantısı gerektirmez.
+ */
+export const getArtistGalleryByName = async (artistName, limit = 24) => {
+  try {
+    const cleanArtist = String(artistName || '')
+      .split(/,| feat\.?| featuring /i)[0]
+      .trim();
+
+    if (!cleanArtist) return null;
+
+    const appToken = await getAppAccessToken();
+    if (!appToken) return null;
+
+    const headers = { Authorization: `Bearer ${appToken}` };
+    const searchUrl = `https://api.spotify.com/v1/search?q=${encodeURIComponent(cleanArtist)}&type=artist&limit=5`;
+    const searchResponse = await fetch(searchUrl, { headers });
+
+    if (!searchResponse.ok) {
+      console.error('[Spotify Artist Gallery Search]', searchResponse.status);
+      return null;
+    }
+
+    const searchData = await searchResponse.json();
+    const artists = searchData.artists?.items || [];
+    if (!artists.length) return null;
+
+    const normalize = (value) => String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+
+    const artist =
+      artists.find((item) => normalize(item.name) === normalize(cleanArtist)) ||
+      artists[0];
+
+    const safeLimit = Math.max(1, Math.min(50, Number.parseInt(limit, 10) || 24));
+    const albumsUrl = new URL(`https://api.spotify.com/v1/artists/${encodeURIComponent(artist.id)}/albums`);
+    albumsUrl.searchParams.set('include_groups', 'album,single,compilation');
+    albumsUrl.searchParams.set('market', 'US');
+    albumsUrl.searchParams.set('limit', String(safeLimit));
+
+    const albumsResponse = await fetch(albumsUrl, { headers });
+    let albums = [];
+
+    if (albumsResponse.ok) {
+      const albumsData = await albumsResponse.json();
+      const seen = new Set();
+
+      albums = (albumsData.items || [])
+        .filter((album) => {
+          const key = album.id || `${album.name}-${album.release_date}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .map((album) => ({
+          id: album.id,
+          name: album.name,
+          type: album.album_type || 'album',
+          releaseDate: album.release_date || null,
+          totalTracks: album.total_tracks ?? null,
+          image: album.images?.[0]?.url || album.images?.[1]?.url || null,
+          images: (album.images || []).map((image) => ({
+            url: image.url,
+            width: image.width || null,
+            height: image.height || null
+          })),
+          spotifyUrl: album.external_urls?.spotify || null,
+          artists: (album.artists || []).map((item) => ({
+            id: item.id,
+            name: item.name
+          }))
+        }));
+    } else {
+      console.warn('[Spotify Artist Gallery Albums]', albumsResponse.status);
+    }
+
+    return {
+      artist: {
+        id: artist.id,
+        name: artist.name,
+        genres: artist.genres || [],
+        image: artist.images?.[0]?.url || artist.images?.[1]?.url || null,
+        images: (artist.images || []).map((image) => ({
+          url: image.url,
+          width: image.width || null,
+          height: image.height || null
+        })),
+        spotifyUrl: artist.external_urls?.spotify || null,
+        followers: artist.followers?.total ?? null,
+        popularity: artist.popularity ?? null
+      },
+      albums
+    };
+  } catch (error) {
+    console.error('[Spotify Artist Gallery Error]', error.message);
+    return null;
+  }
+};
+
 export const getAppAccessToken = async () => {
   try {
     const response = await fetch(

@@ -26,4 +26,7 @@ router.get('/search', spotifyController.searchSpotifyTracks);
 // /api/spotify/artist-images?name=Creed
 router.get('/artist-images', spotifyController.getArtistImages);
 
+// /api/spotify/artist-gallery?name=Creed&limit=24
+router.get('/artist-gallery', spotifyController.getArtistGallery);
+
 export default router;

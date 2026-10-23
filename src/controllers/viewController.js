@@ -16,7 +16,7 @@ export const getHome = (req, res) => {
 
 export const getAccount = (req, res) => {
   logger.detail('VIEW', `Serving account page for user: ${req.user ? req.user.user_name : 'Guest'}`);
-  res.sendFile(path.join(publicPath, 'Account.html'));
+  res.sendFile(path.join(publicPath, 'account.html'));
 };
 
 export const getLogin = (req, res) => {
@@ -26,7 +26,7 @@ export const getLogin = (req, res) => {
 
 export const getSongShare = (req, res) => {
   logger.detail('VIEW', `Serving song share page for user: ${req.user ? req.user.user_name : 'Guest'}`);
-  res.sendFile(path.join(publicPath, '/songshare/songShare.html'));
+  res.sendFile(path.join(publicPath, '/songShare/songShare.html'));
 };
 
 export const getAdmin = (req, res) => {

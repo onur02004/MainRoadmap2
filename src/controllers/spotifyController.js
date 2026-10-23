@@ -177,32 +177,56 @@ export const getTopTracks = catchAsync(async (req, res, next) => {
   res.status(200).json({ status: 'success', topTracks: formattedTracks });
 });
 
+
 /**
- * Kullanıcının Spotify bağlantı durumunu döner
+ * GET /api/spotify/status
+ * Kullanıcının Spotify bağlantı durumunu kontrol eder.
  */
 export const getSpotifyStatus = catchAsync(async (req, res, next) => {
   const userId = req.user.id || req.user._id;
 
   const result = await db.query(
-    `SELECT display_name, spotify_user_id, expires_at 
-     FROM user_spotify_accounts 
+    `SELECT display_name, spotify_user_id
+     FROM user_spotify_accounts
      WHERE user_id = $1`,
     [userId]
   );
 
+  // Kullanıcının Spotify hesabı hiç bağlanmamış.
   if (result.rows.length === 0) {
-    return res.status(200).json({ status: 'success', connected: false });
+    return res.status(200).json({
+      status: 'success',
+      connected: false,
+      usable: false,
+      reconnectRequired: false,
+      account: null
+    });
   }
 
-  res.status(200).json({
+  const account = result.rows[0];
+  let usable = false;
+
+  // Token'ı backend tarafında kontrol et ve gerekiyorsa yenile.
+  try {
+    const accessToken = await getValidAccessTokenForUser(userId);
+    usable = Boolean(accessToken);
+  } catch (error) {
+    // Token bilgilerini veya hata ayrıntılarını istemciye gönderme.
+    usable = false;
+  }
+
+  return res.status(200).json({
     status: 'success',
     connected: true,
+    usable,
+    reconnectRequired: !usable,
     account: {
-      displayName: result.rows[0].display_name,
-      spotifyUserId: result.rows[0].spotify_user_id
+      displayName: account.display_name,
+      spotifyUserId: account.spotify_user_id
     }
   });
 });
+
 
 /**
  * Sistemdeki diğer kullanıcıların Spotify üzerinden anlık ne dinlediğini getirir
@@ -444,6 +468,38 @@ export const getArtistImages = catchAsync(async (req, res, next) => {
   });
 });
 
+
+
+/**
+ * Sanatçı galerisi: sanatçı görselleri ve albüm/single kapakları.
+ * GET /api/spotify/artist-gallery?name=Creed&limit=24
+ */
+export const getArtistGallery = catchAsync(async (req, res, next) => {
+  const name = String(req.query.name || '').trim();
+  const parsedLimit = Number.parseInt(req.query.limit, 10);
+  const limit = Number.isFinite(parsedLimit)
+    ? Math.max(1, Math.min(50, parsedLimit))
+    : 24;
+
+  if (!name) {
+    return next(new AppError('Sanatçı adı (name) parametresi zorunludur.', 400));
+  }
+
+  const gallery = await spotifyService.getArtistGalleryByName(name, limit);
+
+  if (!gallery) {
+    return res.status(404).json({
+      status: 'fail',
+      message: `${name} için sanatçı veya albüm bilgisi bulunamadı.`,
+      data: { artist: null, albums: [] }
+    });
+  }
+
+  return res.status(200).json({
+    status: 'success',
+    data: gallery
+  });
+});
 
 export const shareSong = catchAsync(async (req, res, next) => {
   const userId = req.user?.id || req.user?._id || req.body.userId || '11111111-1111-1111-1111-111111111111'; //[cite: 4]

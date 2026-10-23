@@ -94,11 +94,11 @@
             </svg>
           </div>
           <div class="spotify-text-meta">
-            <span class="meta-status">SPOTIFY SYNC</span>
-            <strong class="meta-label">Connect Spotify</strong>
+            <span class="meta-status" aria-live="polite">DURUM YÜKLENİYOR…</span>
+            <strong class="meta-label">Spotify bağlantısı kontrol ediliyor</strong>
           </div>
         </div>
-        <button type="button" class="btn-spotify-connect" id="btnConnectSpotify">CONNECT</button>
+        <button type="button" class="btn-spotify-connect" id="btnConnectSpotify">LOADING..</button>
       </div>
 
       <div class="songshare-user-card" id="songShareUserCard" title="Account">
@@ -128,11 +128,14 @@
               <span class="pulse-live"></span>
               <span class="strip-title">FRIEND ACTIVITY</span>
             </div>
-            <span class="counter-badge" id="onlineFriendsCount">2 LISTENING</span>
+            <span class="counter-badge" id="onlineFriendsCount">YÜKLENİYOR…</span>
           </div>
 
-          <div class="friends-strip-scroll" id="friendsListContainer">
-
+          <div class="friends-strip-scroll" id="friendsListContainer" aria-live="polite" aria-busy="true">
+            <div class="friends-activity-state" role="status">
+              <span class="friends-activity-state-title">Arkadaş etkinliği yükleniyor…</span>
+              <span class="friends-activity-state-copy">Dinleme durumları kontrol ediliyor.</span>
+            </div>
           </div>
         </div>
 
@@ -169,8 +172,11 @@
               </button>
             </div>
           </div>
-
-
+          <button type="button" class="spotlight-reopen-button" id="btnShowSpotlight" hidden>
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+            <span>Önerileri göster</span>
+            <i class="fa-solid fa-chevron-down spotlight-reopen-chevron" aria-hidden="true"></i>
+          </button>
 
           <!-- API FEED CARDS: populated by /api/songshare/feed -->
           <div id="dynamicFeedItems" class="dynamic-feed-items" aria-live="polite"></div>
@@ -439,8 +445,8 @@
 
                 <div class="wizard-footer-actions">
                   <button class="btn-share-cancel" onclick="goToWizardStep(1)">&larr; Geri Dön</button>
-                  <button class="btn-share-submit is-development-disabled" aria-disabled="true"
-                    onclick="showDevelopmentNotice(event)">Feed'de Yayınla</button>
+                  <button type="button" class="btn-share-submit"
+                    onclick="submitWizardShare()">Feed'de Yayınla</button>
                 </div>
               </div>
 
@@ -846,6 +852,20 @@
             <p class="sp-footnote">
               Önizleme Spotify tarafından sağlanır.
             </p>
+
+            <section class="sp-gallery-card" aria-label="Sanatçı ve grup fotoğrafları">
+              <div class="sp-gallery-header">
+                <div>
+                  <span class="sp-note-label">ARTIST GALLERY</span>
+                  <h3 id="spGalleryTitle">Sanatçıdan kareler</h3>
+                </div>
+                <span class="sp-gallery-count" id="spGalleryCount">FOTOĞRAFLAR</span>
+              </div>
+              <div class="sp-gallery-grid" id="spArtistGallery">
+                <div class="sp-gallery-placeholder"><i class="fa-regular fa-images"></i><span>Fotoğraflar yükleniyor…</span></div>
+              </div>
+              <p class="sp-gallery-caption" id="spGalleryCaption">Sanatçı ve grup görselleri</p>
+            </section>
           </section>
 
           <section class="sp-pane" data-sp-pane="lyrics" hidden>
