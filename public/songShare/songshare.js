@@ -451,21 +451,64 @@ async function fetchUpcomingShareLyrics(trackName, artistName, durationMs = null
   }
 
   try {
-    // 2. BACKEND /api/songshare/lyrics ENDPOINT'İNE İSTEK AT
-    let response = await fetch(`/api/songshare/lyrics?${params.toString()}`);
+    // Önce uygulamanın kendi endpoint'ini kullan. Bazı kurulumlarda router
+    // mount edilmediği/endpoint hata verdiği için LRCLIB'e güvenli fallback var.
+    let songData = null;
+    let lastLyricsError = null;
+    const requestUrls = [`/api/songshare/lyrics?${params.toString()}`];
+    if (durationMs) {
+      const withoutDuration = new URLSearchParams(params);
+      withoutDuration.delete('duration');
+      requestUrls.push(`/api/songshare/lyrics?${withoutDuration.toString()}`);
+    }
 
-    // Süre toleransı yüzünden 404 aldıysa duration olmadan tekrar dene
-    if (response.status === 404 && durationMs) {
-      params.delete('duration');
-      response = await fetch(`/api/songshare/lyrics?${params.toString()}`);
+    for (const url of requestUrls) {
+      try {
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        if (fetchId !== currentLyricsFetchId) return;
+        if (!response.ok) {
+          lastLyricsError = new Error(`Lyrics endpoint HTTP ${response.status}`);
+          continue;
+        }
+        const result = await response.json();
+        songData = result?.data || result?.lyrics || result;
+        if (songData?.syncedLyrics || songData?.plainLyrics) break;
+      } catch (error) {
+        lastLyricsError = error;
+      }
+    }
+
+    // Backend'de endpoint yoksa veya sonuç dönmezse LRCLIB public API'ye dene.
+    if (!songData?.syncedLyrics && !songData?.plainLyrics) {
+      const lrclibParams = new URLSearchParams({
+        track_name: cleanTrack || trackName,
+        artist_name: cleanArtist || artistName
+      });
+      if (durationMs) lrclibParams.set('duration', String(Math.round(durationMs / 1000)));
+      const lrclibUrls = [`https://lrclib.net/api/get?${lrclibParams.toString()}`];
+      const searchParams = new URLSearchParams({
+        track_name: cleanTrack || trackName,
+        artist_name: cleanArtist || artistName
+      });
+      lrclibUrls.push(`https://lrclib.net/api/search?${searchParams.toString()}`);
+
+      for (const url of lrclibUrls) {
+        try {
+          const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+          if (fetchId !== currentLyricsFetchId) return;
+          if (!response.ok) continue;
+          const payload = await response.json();
+          const candidates = Array.isArray(payload) ? payload : [payload];
+          songData = candidates.find(item => item?.syncedLyrics || item?.plainLyrics) || null;
+          if (songData) break;
+        } catch (error) {
+          lastLyricsError = error;
+        }
+      }
     }
 
     if (fetchId !== currentLyricsFetchId) return;
-
-    if (!response.ok) throw new Error('Not found');
-
-    const result = await response.json();
-    const songData = result.data;
+    if (!songData) throw (lastLyricsError || new Error('Lyrics not found'));
 
     let lines = [];
 
@@ -772,16 +815,19 @@ async function loadRecommendations() {
 
       const title = song.title || 'Bilinmeyen Şarkı';
       const artist = song.artist || 'Bilinmeyen Sanatçı';
-      const cover = song.coverUrl || '';
-
-
+      const cover = song.coverUrl || song.imageUrl || song.cover || '';
+      const uri = song.spotifyUri || song.uri || (song.id ? `spotify:track:${song.id}` : '');
+      const spotifyUrl = song.spotifyUrl || song.external_urls?.spotify || (song.id ? `https://open.spotify.com/track/${song.id}` : '');
 
       return `
-        <div
+        <button type="button"
             class="coverflow-item"
             data-img="${escapeHtml(cover)}"
             data-title="${escapeHtml(title)}"
             data-artist="${escapeHtml(artist)}"
+            data-uri="${escapeHtml(uri)}"
+            data-url="${escapeHtml(spotifyUrl)}"
+            aria-label="${escapeHtml(`Önizle: ${title} — ${artist}`)}"
         >
 
             <img
@@ -795,7 +841,7 @@ async function loadRecommendations() {
                 <span>${escapeHtml(artist)}</span>
             </div>
 
-        </div>
+        </button>
     `;
     }).join('');
 
@@ -866,9 +912,22 @@ function initCoverflowEngine() {
 
   if (!stage || items.length === 0) return;
 
-  btnHide?.addEventListener('click', () => {
-    spotlightPanel?.classList.add('hidden');
-  });
+  const btnShow = document.getElementById('btnShowSpotlight');
+  if (btnHide && btnHide.dataset.bound !== 'true') {
+    btnHide.dataset.bound = 'true';
+    btnHide.addEventListener('click', () => {
+      spotlightPanel?.classList.add('spotlight-is-hidden');
+      if (btnShow) btnShow.hidden = false;
+    });
+  }
+  if (btnShow && btnShow.dataset.bound !== 'true') {
+    btnShow.dataset.bound = 'true';
+    btnShow.addEventListener('click', () => {
+      spotlightPanel?.classList.remove('spotlight-is-hidden');
+      btnShow.hidden = true;
+      spotlightPanel?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
 
   if (dotsContainer) {
     dotsContainer.innerHTML = Array.from(items)
@@ -876,16 +935,23 @@ function initCoverflowEngine() {
       .join('');
   }
 
-  items.forEach((item, index) => {
-    item.addEventListener('click', () => {
-      const offset = index - coverflowCurrentIndex;
-      if (offset === 0) {
-        const title = item.dataset.title;
-        const artist = item.dataset.artist;
-        const img = item.dataset.img;
-        if (window.playToDock) window.playToDock(title, artist, img);
+  items.forEach((item) => {
+    item.addEventListener('click', (event) => {
+      event.preventDefault();
+      const title = item.dataset.title || 'Bilinmeyen şarkı';
+      const artist = item.dataset.artist || 'Bilinmeyen sanatçı';
+      const uri = item.dataset.uri || '';
+      const url = item.dataset.url || '';
+      if (typeof window.openSongPreview === 'function' && (uri || url)) {
+        window.openSongPreview({
+          title, artist, cover: item.dataset.img || '', uri, url,
+          rating: 0, comment: 'Günün önerilerinden keşfet.'
+        });
+      } else if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
       } else {
-        slideToOffset(offset);
+        const offset = Array.from(items).indexOf(item) - coverflowCurrentIndex;
+        if (offset) slideToOffset(offset);
       }
     });
   });
@@ -979,6 +1045,7 @@ window.onYouTubeIframeAPIReady = function () {
     events: {
       onReady: () => {
         isYTReady = true;
+        window.initSongPreviewYouTubePlayer?.();
       },
       onStateChange: (event) => {
         if (window.handleYTStateChange) window.handleYTStateChange(event);
@@ -988,10 +1055,8 @@ window.onYouTubeIframeAPIReady = function () {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  const tag = document.createElement('script');
-  tag.src = "https://www.youtube.com/iframe_api";
-  document.head.appendChild(tag);
-
+  // YouTube IFrame API HTML'de zaten yükleniyor; ikinci kez yüklemek
+  // callback/player yarışına ve çift ghost player oluşturulmasına yol açabiliyor.
   window.handleYTStateChange = onYTStateChange;
 
   window.currentSelectedTrack = null;
@@ -1057,22 +1122,159 @@ document.addEventListener('DOMContentLoaded', () => {
   // 4. SPOTIFY SYNC & CANLI VERİ
   // ----------------------------------------------------
   const btnConnectSpotify = document.getElementById('btnConnectSpotify');
-  btnConnectSpotify?.addEventListener('click', async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/spotify/login-url', {
-        headers: { 'Authorization': `Bearer ${token}` }
+
+  const spotifyStatus = document.querySelector('.meta-status');
+  const spotifyLabel = document.querySelector('.meta-label');
+
+  function updateSpotifyCard({ status, label, buttonText, connected = false }) {
+    if (spotifyStatus) spotifyStatus.textContent = status;
+    if (spotifyLabel) spotifyLabel.textContent = label;
+
+    const card = btnConnectSpotify?.closest('.spotify-account-card');
+    const normalizedStatus = String(status || '').toLocaleLowerCase('tr-TR');
+    let state = 'idle';
+
+    if (connected) state = 'connected';
+    else if (normalizedStatus.includes('kontrol ediliyor')) state = 'loading';
+    else if (normalizedStatus.includes('bağlı değil')) state = 'disconnected';
+    else if (normalizedStatus.includes('yeniden bağlanmalı')) state = 'reconnect';
+    else if (normalizedStatus.includes('başarısız') || normalizedStatus.includes('edilemedi')) state = 'error';
+    else if (normalizedStatus.includes('gerekli')) state = 'required';
+
+    if (card) {
+      card.dataset.spotifyState = state;
+    }
+
+    if (btnConnectSpotify) {
+      btnConnectSpotify.textContent = buttonText;
+      btnConnectSpotify.disabled = connected || state === 'loading' || state === 'required';
+      btnConnectSpotify.classList.toggle('is-connected', connected);
+      btnConnectSpotify.classList.toggle('is-loading', state === 'loading');
+      btnConnectSpotify.classList.toggle('is-error', state === 'error');
+    }
+  }
+
+  async function loadSpotifyStatus() {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      updateSpotifyCard({
+        status: 'GİRİŞ GEREKLİ',
+        label: 'Spotify bağlantısını kontrol etmek için giriş yapmalısın',
+        buttonText: 'ÖNCE GİRİŞ YAP'
       });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert(data.message || 'Spotify bağlantı linki üretilemedi.');
+      if (btnConnectSpotify) btnConnectSpotify.disabled = true;
+      return;
+    }
+
+    updateSpotifyCard({
+      status: 'KONTROL EDİLİYOR',
+      label: 'Spotify bağlantısı kontrol ediliyor',
+      buttonText: 'YÜKLENİYOR…'
+    });
+    if (btnConnectSpotify) btnConnectSpotify.disabled = true;
+
+    try {
+      const res = await fetch('/api/spotify/status', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (res.status === 401) {
+        updateSpotifyCard({
+          status: 'OTURUM GEREKLİ',
+          label: 'Oturumun sona ermiş olabilir; yeniden giriş yap',
+          buttonText: 'YENİDEN GİRİŞ YAP'
+        });
+        return;
       }
+
+      const data = await res.json();
+
+      if (!res.ok || data.status !== 'success') {
+        throw new Error(data.message || 'Spotify durumu alınamadı.');
+      }
+
+      if (!data.connected) {
+        updateSpotifyCard({
+          status: 'BAĞLI DEĞİL',
+          label: 'Spotify hesabını bağla',
+          buttonText: 'SPOTIFY’I BAĞLA'
+        });
+        return;
+      }
+
+      if (data.usable) {
+        updateSpotifyCard({
+          status: 'SPOTIFY BAĞLI',
+          label: data.account?.displayName
+            ? `Bağlı hesap: ${data.account.displayName}`
+            : 'Spotify hesabın bağlı ve kullanılabilir',
+          buttonText: 'BAĞLANDI',
+          connected: true
+        });
+        return;
+      }
+
+      updateSpotifyCard({
+        status: 'YENİDEN BAĞLANMALI',
+        label: 'Spotify erişimi yenilenemedi. Hesabını tekrar bağla.',
+        buttonText: 'YENİDEN BAĞLA'
+      });
     } catch (err) {
-      console.error('Spotify login hatası:', err);
+      console.error('Spotify durum kontrolü başarısız:', err);
+
+      updateSpotifyCard({
+        status: 'KONTROL EDİLEMEDİ',
+        label: 'Bağlantı durumu alınamadı. Sayfayı yenilemeyi dene.',
+        buttonText: 'TEKRAR DENE'
+      });
+    }
+  }
+
+  btnConnectSpotify?.addEventListener('click', async () => {
+    // Bağlantı durumu tekrar kontrol edilebilsin.
+    if (btnConnectSpotify.textContent.includes('TEKRAR DENE')) {
+      await loadSpotifyStatus();
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+
+    if (!token) return;
+
+    try {
+      btnConnectSpotify.disabled = true;
+      btnConnectSpotify.textContent = 'YÖNLENDİRİLİYOR…';
+
+      const res = await fetch('/api/spotify/login-url', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.url) {
+        throw new Error(data.message || 'Spotify bağlantı linki üretilemedi.');
+      }
+
+      window.location.href = data.url;
+    } catch (err) {
+      console.error('Spotify bağlantı hatası:', err);
+
+      updateSpotifyCard({
+        status: 'BAĞLANTI BAŞARISIZ',
+        label: err.message || 'Spotify bağlantısı başlatılamadı.',
+        buttonText: 'TEKRAR DENE'
+      });
     }
   });
+
+  // Sayfa açıldığında Spotify durumunu kontrol et.
+  loadSpotifyStatus();
+
 
   let lastTrackTitle = null;
 
@@ -1815,6 +2017,8 @@ ${!isLive
       if (!res.ok) throw new Error();
       const data = await res.json();
 
+      if (window.currentSelectedTrack) return;
+
       if (data.isPlaying && data.songUrl) {
         const parts = data.songUrl.split('/');
         const trackId = parts[parts.length - 1];
@@ -1945,10 +2149,13 @@ ${!isLive
   // 6. SPOTIFY BACKEND PARÇA ARAMA VE SEÇİMİ
   // ----------------------------------------------------
   let searchDebounceTimer = null;
+  let spotifySearchRequestId = 0;
 
   window.handleSpotifySearchInput = function (e) {
     clearTimeout(searchDebounceTimer);
     const q = e.target.value.trim();
+    const requestId = ++spotifySearchRequestId;
+
     if (q.length < 2) return;
 
     searchDebounceTimer = setTimeout(async () => {
@@ -1957,7 +2164,12 @@ ${!isLive
         const res = await fetch(`/api/spotify/search?q=${encodeURIComponent(q)}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+
+        // Hızlı aramalarda eski sorgunun cevabı yeni sonuçları ezmesin.
+        if (requestId !== spotifySearchRequestId) return;
+
         const json = await res.json();
+        if (requestId !== spotifySearchRequestId) return;
 
         if (json.tracks && json.tracks.length > 0) {
           const grid = document.getElementById('wizardSongGrid');
@@ -1965,7 +2177,7 @@ ${!isLive
 
           grid.innerHTML = json.tracks.map((t, idx) => `
             <button type="button"
-              class="selector-tile selector-tile-enter ${idx === 0 ? 'selected' : ''}"
+              class="selector-tile selector-tile-enter"
               style="--tile-index:${idx}"
               data-search-index="${idx}"
               aria-label="${escapeHtml(t.title)} — ${escapeHtml(t.artist)} seç">
@@ -1988,8 +2200,8 @@ ${!isLive
             });
           });
 
-          const first = json.tracks[0];
-          selectCustomTrack(first.title, first.artist, first.coverUrl, first.spotifyUri);
+          // Arama sonuçları gösterilirken otomatik şarkı seçme.
+          // Kullanıcı hangi parçaya tıklarsa yalnızca o parça seçilsin.
         }
       } catch (err) {
         console.error('Spotify arama hatası:', err);
@@ -2103,6 +2315,16 @@ ${!isLive
   }
 
 
+  function getSpotifyTrackId(track) {
+    if (!track) return '';
+    const raw = String(track.uri || track.spotifyUri || track.id || '').trim();
+    const uriMatch = raw.match(/spotify:track:([A-Za-z0-9]+)/i);
+    if (uriMatch) return uriMatch[1];
+    const urlMatch = raw.match(/open\.spotify\.com\/(?:embed\/)?track\/([A-Za-z0-9]+)/i);
+    if (urlMatch) return urlMatch[1];
+    return /^[A-Za-z0-9]{10,}$/.test(raw) ? raw : '';
+  }
+
   function applyTrackToWizard(track, isNowPlaying = false) {
     const emptyLayer = document.getElementById('wizEmptyLayer');
     const bgImg = document.getElementById('wizPrevBg');
@@ -2164,9 +2386,21 @@ ${!isLive
     if (step2Title) step2Title.textContent = track.name;
     if (step2Artist) step2Artist.textContent = track.artist;
 
-    const trackId = track.uri.includes(':') ? track.uri.split(':')[2] : track.uri;
-    if (spotifyIframe && trackId) {
-      spotifyIframe.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`;
+    // Her seçimde iframe'i gerçekten durdurup yeniden kur; aksi halde Spotify
+    // embed önceki parçanın playback state'ini koruyabiliyor.
+    const trackId = getSpotifyTrackId(track);
+    if (spotifyIframe) {
+      spotifyIframe.src = 'about:blank';
+      if (trackId) {
+        const embedUrl = new URL(`https://open.spotify.com/embed/track/${encodeURIComponent(trackId)}`);
+        embedUrl.searchParams.set('utm_source', 'generator');
+        embedUrl.searchParams.set('theme', '0');
+        // Her track seçimi için yeni iframe document/state.
+        window.setTimeout(() => {
+          if (window.currentSelectedTrack !== track) return;
+          spotifyIframe.src = embedUrl.toString();
+        }, 60);
+      }
     }
     window.toggleEmbedPlayer(false);
 
@@ -2219,6 +2453,10 @@ ${!isLive
       }
 
       const data = await res.json();
+
+      // İlk açılış isteği geç dönerse, kullanıcının bu sırada seçtiği parçayı ezme.
+      if (window.currentSelectedTrack) return;
+
       if (data.isPlaying && data.songUrl) {
         const parts = data.songUrl.split('/');
         const trackId = parts[parts.length - 1];
@@ -5412,7 +5650,10 @@ function prepareImage(img) {
   const currentTime = $('spCurrentTime');
   const durationLabel = $('spDuration');
   const playButton = $('spYoutubePlay');
+  const youtubeHost = $('spYoutubePlayerHost');
 
+  let modalYTPlayer = null;
+  let modalYTReady = false;
   let activeTrack = null;
   let lyrics = [];
   let syncTimer = null;
@@ -5425,12 +5666,49 @@ function prepareImage(img) {
     return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
   };
 
+  // /api/auto-sync eski sürümlerde farklı alan adlarıyla zaman damgası döndürebiliyor.
+  // Hepsini saniyeye normalize et; 0 saniyelik gerçek ilk satırı da koru.
+  function normalizeLyricTime(value) {
+    if (typeof value === 'number' && Number.isFinite(value)) return Math.max(0, value);
+    if (typeof value !== 'string') return null;
+
+    const raw = value.trim();
+    if (!raw) return null;
+
+    const clock = raw.match(/^(?:(\d+):)?(\d{1,2}):(\d{1,2}(?:\.\d+)?)$/);
+    if (clock) {
+      const hours = Number(clock[1] || 0);
+      const minutes = Number(clock[2] || 0);
+      const seconds = Number(clock[3] || 0);
+      return hours * 3600 + minutes * 60 + seconds;
+    }
+
+    const numeric = Number(raw);
+    return Number.isFinite(numeric) ? Math.max(0, numeric) : null;
+  }
+
+  function normalizeSyncedLyrics(rawLyrics) {
+    if (!Array.isArray(rawLyrics)) return [];
+    return rawLyrics.map((item, originalIndex) => {
+      const timeValue = item?.time ?? item?.startTime ?? item?.timestamp ?? item?.start ?? item?.seconds;
+      const textValue = item?.words ?? item?.text ?? item?.line ?? item?.lyrics ?? '';
+      return {
+        time: normalizeLyricTime(timeValue),
+        words: String(textValue ?? '').trim(),
+        originalIndex
+      };
+    })
+      .filter(item => item.time !== null && item.words.length > 0)
+      .sort((a, b) => a.time - b.time || a.originalIndex - b.originalIndex)
+      .map(({ time, words }) => ({ time, words }));
+  }
+
   function getTrackId(track) {
-    const uriMatch = track.uri.match(/^spotify:track:([a-zA-Z0-9]+)$/);
+    const uriMatch = String(track?.uri || '').match(/(?:^spotify:track:|open\.spotify\.com\/track\/)([a-zA-Z0-9]+)/);
     if (uriMatch) return uriMatch[1];
 
     try {
-      const url = new URL(track.url);
+      const url = new URL(track?.url || '');
       const match = url.pathname.match(/\/track\/([a-zA-Z0-9]+)/);
       return match ? match[1] : null;
     } catch {
@@ -5451,8 +5729,8 @@ function prepareImage(img) {
       pane.hidden = !selected;
     });
 
-    if (name === 'spotify' && isYTReady && ytPlayer?.pauseVideo) {
-      ytPlayer.pauseVideo();
+    if (name === 'spotify' && modalYTReady && modalYTPlayer?.pauseVideo) {
+      modalYTPlayer.pauseVideo();
     }
   }
 
@@ -5472,8 +5750,8 @@ function prepareImage(img) {
     clearInterval(syncTimer);
     syncTimer = null;
 
-    if (isYTReady && ytPlayer?.pauseVideo) {
-      ytPlayer.pauseVideo();
+    if (modalYTReady && modalYTPlayer?.pauseVideo) {
+      modalYTPlayer.pauseVideo();
     }
 
     // Spotify iframe kaldırılınca önizleme sesi de durur.
@@ -5520,10 +5798,10 @@ function prepareImage(img) {
       element.dataset.time = String(Number(line.time) || 0);
 
       element.addEventListener('click', () => {
-        if (!isYTReady || !ytPlayer?.seekTo) return;
+        if (!modalYTReady || !modalYTPlayer?.seekTo) return;
 
-        ytPlayer.seekTo(Number(line.time) || 0, true);
-        if (ytPlayer.playVideo) ytPlayer.playVideo();
+        modalYTPlayer.seekTo(Number(line.time) || 0, true);
+        modalYTPlayer.playVideo?.();
       });
 
       lyricsLines.appendChild(element);
@@ -5533,10 +5811,10 @@ function prepareImage(img) {
   }
 
   function updateLyrics() {
-    if (!isYTReady || !ytPlayer?.getCurrentTime) return;
+    if (!modalYTReady || !modalYTPlayer?.getCurrentTime) return;
 
-    const time = ytPlayer.getCurrentTime();
-    const duration = ytPlayer.getDuration() || 0;
+    const time = modalYTPlayer.getCurrentTime();
+    const duration = modalYTPlayer.getDuration() || 0;
 
     if (!seeking) timeline.value = String(time);
 
@@ -5547,9 +5825,10 @@ function prepareImage(img) {
     let index = -1;
 
     for (let i = 0; i < lyrics.length; i++) {
-      if ((Number(lyrics[i].time) || 0) <= time + 0.05) {
+      const lineTime = Number(lyrics[i]?.time);
+      if (Number.isFinite(lineTime) && lineTime <= time + 0.08) {
         index = i;
-      } else {
+      } else if (Number.isFinite(lineTime)) {
         break;
       }
     }
@@ -5580,76 +5859,205 @@ function prepareImage(img) {
     syncTimer = setInterval(updateLyrics, 150);
   }
 
+  function parseLrcText(value) {
+    if (typeof value !== 'string') return [];
+    const result = [];
+    for (const rawLine of value.split(/\r?\n/)) {
+      const matches = [...rawLine.matchAll(/\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\]/g)];
+      const words = rawLine.replace(/\[(?:\d{1,2}:\d{2})(?:\.\d{1,3})?\]/g, '').trim();
+      if (!words || !matches.length) continue;
+      for (const match of matches) {
+        const fraction = match[3] ? Number(`0.${match[3]}`) : 0;
+        result.push({ time: Number(match[1]) * 60 + Number(match[2]) + fraction, words });
+      }
+    }
+    return result.sort((a, b) => a.time - b.time);
+  }
+
+  async function fetchLrclibLyrics(trackName, artistName, id) {
+    const cleanTrack = String(trackName || '').replace(/\s*[([{].*?[)\]}]\s*/g, ' ').trim();
+    const cleanArtist = String(artistName || '').split(',')[0].trim();
+    const params = new URLSearchParams({ track_name: cleanTrack || trackName, artist_name: cleanArtist || artistName });
+    const requests = [
+      `https://lrclib.net/api/get?${params.toString()}`,
+      `https://lrclib.net/api/search?${params.toString()}`
+    ];
+    for (const url of requests) {
+      try {
+        const response = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (id !== requestId) return null;
+        if (!response.ok) continue;
+        const payload = await response.json();
+        const candidates = Array.isArray(payload) ? payload : [payload];
+        const match = candidates.find(item => item?.syncedLyrics || item?.plainLyrics);
+        if (match) {
+          const synced = parseLrcText(match.syncedLyrics || '');
+          if (synced.length) return { lyrics: synced, plain: match.plainLyrics || '', source: 'LRCLIB' };
+          if (match.plainLyrics) return { lyrics: match.plainLyrics.split(/\r?\n/).filter(Boolean).map(words => ({ time: null, words })), plain: match.plainLyrics, source: 'LRCLIB' };
+        }
+      } catch (error) {
+        console.warn('LRCLIB isteği başarısız:', error);
+      }
+    }
+    return null;
+  }
+
   async function loadLyrics(track, id) {
+    const trackName = typeof track === 'string' ? track : track.title;
+    const artistName = typeof track === 'string' ? '' : track.artist;
     lyricsStatus.textContent = 'Senkronize sözler aranıyor…';
     lyricsLines.replaceChildren();
     playButton.disabled = true;
-    playButton.innerHTML =
-      '<i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor';
+    playButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor';
 
+    let syncData = null;
+    let lyricSource = '';
+    // 1) Mevcut otomatik senkronizasyon servisi: YouTube video ID'si burada bulunur.
     try {
       const response = await fetch(
-        `/api/auto-sync?track=${encodeURIComponent(track.title)}` +
-        `&artist=${encodeURIComponent(track.artist)}`,
-        { credentials: 'include' }
+        `/api/auto-sync?track=${encodeURIComponent(trackName)}&artist=${encodeURIComponent(artistName)}`,
+        { credentials: 'include', headers: { Accept: 'application/json' } }
       );
+      if (response.ok) syncData = await response.json();
+    } catch (error) {
+      console.warn('Otomatik senkronizasyon servisine ulaşılamadı:', error);
+    }
+    if (id !== requestId || !modal.classList.contains('is-open')) return;
 
-      if (!response.ok) throw new Error('Lyrics request failed');
+    const rawLyrics = syncData?.lyrics || syncData?.syncedLyrics || syncData?.data?.lyrics || [];
+    let normalized = typeof rawLyrics === 'string' ? parseLrcText(rawLyrics) : normalizeSyncedLyrics(rawLyrics);
+    let videoId = syncData?.videoId || syncData?.video_id || syncData?.youtubeVideoId || syncData?.youtube_video_id || syncData?.data?.videoId || syncData?.data?.video_id;
 
-      const data = await response.json();
+    // 2) Otomatik servis söz döndürmediyse LRCLIB'den zaman damgalı LRC al.
+    if (!normalized.length) {
+      const fallback = await fetchLrclibLyrics(trackName, artistName, id);
+      if (id !== requestId || !modal.classList.contains('is-open')) return;
+      if (fallback?.lyrics?.length) {
+        normalized = fallback.lyrics;
+        lyricSource = fallback.source;
+      }
+    }
 
-      if (id !== requestId || !modal.classList.contains('is-open')) {
+    lyrics = normalized;
+    renderLyrics(lyrics);
+
+    if (!lyrics.length) {
+      lyricsStatus.textContent = 'Bu parça için zaman damgalı söz bulunamadı. Başka bir sürümünü deneyebilirsin.';
+      playButton.disabled = true;
+      playButton.innerHTML = '<i class="fa-solid fa-circle-info"></i> Söz bulunamadı';
+      return;
+    }
+
+    const hasTimestamps = lyrics.some(line => Number.isFinite(Number(line.time)));
+    lyricsStatus.textContent = hasTimestamps
+      ? `${lyricSource ? lyricSource + ' · ' : ''}Zaman damgalı sözler hazır. Senkron için YouTube oynatımını başlat.`
+      : 'Sözler bulundu ancak zaman damgası yok; bu sürümde otomatik senkronizasyon yapılamıyor.';
+
+    if (!videoId) {
+      // Lyrics are still useful when the auto-sync service has no matching video.
+      playButton.disabled = true;
+      playButton.innerHTML = '<i class="fa-solid fa-circle-info"></i> Video bulunamadı';
+      lyricsStatus.textContent = hasTimestamps
+        ? `${lyricSource ? lyricSource + ' · ' : ''}Sözler yüklendi, fakat otomatik senkronizasyon servisi eşleşen YouTube videosu döndürmedi.`
+        : 'Sözler yüklendi ancak senkronizasyon için video bulunamadı.';
+      return;
+    }
+
+    let attempts = 0;
+    const cueWhenReady = () => {
+      if (id !== requestId) return;
+      if (modalYTReady && modalYTPlayer?.cueVideoById) {
+        modalYTPlayer.cueVideoById(videoId);
+        playButton.disabled = false;
+        playButton.innerHTML = '<i class="fa-solid fa-play"></i> YouTube ile dinle';
+        updateLyrics();
         return;
       }
-
-      if (!data.videoId) {
-        lyricsStatus.textContent =
-          'Bu şarkı için senkronize video bulunamadı.';
+      if (++attempts < 40) setTimeout(cueWhenReady, 250);
+      else {
         playButton.disabled = true;
-        playButton.innerHTML =
-          '<i class="fa-solid fa-circle-info"></i> Video bulunamadı';
+        playButton.innerHTML = '<i class="fa-solid fa-circle-info"></i> Oynatıcı hazır değil';
+        lyricsStatus.textContent = 'Sözler yüklendi ancak YouTube oynatıcı başlatılamadı. Sayfayı yenileyip tekrar dene.';
+      }
+    };
+    cueWhenReady();
+  }
+
+  window.initSongPreviewYouTubePlayer = function () {
+    if (!youtubeHost || modalYTPlayer || !window.YT?.Player) return;
+    modalYTPlayer = new YT.Player('spYoutubePlayerHost', {
+      height: '180', width: '320',
+      playerVars: { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1, origin: window.location.origin },
+      events: {
+        onReady: () => { modalYTReady = true; },
+        onStateChange: event => {
+          if (!window.YT?.PlayerState) return;
+          if (event.data === YT.PlayerState.PLAYING) {
+            playButton.innerHTML = '<i class="fa-solid fa-pause"></i> Duraklat';
+            startSync();
+          } else if ([YT.PlayerState.PAUSED, YT.PlayerState.ENDED, YT.PlayerState.CUED].includes(event.data)) {
+            playButton.innerHTML = '<i class="fa-solid fa-play"></i> YouTube ile dinle';
+            clearInterval(syncTimer);
+            syncTimer = null;
+            // Duraklatma/sonlandırma anındaki satır ve timeline konumunu koru.
+            updateLyrics();
+          }
+        }
+      }
+    });
+  };
+
+  // YouTube API callback bazen bu modül yüklenmeden önce çalışır. O durumda
+  // ghost player hazır olur ama modal player hiç oluşturulmazdı.
+  if (isYTReady && window.YT?.Player) {
+    window.initSongPreviewYouTubePlayer();
+  }
+
+  async function loadArtistGallery(artistName, id) {
+    const gallery = $('spArtistGallery');
+    const galleryTitle = $('spGalleryTitle');
+    const galleryCount = $('spGalleryCount');
+    const galleryCaption = $('spGalleryCaption');
+    if (!gallery) return;
+    gallery.innerHTML = '<div class="sp-gallery-placeholder"><i class="fa-solid fa-spinner fa-spin"></i><span>Albüm kapakları aranıyor…</span></div>';
+    if (galleryTitle) galleryTitle.textContent = `${artistName} · Albüm ve single kapakları`;
+    try {
+      const response = await fetch(`/api/spotify/artist-gallery?name=${encodeURIComponent(artistName)}&limit=100`, { credentials: 'include' });
+      const result = await response.json();
+      if (id !== requestId || !modal.classList.contains('is-open')) return;
+      if (!response.ok) throw new Error(result.message || 'Galeri yüklenemedi');
+      const data = result.data || {};
+      const albums = Array.isArray(data.albums) ? data.albums : [];
+      const entries = [
+        ...(data.artist?.image ? [{ id: `artist-${data.artist.id}`, name: `${data.artist.name} · Sanatçı`, type: 'artist', image: data.artist.image, spotifyUrl: data.artist.spotifyUrl }] : []),
+        ...albums.filter(album => album.image)
+      ];
+      if (galleryCount) galleryCount.textContent = `${entries.length} GÖRSEL`;
+      if (!entries.length) {
+        gallery.innerHTML = '<div class="sp-gallery-placeholder"><i class="fa-regular fa-images"></i><span>Bu sanatçı için görsel bulunamadı.</span></div>';
+        if (galleryCaption) galleryCaption.textContent = 'Spotify kataloğunda eşleşen kapak bulunamadı.';
         return;
       }
-
-      lyrics = Array.isArray(data.lyrics) ? data.lyrics : [];
-      renderLyrics(lyrics);
-
-      lyricsStatus.textContent = lyrics.length
-        ? 'Zaman damgalı sözler hazır'
-        : 'Söz bulunamadı. Videoyu yine de dinleyebilirsin.';
-
-      // YouTube API henüz hazır değilse sınırlı süre bekle.
-      let attempts = 0;
-
-      const cueWhenReady = () => {
-        if (id !== requestId) return;
-
-        if (isYTReady && ytPlayer?.cueVideoById) {
-          ytPlayer.cueVideoById(data.videoId);
-
-          playButton.disabled = false;
-          playButton.innerHTML =
-            '<i class="fa-solid fa-play"></i> YouTube ile dinle';
-
-          startSync();
-          return;
-        }
-
-        if (++attempts < 40) {
-          setTimeout(cueWhenReady, 250);
-        } else {
-          lyricsStatus.textContent =
-            'YouTube oynatıcı başlatılamadı. Sayfayı yenileyip tekrar dene.';
-        }
-      };
-
-      cueWhenReady();
+      gallery.replaceChildren();
+      entries.forEach((item, index) => {
+        const link = document.createElement('a');
+        link.className = 'sp-gallery-item';
+        link.href = item.spotifyUrl || data.artist?.spotifyUrl || '#';
+        link.target = '_blank'; link.rel = 'noopener noreferrer'; link.title = item.name || 'Albüm kapağı';
+        const img = document.createElement('img');
+        img.loading = index > 11 ? 'lazy' : 'eager'; img.src = item.image; img.alt = `${item.name || 'Albüm'} kapak görseli`;
+        img.addEventListener('error', () => link.remove(), { once: true });
+        const caption = document.createElement('span'); caption.className = 'sp-gallery-item-caption'; caption.textContent = item.name || 'Albüm';
+        const meta = document.createElement('small');
+        const year = item.releaseDate ? String(item.releaseDate).slice(0, 4) : '';
+        meta.textContent = [item.type === 'single' ? 'Single' : item.type === 'compilation' ? 'Derleme' : item.type === 'artist' ? 'Sanatçı' : 'Albüm', year].filter(Boolean).join(' · ');
+        link.append(img, caption, meta); gallery.appendChild(link);
+      });
+      if (galleryCaption) galleryCaption.textContent = `${data.artist?.name || artistName} · Spotify kataloğundaki albüm, single ve derleme kapakları`;
     } catch (error) {
       if (id !== requestId) return;
-
-      console.error('Senkronize sözler yüklenemedi:', error);
-      lyricsStatus.textContent =
-        'Sözler şu anda yüklenemiyor. Daha sonra tekrar dene.';
+      console.warn('Sanatçı albüm galerisi yüklenemedi:', error);
+      gallery.innerHTML = '<div class="sp-gallery-placeholder"><i class="fa-solid fa-triangle-exclamation"></i><span>Kapaklar yüklenemedi. Daha sonra tekrar dene.</span></div>';
     }
   }
 
@@ -5663,13 +6071,13 @@ function prepareImage(img) {
     clearInterval(syncTimer);
     syncTimer = null;
 
-    if (isYTReady && ytPlayer?.pauseVideo) {
-      ytPlayer.pauseVideo();
-    }
+    if (isYTReady && ytPlayer?.pauseVideo) ytPlayer.pauseVideo();
+    if (modalYTReady && modalYTPlayer?.pauseVideo) modalYTPlayer.pauseVideo();
 
     const trackId = getTrackId(track);
     if (!trackId) {
       console.warn('Şarkının Spotify track ID bilgisi eksik.');
+      if (track?.url) window.open(track.url, '_blank', 'noopener,noreferrer');
       return;
     }
 
@@ -5732,7 +6140,8 @@ function prepareImage(img) {
     // Bu iki istek birbirinden bağımsız çalışır.
     await Promise.allSettled([
       checkSpotifyConnection(trackId, id),
-      loadLyrics(track.title, id)
+      loadLyrics(track, id),
+      loadArtistGallery(track.artist, id)
     ]);
   };
 
@@ -5797,16 +6206,16 @@ function prepareImage(img) {
   });
 
   playButton.addEventListener('click', () => {
-    if (!isYTReady || !ytPlayer) return;
+    if (!modalYTReady || !modalYTPlayer) return;
 
-    const state = ytPlayer.getPlayerState();
+    const state = modalYTPlayer.getPlayerState();
 
     if (state === YT.PlayerState.PLAYING) {
-      ytPlayer.pauseVideo();
+      modalYTPlayer.pauseVideo();
       playButton.innerHTML =
         '<i class="fa-solid fa-play"></i> Devam et';
     } else {
-      ytPlayer.playVideo();
+      modalYTPlayer.playVideo();
       playButton.innerHTML =
         '<i class="fa-solid fa-pause"></i> Duraklat';
     }
@@ -5818,8 +6227,8 @@ function prepareImage(img) {
   });
 
   timeline.addEventListener('change', () => {
-    if (isYTReady && ytPlayer?.seekTo) {
-      ytPlayer.seekTo(Number(timeline.value), true);
+    if (modalYTReady && modalYTPlayer?.seekTo) {
+      modalYTPlayer.seekTo(Number(timeline.value), true);
     }
     seeking = false;
     updateLyrics();

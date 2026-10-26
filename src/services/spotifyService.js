@@ -232,46 +232,39 @@ export const getArtistGalleryByName = async (artistName, limit = 24) => {
       artists.find((item) => normalize(item.name) === normalize(cleanArtist)) ||
       artists[0];
 
-    const safeLimit = Math.max(1, Math.min(50, Number.parseInt(limit, 10) || 24));
-    const albumsUrl = new URL(`https://api.spotify.com/v1/artists/${encodeURIComponent(artist.id)}/albums`);
-    albumsUrl.searchParams.set('include_groups', 'album,single,compilation');
-    albumsUrl.searchParams.set('market', 'US');
-    albumsUrl.searchParams.set('limit', String(safeLimit));
-
-    const albumsResponse = await fetch(albumsUrl, { headers });
-    let albums = [];
-
-    if (albumsResponse.ok) {
+    const safeLimit = Math.max(1, Math.min(100, Number.parseInt(limit, 10) || 50));
+    const seen = new Set();
+    const albums = [];
+    let offset = 0;
+    while (albums.length < safeLimit) {
+      const albumsUrl = new URL(`https://api.spotify.com/v1/artists/${encodeURIComponent(artist.id)}/albums`);
+      albumsUrl.searchParams.set('include_groups', 'album,single,compilation');
+      albumsUrl.searchParams.set('market', 'US');
+      albumsUrl.searchParams.set('limit', '50');
+      albumsUrl.searchParams.set('offset', String(offset));
+      const albumsResponse = await fetch(albumsUrl, { headers });
+      if (!albumsResponse.ok) {
+        console.warn('[Spotify Artist Gallery Albums]', albumsResponse.status);
+        break;
+      }
       const albumsData = await albumsResponse.json();
-      const seen = new Set();
-
-      albums = (albumsData.items || [])
-        .filter((album) => {
-          const key = album.id || `${album.name}-${album.release_date}`;
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        })
-        .map((album) => ({
-          id: album.id,
-          name: album.name,
-          type: album.album_type || 'album',
-          releaseDate: album.release_date || null,
-          totalTracks: album.total_tracks ?? null,
-          image: album.images?.[0]?.url || album.images?.[1]?.url || null,
-          images: (album.images || []).map((image) => ({
-            url: image.url,
-            width: image.width || null,
-            height: image.height || null
-          })),
+      const items = albumsData.items || [];
+      for (const album of items) {
+        const key = album.id || `${album.name}-${album.release_date}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        albums.push({
+          id: album.id, name: album.name, type: album.album_type || 'album',
+          releaseDate: album.release_date || null, totalTracks: album.total_tracks ?? null,
+          image: album.images?.[0]?.url || album.images?.[1]?.url || album.images?.[2]?.url || null,
+          images: (album.images || []).map((image) => ({ url: image.url, width: image.width || null, height: image.height || null })),
           spotifyUrl: album.external_urls?.spotify || null,
-          artists: (album.artists || []).map((item) => ({
-            id: item.id,
-            name: item.name
-          }))
-        }));
-    } else {
-      console.warn('[Spotify Artist Gallery Albums]', albumsResponse.status);
+          artists: (album.artists || []).map((item) => ({ id: item.id, name: item.name }))
+        });
+        if (albums.length >= safeLimit) break;
+      }
+      if (!albumsData.next || !items.length) break;
+      offset += items.length;
     }
 
     return {
@@ -279,7 +272,7 @@ export const getArtistGalleryByName = async (artistName, limit = 24) => {
         id: artist.id,
         name: artist.name,
         genres: artist.genres || [],
-        image: artist.images?.[0]?.url || artist.images?.[1]?.url || null,
+        image: artist.images?.[0]?.url || artist.images?.[1]?.url || artist.images?.[2]?.url || null,
         images: (artist.images || []).map((image) => ({
           url: image.url,
           width: image.width || null,

@@ -478,8 +478,8 @@ export const getArtistGallery = catchAsync(async (req, res, next) => {
   const name = String(req.query.name || '').trim();
   const parsedLimit = Number.parseInt(req.query.limit, 10);
   const limit = Number.isFinite(parsedLimit)
-    ? Math.max(1, Math.min(50, parsedLimit))
-    : 24;
+    ? Math.max(1, Math.min(100, parsedLimit))
+    : 50;
 
   if (!name) {
     return next(new AppError('Sanatçı adı (name) parametresi zorunludur.', 400));
