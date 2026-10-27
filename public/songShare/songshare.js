@@ -158,27 +158,24 @@ window.triggerRightPanelsSlideOut = function (track) {
   const stageCluster = document.getElementById('shareStageCluster');
   const appleAmbient = document.getElementById('appleLyricsAmbient');
 
-  // Sağ panelleri ekranın dışına sağa kaydır
   rightAside?.classList.add('slide-out-right');
   friendsStrip?.classList.add('slide-out-right');
   shell?.classList.add('share-lyrics-active');
-
-  // Bitişik lyrics modülünü aktif hale getir
   stageCluster?.classList.add('has-lyrics-attached');
 
   if (track) {
     const dockSongTitle = document.getElementById('dockLyricsSongTitle');
     const dockSongArtist = document.getElementById('dockLyricsSongArtist');
+    const currentDockTitle = dockSongTitle?.textContent?.trim();
+    const existingLines = document.querySelectorAll('#dockLyricsScrollBody .lyrics-dock-line').length;
+    const shouldFetchLyrics = !existingLines || currentDockTitle !== (track.name || 'Seçilen Parça');
     if (dockSongTitle) dockSongTitle.textContent = track.name || 'Seçilen Parça';
     if (dockSongArtist) dockSongArtist.textContent = track.artist || 'Sanatçı';
+    if (appleAmbient && track.imageUrl) appleAmbient.style.backgroundImage = `url('${track.imageUrl}')`;
 
-    // Apple Music akışkan kapak rengi ışıltısı
-    if (appleAmbient && track.imageUrl) {
-      appleAmbient.style.backgroundImage = `url('${track.imageUrl}')`;
-    }
-
-    // Backend üzerinden LRCLIB sözlerini animasyonlu çek
-    fetchUpcomingShareLyrics(track.name, track.artist, track.duration_ms);
+    // Menüden geri dönüldüğünde mevcut lyrics DOM'unu koru; yalnızca parça değiştiğinde yeniden yükle.
+    if (shouldFetchLyrics) fetchUpcomingShareLyrics(track.name, track.artist, track.duration_ms);
+    else updateLyricsSharePreview();
   }
 };
 
@@ -560,7 +557,7 @@ async function fetchUpcomingShareLyrics(trackName, artistName, durationMs = null
     scrollBody.innerHTML = lines.map((item, idx) => `
   <div class="lyrics-dock-line line-animate-in ${idx === activeIndex ? 'active' : ''}" 
        style="--line-index: ${Math.min(idx, 15)};"
-       data-time="${item.time || 0}"
+       data-time="${item.time || 0}" data-line-index="${idx}"
        onclick="selectActiveLyricLine(this)">
     ${escapeHtml(item.text)}
   </div>
@@ -589,6 +586,7 @@ async function fetchUpcomingShareLyrics(trackName, artistName, durationMs = null
     showEmptyLyricsState(scrollBody, syncStatus);
   }
 }
+window.fetchShareLyricsForTrack = fetchUpcomingShareLyrics;
 
 function showEmptyLyricsState(scrollBody, syncStatus) {
   if (syncStatus) syncStatus.textContent = 'Söz Yok';
@@ -619,17 +617,139 @@ window.restoreRightPanels = function () {
   stageCluster?.classList.remove('has-lyrics-attached');
 };
 
-window.selectActiveLyricLine = function (el) {
-  const lines = document.querySelectorAll('.lyrics-dock-line');
-  lines.forEach(l => l.classList.remove('active'));
-  el.classList.add('active');
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+let lyricShareMode = false;
+let lyricRangeStart = null;
+let lyricRangeEnd = null;
+let lyricDesign = { background: 'blur', color: '#211c35', gradientColor: '#452333', align: 'left', font: 'clean', lineSpacing: 1.45, fontColor: '#ffffff', fontSize: 23, textEffect: 'soft', textTransform: 'none', letterSpacing: -0.5, italic: false };
+
+const MAX_LYRICS_SHARE_LINES = 8;
+
+function renderLyricRangeSelection() {
+  const lines = [...document.querySelectorAll('#dockLyricsScrollBody .lyrics-dock-line')];
+  if (!lines.length || lyricRangeStart === null) return;
+  const low = lyricRangeEnd === null ? lyricRangeStart : Math.min(lyricRangeStart, lyricRangeEnd);
+  const high = lyricRangeEnd === null ? lyricRangeStart : Math.max(lyricRangeStart, lyricRangeEnd);
+  lines.forEach((item, i) => {
+    item.classList.remove('is-range-start', 'is-range-end', 'is-range-pending', 'is-range-selected');
+    if (i >= low && i <= high) item.classList.add('is-range-selected');
+    if (i === low) item.classList.add(lyricRangeEnd === null ? 'is-range-pending' : 'is-range-start');
+    if (lyricRangeEnd !== null && i === high) item.classList.add('is-range-end');
+  });
+}
+
+// İlk tıklama başlangıç, ikinci tıklama bitiştir. En fazla 8 satır seçilebilir.
+window.selectActiveLyricLine = function (lineOrEvent) {
+  const line = lineOrEvent?.currentTarget || lineOrEvent;
+  if (!line || !line.classList?.contains('lyrics-dock-line')) return;
+  const lines = [...document.querySelectorAll('#dockLyricsScrollBody .lyrics-dock-line')];
+  const index = lines.indexOf(line);
+  if (index < 0) return;
+
+  if (lyricRangeStart === null || lyricRangeEnd !== null) {
+    lyricRangeStart = index;
+    lyricRangeEnd = null;
+  } else {
+    // Aralığı okuma sırasına normalize et ve maksimum satır sayısını uygula.
+    const low = Math.min(lyricRangeStart, index);
+    const high = Math.max(lyricRangeStart, index);
+    lyricRangeStart = low;
+    lyricRangeEnd = Math.min(high, low + MAX_LYRICS_SHARE_LINES - 1);
+  }
+
+  renderLyricRangeSelection();
+  const selected = getSelectedLyricLines();
+  const slider = document.getElementById('wizardHighlightSlider');
+  if (selected.length && slider) {
+    slider.value = String(Math.round(selected[0].time));
+    window.updateWizardHighlightAnimation?.(slider.value);
+  }
+  updateLyricsSharePreview();
+};
+
+function getSelectedLyricLines() {
+  const lines = [...document.querySelectorAll('.lyrics-dock-line')];
+  if (!lines.length || lyricRangeStart === null) return [];
+  const end = lyricRangeEnd === null ? lyricRangeStart : lyricRangeEnd;
+  return lines.slice(Math.min(lyricRangeStart, end), Math.max(lyricRangeStart, end) + 1)
+    .map(line => ({ text: line.textContent.trim(), time: Number(line.dataset.time || 0) })).filter(x => x.text);
+}
+function updateLyricsSharePreview() {
+  const selected = getSelectedLyricLines();
+  const linesEl = document.getElementById('lyricsPreviewLines');
+  if (linesEl) linesEl.textContent = selected.length ? selected.map(x => x.text).join('\n') : 'Şarkı sözlerinden bir an seç';
+  const track = window.currentSelectedTrack;
+  const meta = document.getElementById('lyricsPreviewMeta');
+  if (meta) meta.textContent = document.getElementById('lyricsIncludeMeta')?.checked === false ? '' : `${track?.artist || 'Sanatçı'} · ${track?.name || 'Şarkı'}`;
+  const player = document.getElementById('lyricsPreviewPlayer');
+  if (player) player.hidden = !document.getElementById('lyricsIncludePlayer')?.checked;
+  const cover = document.getElementById('step2SelImg')?.src || track?.imageUrl || '';
+  const coverEl = document.getElementById('lyricsPreviewCover');
+  if (coverEl) { coverEl.src = cover; coverEl.alt = `${track?.name || 'Şarkı'} albüm kapağı`; }
+  const preview = document.getElementById('lyricsSharePreview');
+  if (preview) {
+    preview.style.setProperty('--lyric-bg-color', lyricDesign.color);
+    preview.style.setProperty('--lyric-bg-color-2', lyricDesign.gradientColor || '#452333');
+    preview.style.setProperty('--lyric-bg-image', `url("${cover}")`);
+    preview.dataset.background = lyricDesign.background;
+    preview.dataset.align = lyricDesign.align;
+    preview.dataset.font = lyricDesign.font;
+    preview.style.setProperty('--lyrics-line-spacing', String(lyricDesign.lineSpacing || 1.45));
+    preview.style.setProperty('--lyrics-font-color', lyricDesign.fontColor || '#ffffff');
+    preview.style.setProperty('--lyrics-font-size', `${Number(lyricDesign.fontSize || 23)}px`);
+    preview.style.setProperty('--lyrics-letter-spacing', `${Number(lyricDesign.letterSpacing ?? -0.5)}px`);
+    preview.dataset.effect = lyricDesign.textEffect || 'soft';
+    preview.dataset.transform = lyricDesign.textTransform || 'none';
+    preview.classList.toggle('is-italic', !!lyricDesign.italic);
+    preview.classList.toggle('hide-cover', document.getElementById('lyricsIncludeCover')?.checked === false);
+  }
+  const summary = document.getElementById('lyricsRangeSummary');
+  if (summary) {
+    if (!selected.length) {
+      summary.innerHTML = '<i class="fa-solid fa-hand-pointer"></i><span>Başlangıç satırını seç, ardından bitiş satırına tıkla. Sağdaki panelde başlangıç ve bitiş etiketleri görünecek.</span>';
+    } else {
+      const startLine = lyricRangeStart + 1;
+      const endLine = lyricRangeEnd === null ? null : lyricRangeEnd + 1;
+      summary.innerHTML = `<i class="fa-solid fa-highlighter"></i><span><b>BAŞLANGIÇ: Satır ${startLine}</b>${endLine === null ? ' <em>Şimdi bitiş satırını seç…</em>' : ` <b>· BİTİŞ: Satır ${endLine}</b><small>${selected.length} satır seçildi · ${selected[0].time}s – ${selected[selected.length - 1].time}s</small>`}</span>`;
+    }
+  }
 };
 
 // ----------------------------------------------------
 // 1. GLOBAL PAYLAŞIM SİHİRBAZI (WIZARD) VE SPOTLIGHT
 // ----------------------------------------------------
+function showShareWizardFeedback(message, type = 'error') {
+  const box = document.getElementById('shareWizardFeedback');
+  if (!box) return;
+  box.className = `share-wizard-feedback is-${type}`;
+  box.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'info' ? 'fa-circle-info' : 'fa-triangle-exclamation'}" aria-hidden="true"></i><span></span>`;
+  box.querySelector('span').textContent = message;
+  box.hidden = false;
+}
+
+function clearShareWizardFeedback() {
+  const box = document.getElementById('shareWizardFeedback');
+  if (box) { box.hidden = true; box.textContent = ''; box.className = 'share-wizard-feedback'; }
+}
+
 window.goToWizardStep = function (step) {
+  if (step === 2) {
+    if (!window.currentSelectedTrack?.uri) {
+      showShareWizardFeedback('Devam etmeden önce önerilerden bir şarkı seç veya Spotify’da ara.', 'error');
+      document.getElementById('wizardStep1')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('spotifySearchInput')?.focus({ preventScroll: true });
+      return;
+    }
+    if (lyricShareMode) {
+      const selected = getSelectedLyricLines();
+      const lyricsAvailable = document.querySelectorAll('#dockLyricsScrollBody .lyrics-dock-line').length > 0;
+      if (!lyricsAvailable) {
+        showShareWizardFeedback('Bu parça için şarkı sözü bulunamadı. Müzik paylaşımına geçebilir veya başka bir parça deneyebilirsin.', 'error');
+        return;
+      }
+      // Söz aralığı ayarlar adımında seçilebilir; seçmeden ilerlemek serbesttir.
+    }
+    clearShareWizardFeedback();
+  }
   const step1 = document.getElementById('wizardStep1');
   const step2 = document.getElementById('wizardStep2');
   const dot1 = document.getElementById('dotStep1');
@@ -710,7 +830,7 @@ function renderShareRecommendationTiles(tracks, { loading = false, emptyMessage 
     const uri = song.spotifyUri || (song.id ? `spotify:track:${song.id}` : '');
     return `
       <button type="button"
-        class="selector-tile selector-tile-enter ${index === 0 ? 'selected' : ''}"
+        class="selector-tile selector-tile-enter"
         data-recommendation-index="${index}"
         style="--tile-index:${index}"
         aria-label=" ${escapeHtml(title)} — ${escapeHtml(artist)} seç">
@@ -743,6 +863,7 @@ function renderShareRecommendationTiles(tracks, { loading = false, emptyMessage 
 }
 
 async function loadRecommendations() {
+  window.songShareRecommendationTracks = [];
 
   const stage =
     document.getElementById('coverflowStage');
@@ -803,12 +924,16 @@ async function loadRecommendations() {
       renderShareRecommendationTiles([], {
         emptyMessage: 'Öneriler bulunamadı. Bir şarkı bulmak için aramayı kullanabilirsin.'
       });
+      const label = document.getElementById('selectorListLabel');
+      if (label) label.textContent = 'Öneriler bulunamadı';
       stage.classList.remove('recommendations-loading');
       return;
     }
 
     // Aynı API cevabını paylaş sayfasındaki öneri kartlarında da kullan.
     renderShareRecommendationTiles(recommendations);
+    const label = document.getElementById('selectorListLabel');
+    if (label) label.textContent = 'Önerilen şarkılar';
 
     // Backend'den gelen şarkıları Coverflow'a aktar
     stage.innerHTML = recommendations.map(song => {
@@ -877,6 +1002,8 @@ async function loadRecommendations() {
     renderShareRecommendationTiles([], {
       emptyMessage: 'Öneriler yüklenemedi. Bir şarkı bulmak için aramayı kullanabilirsin.'
     });
+    const label = document.getElementById('selectorListLabel');
+    if (label) label.textContent = 'Öneriler yüklenemedi';
 
     /*
      * Öneri isteği başarısızsa ekstra bir istek atmayız.
@@ -1061,12 +1188,113 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.currentSelectedTrack = null;
 
-  // Paylaşım türü seçici: müzik paylaşımı aktif, lyrics kesiti şimdilik kapalı.
+  // Paylaşım türü seçici: şarkı sözleri için puanlamasız, tasarlanabilir alıntı modu.
   const lyricsModeButton = document.getElementById('shareModeLyrics');
-  lyricsModeButton?.addEventListener('click', (event) => {
-    event.preventDefault();
-    window.showDevelopmentNotice(event);
+  const musicModeButton = document.getElementById('shareModeMusic');
+  function setLyricsShareMode(enabled) {
+    lyricShareMode = enabled;
+    lyricsModeButton?.classList.toggle('is-active', enabled);
+    musicModeButton?.classList.toggle('is-active', !enabled);
+    lyricsModeButton?.setAttribute('aria-pressed', String(enabled));
+    musicModeButton?.setAttribute('aria-pressed', String(!enabled));
+    document.getElementById('lyricsEditorPanel')?.classList.toggle('is-mode-active', enabled);
+    document.getElementById('wizardStep2')?.classList.toggle('lyrics-compose-mode', enabled);
+    document.getElementById('shareStageCluster')?.classList.toggle('lyrics-compose-mode', enabled);
+    document.getElementById('shareLyricsDockPanel')?.classList.toggle('lyrics-select-mode', enabled);
+    const ratingContainer = document.querySelector('#wizardStep2 .rating-dynamic-container');
+    ratingContainer?.closest('.form-group')?.classList.toggle('lyrics-rating-hidden', enabled);
+    const commentField = document.getElementById('wizardCommentInput');
+    commentField?.closest('.form-group')?.classList.toggle('lyrics-comment-hidden', enabled);
+    if (enabled) updateLyricsSharePreview();
+  }
+  lyricsModeButton?.addEventListener('click', async () => {
+    clearShareWizardFeedback();
+    setLyricsShareMode(true);
+    const track = window.currentSelectedTrack;
+    if (!track?.uri) {
+      showShareWizardFeedback('Lyrics modu hazır. Önce bir şarkı seç; sözler ardından otomatik yüklenecek.', 'info');
+      document.getElementById('spotifySearchInput')?.focus({ preventScroll: true });
+      return;
+    }
+    let lyricLines = document.querySelectorAll('#dockLyricsScrollBody .lyrics-dock-line').length;
+    if (!lyricLines) {
+      showShareWizardFeedback('Bu şarkının sözleri kontrol ediliyor…', 'info');
+      try {
+        await window.fetchShareLyricsForTrack?.(track.name, track.artist, track.duration_ms);
+      } catch (error) {
+        console.warn('Lyrics moduna geçerken sözler yüklenemedi:', error);
+      }
+      lyricLines = document.querySelectorAll('#dockLyricsScrollBody .lyrics-dock-line').length;
+    }
+    if (!lyricLines) {
+      showShareWizardFeedback('Bu parça için söz bulunamadı. Yine de ayarlara geçebilir veya başka bir şarkı deneyebilirsin.', 'info');
+      return;
+    }
+    clearShareWizardFeedback();
+    updateLyricsSharePreview();
   });
+  musicModeButton?.addEventListener('click', () => { setLyricsShareMode(false); clearShareWizardFeedback(); });
+  const refreshRecommendationsButton = document.getElementById('btnRefreshRecommendations');
+  refreshRecommendationsButton?.addEventListener('click', async () => {
+    const icon = refreshRecommendationsButton.querySelector('i');
+    refreshRecommendationsButton.disabled = true;
+    refreshRecommendationsButton.classList.add('is-loading');
+    if (icon) icon.classList.add('fa-spin');
+    clearShareWizardFeedback();
+    const label = document.getElementById('selectorListLabel');
+    if (label) label.textContent = 'Yeni öneriler yükleniyor…';
+    try {
+      await loadRecommendations();
+      if (!window.songShareRecommendationTracks?.length) {
+        showShareWizardFeedback('Öneriler şu anda yüklenemedi. Aramayı kullanarak şarkı bulabilirsin.', 'error');
+      }
+    } finally {
+      refreshRecommendationsButton.disabled = false;
+      refreshRecommendationsButton.classList.remove('is-loading');
+      if (icon) icon.classList.remove('fa-spin');
+    }
+  });
+  document.querySelectorAll('[data-lyric-bg]').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-lyric-bg]').forEach(b => b.classList.toggle('is-active', b === btn));
+    lyricDesign.background = btn.dataset.lyricBg;
+    document.getElementById('lyricsColorRow')?.classList.toggle('is-muted', lyricDesign.background === 'blur');
+    updateLyricsSharePreview();
+  }));
+  document.querySelectorAll('[data-lyric-align]').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-lyric-align]').forEach(b => b.classList.toggle('is-active', b === btn));
+    lyricDesign.align = btn.dataset.lyricAlign; updateLyricsSharePreview();
+  }));
+  document.querySelectorAll('[data-color]').forEach(btn => btn.addEventListener('click', () => {
+    lyricDesign.color = btn.dataset.color;
+    const input = document.getElementById('lyricsBackgroundColor'); if (input) input.value = lyricDesign.color;
+    const hex = document.getElementById('lyricsColorHex'); if (hex) hex.textContent = lyricDesign.color.toUpperCase();
+    updateLyricsSharePreview();
+  }));
+  document.getElementById('lyricsBackgroundColor')?.addEventListener('input', e => {
+    lyricDesign.color = e.target.value;
+    const hex = document.getElementById('lyricsColorHex'); if (hex) hex.textContent = lyricDesign.color.toUpperCase();
+    updateLyricsSharePreview();
+  });
+  document.getElementById('lyricsGradientColor')?.addEventListener('input', e => {
+    lyricDesign.gradientColor = e.target.value;
+    const hex = document.getElementById('lyricsGradientColorHex'); if (hex) hex.textContent = lyricDesign.gradientColor.toUpperCase();
+    updateLyricsSharePreview();
+  });
+  document.getElementById('lyricsFontStyle')?.addEventListener('change', e => { lyricDesign.font = e.target.value; updateLyricsSharePreview(); });
+  document.getElementById('lyricsFontColor')?.addEventListener('input', e => { lyricDesign.fontColor = e.target.value; const out = document.getElementById('lyricsFontColorHex'); if (out) out.textContent = lyricDesign.fontColor.toUpperCase(); updateLyricsSharePreview(); });
+  document.getElementById('lyricsFontSize')?.addEventListener('input', e => { lyricDesign.fontSize = Number(e.target.value); const out = document.getElementById('lyricsFontSizeValue'); if (out) out.textContent = `${lyricDesign.fontSize} px`; updateLyricsSharePreview(); });
+  document.getElementById('lyricsTextEffect')?.addEventListener('change', e => { lyricDesign.textEffect = e.target.value; updateLyricsSharePreview(); });
+  document.getElementById('lyricsTextTransform')?.addEventListener('change', e => { lyricDesign.textTransform = e.target.value; updateLyricsSharePreview(); });
+  document.getElementById('lyricsLetterSpacing')?.addEventListener('input', e => { lyricDesign.letterSpacing = Number(e.target.value); const out = document.getElementById('lyricsLetterSpacingValue'); if (out) out.textContent = `${lyricDesign.letterSpacing.toFixed(1)} px`; updateLyricsSharePreview(); });
+  document.getElementById('lyricsTextItalic')?.addEventListener('change', e => { lyricDesign.italic = e.target.checked; updateLyricsSharePreview(); });
+  document.getElementById('lyricsLineSpacing')?.addEventListener('input', e => {
+    lyricDesign.lineSpacing = Number(e.target.value);
+    const output = document.getElementById('lyricsLineSpacingValue');
+    if (output) output.textContent = `${lyricDesign.lineSpacing.toFixed(2)}×`;
+    updateLyricsSharePreview();
+  });
+  ['lyricsIncludePlayer', 'lyricsIncludeCover', 'lyricsIncludeMeta'].forEach(id => document.getElementById(id)?.addEventListener('change', updateLyricsSharePreview));
+  document.getElementById('resetLyricsRange')?.addEventListener('click', () => { lyricRangeStart = lyricRangeEnd = null; document.querySelectorAll('.lyrics-dock-line').forEach(line => line.classList.remove('is-range-start','is-range-end','is-range-pending','is-range-selected')); updateLyricsSharePreview(); });
 
   // ----------------------------------------------------
   // 3. SPA VIEW & SAYFA GEÇİŞ YÖNETİMİ
@@ -1103,6 +1331,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (viewName === 'home') {
       window.restoreRightPanels();
+    } else if (viewName === 'share' && window.currentSelectedTrack) {
+      // Home/feed görünümünden geri dönünce seçili şarkı, lyrics ve sanatçı bilgileri korunur.
+      window.triggerRightPanelsSlideOut(window.currentSelectedTrack);
+      if (lyricShareMode) {
+        document.getElementById('lyricsEditorPanel')?.classList.add('is-mode-active');
+        document.getElementById('wizardStep2')?.classList.add('lyrics-compose-mode');
+        document.getElementById('shareStageCluster')?.classList.add('lyrics-compose-mode');
+        document.getElementById('shareLyricsDockPanel')?.classList.add('lyrics-select-mode');
+      }
+      updateLyricsSharePreview();
     }
   }
 
@@ -2156,18 +2394,24 @@ ${!isLive
     const q = e.target.value.trim();
     const requestId = ++spotifySearchRequestId;
 
-    if (q.length < 2) return;
+    if (q.length < 2) {
+      if (!q) clearShareWizardFeedback();
+      return;
+    }
+    clearShareWizardFeedback();
+    const grid = document.getElementById('wizardSongGrid');
+    if (grid) grid.innerHTML = '<div class="selector-search-state"><i class="fa-solid fa-spinner fa-spin"></i><span>Spotify’da aranıyor…</span></div>';
 
     searchDebounceTimer = setTimeout(async () => {
       try {
         const token = localStorage.getItem('token');
         const res = await fetch(`/api/spotify/search?q=${encodeURIComponent(q)}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${token}` }, credentials: 'include'
         });
 
         // Hızlı aramalarda eski sorgunun cevabı yeni sonuçları ezmesin.
         if (requestId !== spotifySearchRequestId) return;
-
+        if (!res.ok) throw new Error(res.status === 401 ? 'Spotify araması için oturumunu yenilemen gerekiyor.' : `Arama servisi yanıt vermedi (HTTP ${res.status}).`);
         const json = await res.json();
         if (requestId !== spotifySearchRequestId) return;
 
@@ -2200,11 +2444,21 @@ ${!isLive
             });
           });
 
+          const label = document.getElementById('selectorListLabel');
+          if (label) label.textContent = `Arama sonuçları (${json.tracks.length})`;
           // Arama sonuçları gösterilirken otomatik şarkı seçme.
           // Kullanıcı hangi parçaya tıklarsa yalnızca o parça seçilsin.
+          clearShareWizardFeedback();
+        } else {
+          if (grid) grid.innerHTML = '<div class="selector-empty-state"><i class="fa-solid fa-magnifying-glass"></i><span>Bu aramayla eşleşen şarkı bulunamadı. Farklı bir başlık veya sanatçı dene.</span></div>';
+          showShareWizardFeedback('Sonuç bulunamadı. Şarkı adını veya sanatçıyı farklı yazarak tekrar dene.', 'info');
         }
       } catch (err) {
+        if (requestId !== spotifySearchRequestId) return;
         console.error('Spotify arama hatası:', err);
+        const grid = document.getElementById('wizardSongGrid');
+        if (grid) grid.innerHTML = '<div class="selector-empty-state"><i class="fa-solid fa-triangle-exclamation"></i><span>Arama şu anda tamamlanamadı.</span></div>';
+        showShareWizardFeedback(err.message || 'Spotify araması başarısız oldu. Bağlantını kontrol edip tekrar dene.', 'error');
       }
     }, 400);
   };
@@ -2224,6 +2478,8 @@ ${!isLive
   };
 
   window.selectCustomTrack = function (title, artist, coverUrl, spotifyUri, durationMs = 180000) {
+    // Farklı bir şarkıya geçildiğinde önceki şarkının lyrics aralığı taşınmasın.
+    lyricRangeStart = lyricRangeEnd = null;
     window.currentSelectedTrack = {
       name: title,
       artist,
@@ -2518,6 +2774,27 @@ ${!isLive
     wizardVisualizerBars = visualizer.querySelectorAll('.bar');
   }
 
+  const highlightSliderForLyrics = document.getElementById('wizardHighlightSlider');
+  highlightSliderForLyrics?.addEventListener('input', () => {
+    if (!lyricShareMode) return;
+    const lines = [...document.querySelectorAll('#dockLyricsScrollBody .lyrics-dock-line')];
+    if (!lines.length) return;
+    const targetTime = Number(highlightSliderForLyrics.value) || 0;
+    let nearestIndex = 0;
+    let nearestDistance = Infinity;
+    lines.forEach((line, index) => {
+      const distance = Math.abs((Number(line.dataset.time) || 0) - targetTime);
+      if (distance < nearestDistance) { nearestDistance = distance; nearestIndex = index; }
+    });
+    const previousCount = lyricRangeStart !== null
+      ? Math.max(1, Math.min(MAX_LYRICS_SHARE_LINES, Math.abs((lyricRangeEnd ?? lyricRangeStart) - lyricRangeStart) + 1))
+      : 1;
+    lyricRangeStart = nearestIndex;
+    lyricRangeEnd = previousCount > 1 ? Math.min(lines.length - 1, nearestIndex + previousCount - 1) : null;
+    renderLyricRangeSelection();
+    updateLyricsSharePreview();
+  });
+
   window.updateWizardHighlightAnimation = function (val) {
     const slider = document.getElementById('wizardHighlightSlider');
     const display = document.getElementById('wizardHighlightDisplay');
@@ -2644,10 +2921,30 @@ ${!isLive
       song_url: `https://open.spotify.com/track/${window.currentSelectedTrack.uri.split(':')[2] || ''}`,
       song_cover_url: window.currentSelectedTrack.imageUrl,
       visibility: privacy,
-      rating_by_user: Number(rating),
+      ...(lyricShareMode ? {} : { rating_by_user: Number(rating) }),
       comment_by_user: comment,
-      recommended_time_by_user: formatSecondsSimple(highlightSec)
+      recommended_time_by_user: formatSecondsSimple(highlightSec),
+      post_type: lyricShareMode ? 'lyrics' : 'music',
+      lyrics_excerpt: lyricShareMode ? getSelectedLyricLines().map(line => line.text).join('\n') : null,
+      lyrics_start_time: lyricShareMode && getSelectedLyricLines().length ? getSelectedLyricLines()[0].time : null,
+      lyrics_end_time: lyricShareMode && getSelectedLyricLines().length ? getSelectedLyricLines().at(-1).time : null,
+      lyrics_design: lyricShareMode ? {
+        background: lyricDesign.background, background_color: lyricDesign.color,
+        text_align: lyricDesign.align, font_style: lyricDesign.font,
+        line_spacing: Number(lyricDesign.lineSpacing || 1.45),
+        font_color: lyricDesign.fontColor || '#ffffff', font_size: Number(lyricDesign.fontSize || 23),
+        text_effect: lyricDesign.textEffect || 'soft', text_transform: lyricDesign.textTransform || 'none',
+        letter_spacing: Number(lyricDesign.letterSpacing ?? -0.5), italic: !!lyricDesign.italic,
+        include_player: document.getElementById('lyricsIncludePlayer')?.checked !== false,
+        include_cover: document.getElementById('lyricsIncludeCover')?.checked !== false,
+        include_metadata: document.getElementById('lyricsIncludeMeta')?.checked !== false
+      } : null
     };
+
+    if (lyricShareMode && !getSelectedLyricLines().length) {
+      alert('Önce sağdaki söz panelinden paylaşmak istediğin ilk ve son satırı seç.');
+      return;
+    }
 
     try {
       const res = await fetch('/api/songshare', {

@@ -195,10 +195,10 @@
               <span class="share-mode-copy"><strong>Müzik paylaşma</strong><small>Bir parçayı arkadaşlarınla paylaş</small></span>
               <i class="fa-solid fa-check share-mode-check" aria-hidden="true"></i>
             </button>
-            <button type="button" class="share-mode-option is-disabled" id="shareModeLyrics" aria-pressed="false" aria-disabled="true" title="Bu özellik yakında kullanılabilecek">
+            <button type="button" class="share-mode-option" id="shareModeLyrics" aria-pressed="false" title="Şarkı sözlerinden bir kesit tasarla">
               <span class="share-mode-icon"><i class="fa-solid fa-quote-right"></i></span>
               <span class="share-mode-copy"><strong>Lyrics kesiti paylaşma</strong><small>Şarkı sözlerinden bir an paylaş</small></span>
-              <span class="share-mode-coming-soon">YAKINDA</span>
+              <span class="share-mode-check"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
             </button>
           </div>
 
@@ -306,7 +306,7 @@
                 </div>
 
                 <div class="form-group" style="margin-top: 4px;">
-                  <label>Spotify'da Parça Ara (Backend API)</label>
+                  <label for="spotifySearchInput">Spotify'da Parça Ara</label>
                   <div class="search-input-wrapper">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <circle cx="11" cy="11" r="8"></circle>
@@ -316,10 +316,16 @@
                       placeholder="Spotify veritabanından parça aratın (Örn: Artist, Şarkı)..."
                       oninput="handleSpotifySearchInput(event)" />
                   </div>
+                  <div class="share-wizard-feedback" id="shareWizardFeedback" role="status" aria-live="polite" hidden></div>
                 </div>
 
                 <div class="form-group">
-                  <label id="selectorListLabel">Kütüphane Önerileri & Sonuçlar</label>
+                  <div class="selector-list-heading">
+                    <label id="selectorListLabel">Önerilen şarkılar</label>
+                    <button type="button" class="btn-refresh-recommendations" id="btnRefreshRecommendations" title="Önerileri yenile">
+                      <i class="fa-solid fa-rotate" aria-hidden="true"></i><span>Yenile</span>
+                    </button>
+                  </div>
                   <div class="song-selector-grid is-loading" id="wizardSongGrid" aria-live="polite"
                     aria-label="Önerilen şarkılar">
                     <div class="selector-tile selector-tile-skeleton" style="--tile-index:0">
@@ -359,6 +365,28 @@
                   </div>
                 </div>
 
+                <div class="lyrics-editor-panel" id="lyricsEditorPanel" aria-label="Şarkı sözü paylaşım tasarımı">
+                  <div class="lyrics-editor-heading"><div><span class="editor-eyebrow">LYRICS STUDIO</span><h3>Paylaşımını tasarla</h3><p>Önizleme, seçtiğin söz aralığıyla anında güncellenir.</p></div><span class="editor-pro-pill"><i class="fa-solid fa-wand-magic-sparkles"></i> STUDIO</span></div>
+                  <div class="lyrics-share-preview" id="lyricsSharePreview"><div class="lyrics-preview-label">LIVE PREVIEW <span>• güncelleniyor</span></div><div class="lyrics-preview-content"><img class="lyrics-preview-cover" id="lyricsPreviewCover" src="" alt="Albüm kapağı"><div class="lyrics-preview-copy"><div class="lyrics-preview-lines" id="lyricsPreviewLines">Şarkı sözlerinden bir an seç</div><div class="lyrics-preview-meta" id="lyricsPreviewMeta">Sanatçı · Şarkı</div></div></div><div class="lyrics-preview-player" id="lyricsPreviewPlayer"><i class="fa-solid fa-circle-play"></i> Dinlemek için aç</div></div>
+                  <div class="editor-setting-row"><div><strong>Arka plan</strong><small>Albüm kapağından otomatik veya kendi rengin</small></div><div class="editor-segmented" role="group" aria-label="Arka plan türü"><button type="button" class="is-active" data-lyric-bg="blur">Albüm bulanık</button><button type="button" data-lyric-bg="solid">Düz renk</button><button type="button" data-lyric-bg="gradient">Gradient</button></div></div>
+                  <div class="editor-color-row" id="lyricsColorRow"><label for="lyricsBackgroundColor">Arka plan rengi</label><input id="lyricsBackgroundColor" type="color" value="#211c35"><span id="lyricsColorHex">#211C35</span><label class="gradient-color-label" for="lyricsGradientColor">Gradient 2. renk</label><input id="lyricsGradientColor" type="color" value="#452333" aria-label="Gradient ikinci rengi"><span id="lyricsGradientColorHex">#452333</span><div class="editor-swatches"><button type="button" data-color="#211c35" style="--swatch:#211c35" aria-label="Mor"></button><button type="button" data-color="#123b35" style="--swatch:#123b35" aria-label="Yeşil"></button><button type="button" data-color="#142c50" style="--swatch:#142c50" aria-label="Mavi"></button><button type="button" data-color="#5a2438" style="--swatch:#5a2438" aria-label="Bordo"></button><button type="button" data-color="#111318" style="--swatch:#111318" aria-label="Siyah"></button></div></div>
+                  <div class="editor-setting-row"><div><strong>Tipografi</strong><small>Paylaşım kartının metin görünümü</small></div><select id="lyricsFontStyle" class="form-input"><option value="clean">Apple Clean</option><option value="serif">Editorial Serif</option><option value="bold">Bold Statement</option></select></div>
+                  <div class="editor-setting-row"><div><strong>Metin hizası</strong><small>Satırların kart içindeki konumu</small></div><div class="editor-segmented" role="group" aria-label="Metin hizası"><button type="button" class="is-active" data-lyric-align="left">Sol</button><button type="button" data-lyric-align="center">Orta</button><button type="button" data-lyric-align="right">Sağ</button></div></div>
+                  <div class="lyrics-custom-grid">
+                    <label class="lyrics-custom-control" for="lyricsFontColor"><span><strong>Yazı rengi</strong><small>Sözlerin tonu</small></span><span class="lyrics-color-input-wrap"><input id="lyricsFontColor" type="color" value="#ffffff"><output id="lyricsFontColorHex">#FFFFFF</output></span></label>
+                    <label class="lyrics-custom-control" for="lyricsFontSize"><span><strong>Yazı boyutu</strong><small>Daha sakin veya daha iddialı</small></span><span class="lyrics-range-inline"><input id="lyricsFontSize" type="range" min="14" max="38" step="1" value="23"><output id="lyricsFontSizeValue">23 px</output></span></label>
+                    <label class="lyrics-custom-control" for="lyricsTextEffect"><span><strong>Metin efekti</strong><small>Paylaşımın atmosferi</small></span><select id="lyricsTextEffect" class="form-input"><option value="soft">Soft shadow</option><option value="glow">Neon glow</option><option value="outline">Crisp outline</option><option value="none">Efekt yok</option></select></label>
+                    <label class="lyrics-custom-control" for="lyricsTextTransform"><span><strong>Harf stili</strong><small>Metnin karakteri</small></span><select id="lyricsTextTransform" class="form-input"><option value="none">Normal</option><option value="uppercase">BÜYÜK HARF</option><option value="lowercase">küçük harf</option></select></label>
+                    <label class="lyrics-custom-control" for="lyricsLetterSpacing"><span><strong>Harf aralığı</strong><small>Daha geniş, poster tarzı yazı</small></span><span class="lyrics-range-inline"><input id="lyricsLetterSpacing" type="range" min="-2" max="6" step="0.5" value="-0.5"><output id="lyricsLetterSpacingValue">-0.5 px</output></span></label>
+                    <div class="lyrics-custom-control"><span><strong>Editorial italik</strong><small>Şiirsel, dergi kapağı hissi</small></span><label class="ios-toggle"><input id="lyricsTextItalic" type="checkbox"><span></span></label></div>
+                  </div>
+                  <div class="lyrics-spacing-setting"><div class="lyrics-spacing-heading"><div><strong>Satır aralığı</strong><small>Seçtiğin sözlerin satırları arasındaki boşluk</small></div><output id="lyricsLineSpacingValue" for="lyricsLineSpacing">1.45×</output></div><input id="lyricsLineSpacing" type="range" min="0.8" max="2.2" step="0.05" value="1.45" aria-label="Şarkı sözleri satır aralığı"></div>
+                  <div class="editor-setting-row"><div><strong>Müzik oynatıcı</strong><small>Paylaşılan kartta dinleme bağlantısı göster</small></div><label class="ios-toggle"><input id="lyricsIncludePlayer" type="checkbox" checked><span></span></label></div>
+                  <div class="editor-setting-row"><div><strong>Albüm kapağı</strong><small>Sözlerin yanında albüm kapağını göster</small></div><label class="ios-toggle"><input id="lyricsIncludeCover" type="checkbox" checked><span></span></label></div>
+                  <div class="editor-setting-row"><div><strong>Sanatçı / şarkı bilgisi</strong><small>Başlık ve sanatçı adını göster</small></div><label class="ios-toggle"><input id="lyricsIncludeMeta" type="checkbox" checked><span></span></label></div>
+                  <div class="lyrics-range-summary" id="lyricsRangeSummary"><i class="fa-solid fa-hand-pointer"></i><span>Başlangıç satırını seç, ardından bitiş satırına tıkla. Sağdaki panelde başlangıç ve bitiş etiketleri görünecek.</span></div>
+
+                </div>
                 <div class="share-settings-form">
                   <div class="form-group">
                     <div class="time-picker-card">
