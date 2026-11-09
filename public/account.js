@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initAccountEvents();
   initBlobatarStudio();
   initPixelStudio();
+  initAccountQuickGuide();
 });
 
 
@@ -433,24 +434,8 @@ function initAccountEvents() {
     );
 
 
-  // ----------------------------------------------------------
-  // SECURITY
-  // ----------------------------------------------------------
-
-  document
-    .getElementById('securityForm')
-    ?.addEventListener(
-      'submit',
-      event => {
-
-        event.preventDefault();
-
-        alert(
-          '🔒 Password credentials rotation submitted.'
-        );
-
-      }
-    );
+  // Password changes are intentionally disabled in the UI until a real
+  // backend endpoint and validation flow are implemented.
 
 
   // ----------------------------------------------------------
@@ -4918,4 +4903,77 @@ document.addEventListener(
 
 function startPixelStudio() {
   initPixelStudio();
+}
+
+
+/* ============================================================
+   ACCOUNT QUICK GUIDE — optional, SongShare-style walkthrough
+============================================================ */
+function initAccountQuickGuide() {
+  const backdrop = document.getElementById('helpTourBackdrop');
+  const openBtn = document.getElementById('helpTourOpenBtn');
+  if (!backdrop || !openBtn) return;
+
+  const title = document.getElementById('tourTitle');
+  const body = document.getElementById('tourBody');
+  const label = document.getElementById('tourStepLabel');
+  const progress = document.getElementById('tourProgressFill');
+  const prev = document.getElementById('tourPrevBtn');
+  const next = document.getElementById('tourNextBtn');
+  let index = 0;
+  let highlighted = null;
+  const steps = [
+    { target: '.account-profile-hero-card', title: 'Your profile', body: 'Your username, email, role and current avatar are shown here. Use the avatar controls to open the Avatar Vault.' },
+    { target: '#accountSettingsSection', title: 'Account settings', body: 'Change your display username and explore the available account settings. Password changes are currently disabled.' },
+    { target: '#btnHeroVaultTrigger', title: 'Open the Avatar Vault', body: 'This is where you can browse the avatar collection, explore the 2D map, or create a Blobatar.' },
+    { target: '#btnSideBlobatar', title: 'Create a Blobatar', body: 'Use Blobatar Studio to customize a character’s shape, expression, color and motion, then save it as your avatar.' , openVault: true},
+    { target: '#btnSidePixelStudio', title: 'Pixel Studio (Beta)', body: 'Pixel Studio is still a work in progress. Some tools and save/apply actions may not work reliably yet.', openVault: true}
+  ];
+
+  function clearHighlight() {
+    if (highlighted) highlighted.classList.remove('tour-spotlight');
+    highlighted = null;
+  }
+  function render() {
+    clearHighlight();
+    const step = steps[index];
+    if (step.openVault) {
+      const modal = document.getElementById('canvasVaultModal');
+      if (modal && !modal.classList.contains('active')) {
+        document.getElementById('btnHeroVaultTrigger')?.click();
+      }
+    }
+    const target = document.querySelector(step.target);
+    if (target) {
+      highlighted = target;
+      target.classList.add('tour-spotlight');
+      target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    title.textContent = step.title;
+    body.textContent = step.body;
+    label.textContent = `STEP ${index + 1} OF ${steps.length}`;
+    progress.style.width = `${((index + 1) / steps.length) * 100}%`;
+    prev.disabled = index === 0;
+    next.textContent = index === steps.length - 1 ? 'Finish' : 'Next';
+  }
+  function close() {
+    clearHighlight();
+    backdrop.classList.remove('is-visible');
+    backdrop.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('tour-open');
+  }
+  function open() {
+    index = 0;
+    backdrop.classList.add('is-visible');
+    backdrop.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('tour-open');
+    render();
+  }
+  openBtn.addEventListener('click', open);
+  document.getElementById('tourCloseBtn')?.addEventListener('click', close);
+  document.getElementById('tourSkipBtn')?.addEventListener('click', close);
+  prev.addEventListener('click', () => { if (index > 0) { index--; render(); } });
+  next.addEventListener('click', () => { if (index < steps.length - 1) { index++; render(); } else close(); });
+  backdrop.addEventListener('click', event => { if (event.target === backdrop) close(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && backdrop.classList.contains('is-visible')) close(); });
 }

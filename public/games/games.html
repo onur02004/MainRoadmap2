@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090a0d">
+  <title>Games · SongShare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/games/games.css">
+  <script src="/games/games.js" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="pointer-glow" id="pointerGlow"></div>
+
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-mark">s</span><span>songshare</span></a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <a class="nav-item active" href="/games">Games</a>
+      <a class="nav-item" href="/friends">Friends</a>
+      <a class="nav-item" href="/">Feed</a>
+    </nav>
+    <div class="top-actions">
+      <span class="live-label"><i></i> LIVE</span>
+      <a class="profile-dot" href="/account" aria-label="Account">✦</a>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="page-intro">
+      <div class="intro-left">
+        <div class="overline"><span></span> THE SONGSHARE ARCADE</div>
+        <h1>Games<span class="title-period">.</span></h1>
+        <p>Find something to play. Bring your friends.</p>
+      </div>
+      <div class="intro-side">
+        <div class="blur-orb"></div>
+        <div class="intro-note"><span class="note-icon">↗</span><span>Pick a game<br><b>Make a moment.</b></span></div>
+      </div>
+    </section>
+
+    <section class="friends-section">
+      <div class="section-title">
+        <div><span class="section-kicker">AROUND RIGHT NOW</span><h2>Friends playing</h2></div>
+        <a href="/friends" class="subtle-link">See friends <span>↗</span></a>
+      </div>
+      <div class="friends-rail" id="friendsRail">
+        <div class="friends-loading"><i></i> Looking for friends…</div>
+      </div>
+    </section>
+
+    <section class="library-section" id="library">
+      <div class="library-head">
+        <div><span class="section-kicker">PICK YOUR NEXT GAME</span><h2>All games <span id="allCount" class="count">—</span></h2></div>
+        <label class="search-box"><span>⌕</span><input id="gameSearch" type="search" placeholder="Search games" autocomplete="off"><kbd>/</kbd></label>
+      </div>
+      <div class="toolbar">
+        <div class="filter-row" id="categoryFilters">
+          <button class="filter-chip active" data-category="all">All</button>
+          <button class="filter-chip" data-category="party">Party</button>
+          <button class="filter-chip" data-category="logic">Logic</button>
+          <button class="filter-chip" data-category="trivia">Trivia</button>
+          <button class="filter-chip" data-category="word">Word</button>
+          <button class="filter-chip" data-category="creative">Creative</button>
+        </div>
+        <span class="sort-note">A GOOD TIME, SORTED.</span>
+      </div>
+      <div class="games-list" id="gamesGrid">
+        <div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div>
+      </div>
+      <div class="empty-state" id="emptyState" hidden>
+        <span>⌕</span><h3>No games found</h3><p>Try a different search or category.</p>
+        <button id="resetFilters">Clear filters</button>
+      </div>
+      <div class="load-error" id="loadError" hidden>Couldn't load the games. <button id="retryLoad">Try again</button></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <a class="brand footer-brand" href="/"><span class="brand-mark">s</span><span>songshare</span></a>
+    <span>Good games are better together.</span>
+    <a href="/">Back to feed ↗</a>
+  </footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -149,8 +149,219 @@ function formatSecondsSimple(s) {
 }
 
 // ----------------------------------------------------
-// SAĞ PANELLERİ DIŞARI ATMA VE GERÇEK LRCLIB SÖZLERİNİ YÜKLEME
+// LYRICS PANELİ + SPOTIFY PLAYBACK SENKRONİZASYONU
+// Spotify API yalnızca merkezi now-playing poll'unda (5 sn) çağrılır.
+// Lyrics satırlarının görsel güncellemesi ise yerel timer ile yapılır.
 // ----------------------------------------------------
+
+let currentLyricsFetchId = 0;
+let currentLyricsTrackKey = '';
+let currentLyricsLoaded = false;
+let currentLyricsLoading = false;
+let currentLyricsLoadPromise = null;
+let lastActiveLyricsIndex = -1;
+let lyricsPlaybackTimer = null;
+let nowPlayingRequestInFlight = false;
+let lastForcedNowPlayingRefreshAt = 0;
+
+const NOW_PLAYING_POLL_INTERVAL_MS = 5000;
+const LYRICS_UI_TICK_INTERVAL_MS = 250;
+
+function extractSpotifyTrackId(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+
+  const uriMatch = raw.match(/spotify:track:([A-Za-z0-9]+)/i);
+  if (uriMatch) return uriMatch[1];
+
+  const urlMatch = raw.match(/open\.spotify\.com\/(?:embed\/)?track\/([A-Za-z0-9]+)/i);
+  if (urlMatch) return urlMatch[1];
+
+  return /^[A-Za-z0-9]{10,}$/.test(raw) ? raw : '';
+}
+
+function getLyricsTrackKey(track) {
+  if (!track) return '';
+  const spotifyId = extractSpotifyTrackId(track.uri || track.spotifyUri || track.songUrl);
+  if (spotifyId) return `spotify:${spotifyId}`;
+  return `${track.artist || ''}::${track.name || ''}`.trim().toLocaleLowerCase();
+}
+
+function isShareViewActive() {
+  const shareView = document.getElementById('view-share');
+  return !shareView || shareView.classList.contains('active');
+}
+
+function setLyricsSyncStatus(message, state = 'idle') {
+  const status = document.getElementById('dockLyricsSyncStatus');
+  if (!status) return;
+  status.textContent = message;
+  status.dataset.state = state;
+}
+
+function getEstimatedSpotifyPosition() {
+  const track = window.currentSelectedTrack;
+  if (!track) return 0;
+
+  let position = Math.max(0, Number(track.playbackPositionSec) || 0);
+
+  // Son Spotify ölçümünden bu yana geçen süreyi yalnızca aynı parça çalıyorsa ekle.
+  if (track.syncWithSpotify && track.isPlaying && track.playbackCapturedAt) {
+    position += Math.max(0, Date.now() - track.playbackCapturedAt) / 1000;
+  }
+
+  if (track.duration_ms > 0) {
+    position = Math.min(position, track.duration_ms / 1000);
+  }
+
+  return position;
+}
+
+function updateActiveLyricByTime(position) {
+  const scrollBody = document.getElementById('dockLyricsScrollBody');
+  if (!scrollBody) return;
+
+  const lines = Array.from(scrollBody.querySelectorAll('.lyrics-dock-line'));
+  if (!lines.length) return;
+
+  const track = window.currentSelectedTrack;
+  const hasSyncedLyrics = track?.hasSyncedLyrics ??
+    lines.some(line => Number(line.dataset.time || 0) > 0);
+
+  if (!hasSyncedLyrics) return;
+
+  let activeIndex = 0;
+  const currentPosition = Math.max(0, Number(position) || 0);
+
+  for (let i = 0; i < lines.length; i++) {
+    const lineTime = Number(lines[i].dataset.time || 0);
+    if (lineTime <= currentPosition) activeIndex = i;
+    else break;
+  }
+
+  if (activeIndex === lastActiveLyricsIndex) return;
+
+  const activeLine = lines[activeIndex];
+  if (!activeLine) return;
+
+  lines.forEach((line, index) => {
+    const isActive = index === activeIndex;
+    line.classList.toggle('active', isActive);
+    line.classList.toggle('is-past', index < activeIndex);
+    line.classList.toggle('is-upcoming', index > activeIndex);
+    if (isActive) line.setAttribute('aria-current', 'true');
+    else line.removeAttribute('aria-current');
+  });
+
+  lastActiveLyricsIndex = activeIndex;
+
+  // Lyrics kesiti tasarlanırken kullanıcı satır seçiyor; otomatik kaydırma
+  // seçim odağını bozmasın. Yalnızca normal lyrics görünümünde takip et.
+  if (!lyricShareMode && isShareViewActive() && document.visibilityState !== 'hidden') {
+    activeLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function stopLyricsPlaybackSync() {
+  if (lyricsPlaybackTimer) {
+    clearInterval(lyricsPlaybackTimer);
+    lyricsPlaybackTimer = null;
+  }
+}
+
+function startLyricsPlaybackSync() {
+  stopLyricsPlaybackSync();
+
+  const track = window.currentSelectedTrack;
+  if (!track?.hasSyncedLyrics) return;
+
+  // Bu timer API isteği atmaz; son Spotify pozisyonundan yerel tahmin yapar.
+  lyricsPlaybackTimer = setInterval(() => {
+    if (document.visibilityState === 'hidden') return;
+    updateActiveLyricByTime(getEstimatedSpotifyPosition());
+  }, LYRICS_UI_TICK_INTERVAL_MS);
+
+  if (track.syncWithSpotify) {
+    setLyricsSyncStatus(
+      track.isPlaying ? 'Canlı senkronize' : 'Duraklatıldı',
+      track.isPlaying ? 'live' : 'paused'
+    );
+  } else {
+    setLyricsSyncStatus('Spotify eşleştirmesi bekleniyor', 'waiting');
+  }
+
+  updateActiveLyricByTime(getEstimatedSpotifyPosition());
+
+  // İlk yüklemede veya yeni parça seçiminde anlık durum iste; devamı
+  // loadMyNowPlaying'in merkezi 5 saniyelik poll'undan gelir.
+  const hasFreshPlaybackSnapshot = track.playbackCapturedAt &&
+    Date.now() - track.playbackCapturedAt < NOW_PLAYING_POLL_INTERVAL_MS;
+  if (!hasFreshPlaybackSnapshot) requestLyricsPlaybackRefresh();
+}
+
+function requestLyricsPlaybackRefresh() {
+  if (nowPlayingRequestInFlight ||
+      typeof window.refreshSongShareNowPlaying !== 'function') return;
+
+  // Çok hızlı parça değişimlerinde her seçim için yeni istek atma.
+  const now = Date.now();
+  if (now - lastForcedNowPlayingRefreshAt < 2500) return;
+
+  lastForcedNowPlayingRefreshAt = now;
+  window.refreshSongShareNowPlaying();
+}
+
+window.updateLyricsPlaybackFromSpotify = function (data) {
+  const track = window.currentSelectedTrack;
+  if (!track) return;
+
+  const selectedTrackId = extractSpotifyTrackId(track.uri);
+  const spotifyTrackId = extractSpotifyTrackId(
+    data?.songUrl ||
+    data?.spotifyUri ||
+    data?.trackUri ||
+    data?.uri ||
+    data?.track_id ||
+    data?.trackId
+  );
+
+  if (!selectedTrackId || !spotifyTrackId || selectedTrackId !== spotifyTrackId) {
+    track.syncWithSpotify = false;
+    track.isPlaying = false;
+    track.playbackCapturedAt = null;
+
+    if (track.hasSyncedLyrics) {
+      setLyricsSyncStatus(
+        spotifyTrackId ? 'Spotify’da başka parça çalıyor' : 'Spotify’da müzik çalmıyor',
+        spotifyTrackId ? 'other' : 'idle'
+      );
+      updateActiveLyricByTime(getEstimatedSpotifyPosition());
+    }
+    return;
+  }
+
+  track.syncWithSpotify = true;
+
+  if (data?.progress_ms !== undefined && data?.progress_ms !== null) {
+    track.playbackPositionSec = Math.max(0, Number(data.progress_ms) / 1000);
+  }
+
+  if (Number(data?.duration_ms) > 0) {
+    track.duration_ms = Number(data.duration_ms);
+  }
+
+  track.isPlaying = Boolean(data?.isPlaying);
+  track.playbackCapturedAt = Date.now();
+
+  if (track.hasSyncedLyrics) {
+    setLyricsSyncStatus(
+      track.isPlaying ? 'Canlı senkronize' : 'Duraklatıldı',
+      track.isPlaying ? 'live' : 'paused'
+    );
+    updateActiveLyricByTime(getEstimatedSpotifyPosition());
+  }
+};
+
 window.triggerRightPanelsSlideOut = function (track) {
   const rightAside = document.getElementById('rightAsideContainer');
   const friendsStrip = document.getElementById('friendsListeningStrip');
@@ -163,258 +374,66 @@ window.triggerRightPanelsSlideOut = function (track) {
   shell?.classList.add('share-lyrics-active');
   stageCluster?.classList.add('has-lyrics-attached');
 
-  if (track) {
-    const dockSongTitle = document.getElementById('dockLyricsSongTitle');
-    const dockSongArtist = document.getElementById('dockLyricsSongArtist');
-    const currentDockTitle = dockSongTitle?.textContent?.trim();
-    const existingLines = document.querySelectorAll('#dockLyricsScrollBody .lyrics-dock-line').length;
-    const shouldFetchLyrics = !existingLines || currentDockTitle !== (track.name || 'Seçilen Parça');
-    if (dockSongTitle) dockSongTitle.textContent = track.name || 'Seçilen Parça';
-    if (dockSongArtist) dockSongArtist.textContent = track.artist || 'Sanatçı';
-    if (appleAmbient && track.imageUrl) appleAmbient.style.backgroundImage = `url('${track.imageUrl}')`;
+  if (!track) return;
 
-    // Menüden geri dönüldüğünde mevcut lyrics DOM'unu koru; yalnızca parça değiştiğinde yeniden yükle.
-    if (shouldFetchLyrics) fetchUpcomingShareLyrics(track.name, track.artist, track.duration_ms);
-    else updateLyricsSharePreview();
+  const dockSongTitle = document.getElementById('dockLyricsSongTitle');
+  const dockSongArtist = document.getElementById('dockLyricsSongArtist');
+  const nextTrackKey = getLyricsTrackKey(track);
+  const shouldFetchLyrics = currentLyricsTrackKey !== nextTrackKey ||
+    (!currentLyricsLoaded && !currentLyricsLoading);
+
+  if (dockSongTitle) dockSongTitle.textContent = track.name || 'Seçilen Parça';
+  if (dockSongArtist) dockSongArtist.textContent = track.artist || 'Sanatçı';
+  if (appleAmbient && track.imageUrl) {
+    appleAmbient.style.backgroundImage = `url("${String(track.imageUrl).replace(/"/g, '%22')}")`;
   }
+
+  if (shouldFetchLyrics) {
+    fetchUpcomingShareLyrics(track.name, track.artist, track.duration_ms);
+  } else {
+    if (track.hasSyncedLyrics) startLyricsPlaybackSync();
+    updateLyricsSharePreview();
+  }
+
+  const snapshotIsFresh = track.playbackCapturedAt &&
+    Date.now() - track.playbackCapturedAt < NOW_PLAYING_POLL_INTERVAL_MS;
+  if (!snapshotIsFresh) requestLyricsPlaybackRefresh();
 };
-
-let currentLyricsFetchId = 0; // Hızlı parça değişimlerinde çakışmayı önleyen sayaç
-
-// ----------------------------------------------------
-// SPOTIFY LYRICS LIVE SYNC
-// ----------------------------------------------------
-
-let lyricsPlaybackTimer = null;
-let lyricsSpotifyResyncTimer = null;
-
-function getEstimatedSpotifyPosition() {
-  const track = window.currentSelectedTrack;
-
-  if (!track) return 0;
-
-  if (!track.syncWithSpotify) return;
-
-  let position = Number(track.playbackPositionSec) || 0;
-
-  // Spotify'dan aldığımız pozisyonun üzerinden geçen süreyi ekle
-  if (track.isPlaying && track.playbackCapturedAt) {
-    position += (Date.now() - track.playbackCapturedAt) / 1000;
-  }
-
-  // Şarkı süresini geçmesin
-  if (track.duration_ms) {
-    position = Math.min(
-      position,
-      track.duration_ms / 1000
-    );
-  }
-
-  return position;
-}
-
-
-function updateActiveLyricByTime(position) {
-  const scrollBody = document.getElementById('dockLyricsScrollBody');
-
-  if (!scrollBody) return;
-
-  const lines = Array.from(
-    scrollBody.querySelectorAll('.lyrics-dock-line')
-  );
-
-  if (!lines.length) return;
-
-  // Gerçek senkronize söz var mı?
-  const hasSyncedLyrics = lines.some(
-    line => parseFloat(line.dataset.time || '0') > 0
-  );
-
-  if (!hasSyncedLyrics) return;
-
-  let activeIndex = 0;
-
-  for (let i = 0; i < lines.length; i++) {
-    const lineTime = parseFloat(
-      lines[i].dataset.time || '0'
-    );
-
-    if (lineTime <= position) {
-      activeIndex = i;
-    } else {
-      break;
-    }
-  }
-
-  const activeLine = lines[activeIndex];
-
-  if (!activeLine) return;
-
-  const currentActive = scrollBody.querySelector(
-    '.lyrics-dock-line.active'
-  );
-
-  // Zaten doğru satır aktifse hiçbir şey yapma
-  if (currentActive === activeLine) return;
-
-  lines.forEach(line => {
-    line.classList.remove('active');
-  });
-
-  activeLine.classList.add('active');
-
-  // Yeni satırı merkeze getir
-  activeLine.scrollIntoView({
-    behavior: 'smooth',
-    block: 'center'
-  });
-}
-
-
-// Spotify pozisyonunu frontend'de sürekli ilerlet
-function startLyricsPlaybackSync() {
-
-  stopLyricsPlaybackSync();
-
-  // Yaklaşık 10 FPS yeterli
-  lyricsPlaybackTimer = setInterval(() => {
-
-    const track = window.currentSelectedTrack;
-
-    if (!track) return;
-
-    if (!track.isPlaying) return;
-
-    const position = getEstimatedSpotifyPosition();
-
-    updateActiveLyricByTime(position);
-
-  }, 200);
-
-
-  // Her 3 saniyede bir Spotify'dan gerçek pozisyonu tekrar al
-  // Böylece pause / seek / buffering kaynaklı drift oluşmaz.
-  lyricsSpotifyResyncTimer = setInterval(
-    async () => {
-
-      const track = window.currentSelectedTrack;
-
-      if (!track) return;
-
-      try {
-
-        const token = localStorage.getItem('token');
-
-        const res = await fetch(
-          '/api/spotify/now-playing',
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          }
-        );
-
-        if (!res.ok) return;
-
-        const data = await res.json();
-
-        if (!data.songUrl) return;
-
-        const parts = data.songUrl.split('/');
-        const spotifyTrackId =
-          parts[parts.length - 1];
-
-        const currentTrackId =
-          track.uri?.split(':')[2];
-
-        // Spotify'da başka şarkıya geçildiyse
-        if (
-          spotifyTrackId &&
-          currentTrackId &&
-          spotifyTrackId !== currentTrackId
-        ) {
-
-          console.log(
-            '🎵 Spotify başka şarkıya geçti.'
-          );
-
-          track.name = data.title;
-          track.artist = data.artist;
-          track.imageUrl = data.albumArt;
-          track.uri =
-            `spotify:track:${spotifyTrackId}`;
-
-          track.playbackPositionSec =
-            (data.progress_ms || 0) / 1000;
-
-          track.duration_ms =
-            data.duration_ms || 0;
-
-          track.isPlaying =
-            data.isPlaying;
-
-          track.playbackCapturedAt =
-            Date.now();
-
-          // Yeni şarkının sözlerini getir
-          fetchUpcomingShareLyrics(
-            track.name,
-            track.artist,
-            track.duration_ms
-          );
-
-          return;
-        }
-
-        // Aynı şarkıysa pozisyonu düzelt
-        track.playbackPositionSec =
-          (data.progress_ms || 0) / 1000;
-
-        track.isPlaying =
-          data.isPlaying;
-
-        track.duration_ms =
-          data.duration_ms ||
-          track.duration_ms ||
-          0;
-
-        track.playbackCapturedAt =
-          Date.now();
-
-      } catch (err) {
-
-        console.warn(
-          'Spotify lyrics sync hatası:',
-          err
-        );
-
-      }
-
-    },
-    5000
-  );
-}
-
-
-function stopLyricsPlaybackSync() {
-
-  if (lyricsPlaybackTimer) {
-    clearInterval(lyricsPlaybackTimer);
-    lyricsPlaybackTimer = null;
-  }
-
-  if (lyricsSpotifyResyncTimer) {
-    clearInterval(lyricsSpotifyResyncTimer);
-    lyricsSpotifyResyncTimer = null;
-  }
-}
 
 async function fetchUpcomingShareLyrics(trackName, artistName, durationMs = null) {
   const scrollBody = document.getElementById('dockLyricsScrollBody');
   const syncStatus = document.getElementById('dockLyricsSyncStatus');
   if (!scrollBody) return;
 
+  const requestedTrackKey = getLyricsTrackKey(
+    window.currentSelectedTrack || { name: trackName, artist: artistName }
+  );
+
+  // Aynı şarkının sözleri zaten yükleniyorsa ikinci HTTP zincirini başlatma;
+  // çağıran taraf mevcut işlemin tamamlanmasını beklesin.
+  if (currentLyricsTrackKey === requestedTrackKey &&
+      currentLyricsLoading &&
+      currentLyricsLoadPromise) {
+    await currentLyricsLoadPromise;
+    return;
+  }
+
   const fetchId = ++currentLyricsFetchId;
+  let resolveThisFetch;
+  const thisFetchPromise = new Promise(resolve => {
+    resolveThisFetch = resolve;
+  });
+  currentLyricsLoadPromise = thisFetchPromise;
+
+  stopLyricsPlaybackSync();
+  currentLyricsLoaded = false;
+  currentLyricsLoading = true;
+  currentLyricsTrackKey = requestedTrackKey;
+  lastActiveLyricsIndex = -1;
+
+  if (window.currentSelectedTrack) {
+    window.currentSelectedTrack.hasSyncedLyrics = false;
+  }
 
   // 1. ANİMASYONLU SKELETON / SHIMMER LOADING DURUMU GÖSTER
   scrollBody.innerHTML = `
@@ -432,7 +451,7 @@ async function fetchUpcomingShareLyrics(trackName, artistName, durationMs = null
     </div>
   `;
 
-  if (syncStatus) syncStatus.textContent = 'Aranıyor...';
+  setLyricsSyncStatus('Sözler yükleniyor…', 'loading');
 
   // Şarkı adındaki "(Remastered)", "- Radio Edit" gibi ekleri temizle
   const cleanTrack = (trackName || '').replace(/\s*[\(\[-].*?[\)\]]/g, '').trim();
@@ -509,31 +528,56 @@ async function fetchUpcomingShareLyrics(trackName, artistName, durationMs = null
 
     let lines = [];
 
-    // Senkronize sözler varsa ayrıştır
+    // LRC timestamp'lerini ayrıştır. Aynı satırda birden fazla timestamp
+    // varsa her biri için ayrı senkronize satır üret.
     if (songData?.syncedLyrics) {
-      lines = songData.syncedLyrics
+      lines = String(songData.syncedLyrics)
         .split('\n')
-        .map(line => {
-          const match = line.match(/^\[(\d{2}):(\d{2}\.\d{2,3})\](.*)$/);
-          if (match) {
-            const timeSec = parseInt(match[1], 10) * 60 + parseFloat(match[2]);
-            return { time: timeSec, text: match[3].trim() };
-          }
-          return { time: 0, text: line.replace(/\[.*?\]/g, '').trim() };
-        })
-        .filter(l => l.text.length > 0);
+        .flatMap(rawLine => {
+          const timestamps = [...rawLine.matchAll(/\[(\d{2}):(\d{2})(?:\.(\d{1,3}))?\]/g)];
+          const text = rawLine
+            .replace(/\[\d{2}:\d{2}(?:\.\d{1,3})?\]/g, '')
+            .replace(/\[[^\]]*]/g, '')
+            .trim();
 
-      if (syncStatus) syncStatus.textContent = 'Canlı Senkronize';
+          if (!text) return [];
+
+          if (!timestamps.length) return [{ time: 0, text }];
+
+          return timestamps.map(match => {
+            const fraction = match[3] ? Number(`0.${match[3]}`) : 0;
+            return {
+              time: Number(match[1]) * 60 + Number(match[2]) + fraction,
+              text
+            };
+          });
+        })
+        .filter(line => line.text.length > 0)
+        .sort((a, b) => a.time - b.time);
+
+      if (syncStatus) syncStatus.textContent = 'Senkronize sözler';
     } else if (songData?.plainLyrics) {
-      lines = songData.plainLyrics
+      lines = String(songData.plainLyrics)
         .split('\n')
         .map(line => ({ time: 0, text: line.trim() }))
-        .filter(l => l.text.length > 0);
+        .filter(line => line.text.length > 0);
 
       if (syncStatus) syncStatus.textContent = 'Düz Metin';
     }
 
+    const hasTimecodes = Boolean(
+      songData?.syncedLyrics && lines.some(line => line.time > 0)
+    );
+
+    if (window.currentSelectedTrack) {
+      window.currentSelectedTrack.hasSyncedLyrics = hasTimecodes;
+      window.currentSelectedTrack.lyrics = songData.plainLyrics || null;
+      window.currentSelectedTrack.time_synced_lyrics = songData.syncedLyrics || null;
+    }
+
     if (lines.length === 0) {
+      currentLyricsLoaded = true;
+      currentLyricsLoading = false;
       showEmptyLyricsState(scrollBody, syncStatus);
       return;
     }
@@ -554,8 +598,10 @@ async function fetchUpcomingShareLyrics(trackName, artistName, durationMs = null
     }
 
     // 3. ANİMASYONLU GEÇİŞ: Satırları sırayla kaydırarak göster
+    currentLyricsLoaded = true;
+    currentLyricsLoading = false;
     scrollBody.innerHTML = lines.map((item, idx) => `
-  <div class="lyrics-dock-line line-animate-in ${idx === activeIndex ? 'active' : ''}" 
+  <div class="lyrics-dock-line line-animate-in ${idx === activeIndex ? 'active' : ''}"
        style="--line-index: ${Math.min(idx, 15)};"
        data-time="${item.time || 0}" data-line-index="${idx}"
        onclick="selectActiveLyricLine(this)">
@@ -563,33 +609,39 @@ async function fetchUpcomingShareLyrics(trackName, artistName, durationMs = null
   </div>
 `).join('');
 
-    if (window.currentSelectedTrack) {
-      window.currentSelectedTrack.lyrics = songData.plainLyrics || null;
-      window.currentSelectedTrack.time_synced_lyrics = songData.syncedLyrics || null;
-    }
-
-    // Lyrics DOM'a yerleştirildikten sonra canlı Spotify sync başlat
-    if (
-      window.currentSelectedTrack &&
-      songData?.syncedLyrics
-    ) {
+    lastActiveLyricsIndex = -1;
+    if (hasTimecodes) {
+      setLyricsSyncStatus('Spotify eşleştirmesi bekleniyor', 'waiting');
       startLyricsPlaybackSync();
-
-      // İlk pozisyonu hemen uygula
-      updateActiveLyricByTime(
-        getEstimatedSpotifyPosition()
-      );
+      updateActiveLyricByTime(getEstimatedSpotifyPosition());
+    } else {
+      stopLyricsPlaybackSync();
+      setLyricsSyncStatus('Senkronize zaman bilgisi yok', 'plain');
     }
+
+    renderLyricRangeSelection();
+    updateLyricsSharePreview();
 
   } catch (err) {
     if (fetchId !== currentLyricsFetchId) return;
+    console.warn('Lyrics yüklenemedi:', err);
     showEmptyLyricsState(scrollBody, syncStatus);
+  } finally {
+    if (fetchId === currentLyricsFetchId) {
+      currentLyricsLoaded = true;
+      currentLyricsLoading = false;
+    }
+    resolveThisFetch?.();
   }
 }
 window.fetchShareLyricsForTrack = fetchUpcomingShareLyrics;
 
 function showEmptyLyricsState(scrollBody, syncStatus) {
-  if (syncStatus) syncStatus.textContent = 'Söz Yok';
+  currentLyricsLoaded = true;
+  currentLyricsLoading = false;
+  stopLyricsPlaybackSync();
+  if (window.currentSelectedTrack) window.currentSelectedTrack.hasSyncedLyrics = false;
+  setLyricsSyncStatus('Söz bulunamadı', 'empty');
   scrollBody.innerHTML = `
     <div class="lyrics-empty-state">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -605,6 +657,7 @@ function showEmptyLyricsState(scrollBody, syncStatus) {
 }
 
 window.restoreRightPanels = function () {
+  stopLyricsPlaybackSync();
   const rightAside = document.getElementById('rightAsideContainer');
   const friendsStrip = document.getElementById('friendsListeningStrip');
   const shell = document.getElementById('songShareShell');
@@ -1203,9 +1256,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('shareLyricsDockPanel')?.classList.toggle('lyrics-select-mode', enabled);
     const ratingContainer = document.querySelector('#wizardStep2 .rating-dynamic-container');
     ratingContainer?.closest('.form-group')?.classList.toggle('lyrics-rating-hidden', enabled);
+    document.querySelector('#wizardStep2 .highlight-share-group')?.classList.toggle('lyrics-highlight-hidden', enabled);
     const commentField = document.getElementById('wizardCommentInput');
     commentField?.closest('.form-group')?.classList.toggle('lyrics-comment-hidden', enabled);
-    if (enabled) updateLyricsSharePreview();
+    if (enabled) {
+      updateLyricsSharePreview();
+      updateActiveLyricByTime(getEstimatedSpotifyPosition());
+    }
   }
   lyricsModeButton?.addEventListener('click', async () => {
     clearShareWizardFeedback();
@@ -1294,6 +1351,14 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLyricsSharePreview();
   });
   ['lyricsIncludePlayer', 'lyricsIncludeCover', 'lyricsIncludeMeta'].forEach(id => document.getElementById(id)?.addEventListener('change', updateLyricsSharePreview));
+  const lyricsAdvancedToggle = document.getElementById('lyricsAdvancedToggle');
+  const lyricsAdvancedSettings = document.getElementById('lyricsAdvancedSettings');
+  lyricsAdvancedToggle?.addEventListener('click', () => {
+    const willOpen = lyricsAdvancedToggle.getAttribute('aria-expanded') !== 'true';
+    lyricsAdvancedToggle.setAttribute('aria-expanded', String(willOpen));
+    lyricsAdvancedToggle.classList.toggle('is-open', willOpen);
+    if (lyricsAdvancedSettings) lyricsAdvancedSettings.hidden = !willOpen;
+  });
   document.getElementById('resetLyricsRange')?.addEventListener('click', () => { lyricRangeStart = lyricRangeEnd = null; document.querySelectorAll('.lyrics-dock-line').forEach(line => line.classList.remove('is-range-start','is-range-end','is-range-pending','is-range-selected')); updateLyricsSharePreview(); });
 
   // ----------------------------------------------------
@@ -1312,6 +1377,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (targetHash === '#quit') {
       window.location.href = '/';
     }
+
+    if (viewName !== 'share') stopLyricsPlaybackSync();
 
     navLinks.forEach(link => {
       const href = link.getAttribute('href');
@@ -1642,12 +1709,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadMyNowPlaying() {
+    if (document.visibilityState === 'hidden') return;
+
     const token = localStorage.getItem('token');
 
     if (!token) {
       setCompanionDockEmpty();
+      window.updateLyricsPlaybackFromSpotify?.(null);
       return;
     }
+
+    if (nowPlayingRequestInFlight) return;
+    nowPlayingRequestInFlight = true;
 
     try {
       const res = await fetch('/api/spotify/now-playing', {
@@ -1659,11 +1732,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!res.ok) {
         console.warn('Now playing alınamadı:', res.status);
+        window.updateLyricsPlaybackFromSpotify?.(null);
         setCompanionDockEmpty();
         return;
       }
 
       const data = await res.json();
+      window.__songShareLastNowPlaying = data;
+      window.updateLyricsPlaybackFromSpotify?.(data);
 
       const dockSong =
         document.getElementById('playerTrackTitle');
@@ -1770,8 +1846,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!companionDockLoaded) {
         setCompanionDockEmpty();
       }
+    } finally {
+      nowPlayingRequestInFlight = false;
     }
   }
+
+  window.refreshSongShareNowPlaying = loadMyNowPlaying;
 
   let friendsActivityLoaded = false;
 
@@ -2250,45 +2330,40 @@ ${!isLive
     const token = localStorage.getItem('token');
     try {
       const res = await fetch('/api/spotify/now-playing', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(`Spotify API ${res.status}`);
       const data = await res.json();
+      const trackId = extractSpotifyTrackId(data.songUrl || data.spotifyUri || data.uri);
 
-      if (window.currentSelectedTrack) return;
-
-      if (data.isPlaying && data.songUrl) {
-        const parts = data.songUrl.split('/');
-        const trackId = parts[parts.length - 1];
-
+      if (data.isPlaying && trackId) {
+        // Önceden elle seçilmiş parça varsa da şu an çalanı seçime uygula.
+        lyricRangeStart = lyricRangeEnd = null;
         window.currentSelectedTrack = {
-          name: data.title,
-          artist: data.artist,
-          imageUrl: data.albumArt,
+          name: data.title || 'Bilinmeyen Şarkı',
+          artist: data.artist || 'Bilinmeyen Sanatçı',
+          imageUrl: data.albumArt || '',
           uri: `spotify:track:${trackId}`,
-
-          // Spotify'daki o anki konum
-          playbackPositionSec: (data.progress_ms || 0) / 1000,
-
-          // Bu pozisyonu aldığımız zaman
+          playbackPositionSec: Math.max(0, Number(data.progress_ms) || 0) / 1000,
           playbackCapturedAt: Date.now(),
-
-          // Şarkının toplam süresi
-          duration_ms: data.duration_ms || 0,
-
-          // Spotify gerçekten çalıyor mu?
-          isPlaying: data.isPlaying,
-
-          syncWithSpotify: true
+          duration_ms: Number(data.duration_ms) || 0,
+          isPlaying: true,
+          syncWithSpotify: true,
+          hasSyncedLyrics: false
         };
 
-        applyTrackToWizard(window.currentSelectedTrack);
+        window.__songShareLastNowPlaying = data;
+        applyTrackToWizard(window.currentSelectedTrack, true);
+        window.updateLyricsPlaybackFromSpotify?.(data);
         window.triggerRightPanelsSlideOut(window.currentSelectedTrack);
+        clearShareWizardFeedback();
       } else {
-        alert('Şu anda Spotify hesabınızda çalan aktif bir şarkı bulunamadı.');
+        showShareWizardFeedback('Şu anda Spotify hesabında çalan bir parça bulunamadı.', 'info');
       }
     } catch (e) {
-      alert('Şu an çalan şarkı bilgisi alınamadı. Spotify hesabınızın bağlı olduğundan emin olun.');
+      console.warn('Şu an çalan parça alınamadı:', e);
+      showShareWizardFeedback('Şu an çalan şarkı bilgisi alınamadı. Spotify bağlantını kontrol edip tekrar dene.', 'error');
     }
   };
 
@@ -2478,15 +2553,19 @@ ${!isLive
   };
 
   window.selectCustomTrack = function (title, artist, coverUrl, spotifyUri, durationMs = 180000) {
-    // Farklı bir şarkıya geçildiğinde önceki şarkının lyrics aralığı taşınmasın.
+    // Farklı parçaya geçerken eski alıntı aralığı ve playback snapshot'ı taşınmasın.
     lyricRangeStart = lyricRangeEnd = null;
     window.currentSelectedTrack = {
       name: title,
       artist,
       imageUrl: coverUrl,
       uri: spotifyUri,
-      duration_ms: durationMs,
-      syncWithSpotify: false
+      duration_ms: Number(durationMs) || 180000,
+      playbackPositionSec: 0,
+      playbackCapturedAt: null,
+      isPlaying: false,
+      syncWithSpotify: false,
+      hasSyncedLyrics: false
     };
     applyTrackToWizard(window.currentSelectedTrack);
     window.triggerRightPanelsSlideOut(window.currentSelectedTrack);
@@ -2692,54 +2771,36 @@ ${!isLive
     }
   };
 
-  async function initShareWizardState() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      applyTrackToWizard(null);
-      return;
-    }
+  function initShareWizardState(data = window.__songShareLastNowPlaying) {
+    // İlk merkezi now-playing isteğinin sonucunu kullan; aynı endpoint'e
+    // başlangıçta ikinci bir eşzamanlı istek gönderme.
+    if (window.currentSelectedTrack) return;
 
-    try {
-      const res = await fetch('/api/spotify/now-playing', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) {
+    if (data?.isPlaying && data?.songUrl) {
+      const trackId = extractSpotifyTrackId(data.songUrl || data.spotifyUri || data.uri);
+      if (!trackId) {
         applyTrackToWizard(null);
         return;
       }
 
-      const data = await res.json();
+      window.currentSelectedTrack = {
+        name: data.title || 'Bilinmeyen Şarkı',
+        artist: data.artist || 'Bilinmeyen Sanatçı',
+        imageUrl: data.albumArt || '',
+        uri: `spotify:track:${trackId}`,
+        playbackPositionSec: Math.max(0, Number(data.progress_ms) || 0) / 1000,
+        playbackCapturedAt: Date.now(),
+        duration_ms: Number(data.duration_ms) || 0,
+        isPlaying: Boolean(data.isPlaying),
+        syncWithSpotify: true,
+        hasSyncedLyrics: false
+      };
 
-      // İlk açılış isteği geç dönerse, kullanıcının bu sırada seçtiği parçayı ezme.
-      if (window.currentSelectedTrack) return;
-
-      if (data.isPlaying && data.songUrl) {
-        const parts = data.songUrl.split('/');
-        const trackId = parts[parts.length - 1];
-
-        window.currentSelectedTrack = {
-          name: data.title,
-          artist: data.artist,
-          imageUrl: data.albumArt,
-          uri: `spotify:track:${trackId}`,
-
-          playbackPositionSec:
-            (data.progress_ms || 0) / 1000,
-
-          playbackCapturedAt:
-            Date.now(),
-
-          duration_ms:
-            data.duration_ms || 0,
-
-          isPlaying:
-            data.isPlaying
-        };
-        applyTrackToWizard(window.currentSelectedTrack, true);
-      } else {
-        applyTrackToWizard(null);
+      applyTrackToWizard(window.currentSelectedTrack, true);
+      if (isShareViewActive()) {
+        window.triggerRightPanelsSlideOut(window.currentSelectedTrack);
       }
-    } catch (err) {
+    } else {
       applyTrackToWizard(null);
     }
   }
@@ -2841,41 +2902,34 @@ ${!isLive
   window.updateWizardRatingAnimation = function (val) {
     const slider = document.getElementById('wizardRatingSlider');
     const display = document.getElementById('wizardRatingValue');
-
     if (!slider) return;
 
-    const rating = Math.max(
-      0,
-      Math.min(100, Number(val) || 0)
-    );
-
-    if (display) {
-      display.textContent = rating;
-    }
-
-    const percent = rating;
-
+    const min = Number(slider.min || 0);
+    const max = Number(slider.max || 100);
+    const rating = Math.max(min, Math.min(max, Number(val) || 0));
+    const percent = max > min ? ((rating - min) / (max - min)) * 100 : 0;
     const color = rating < 35 ? '#818cf8' : rating < 70 ? '#60a5fa' : '#3ecf8e';
-    const glow = rating < 35 ? 'rgba(129,140,248,.42)' : rating < 70 ? 'rgba(96,165,250,.42)' : 'rgba(62,207,142,.42)';
+    const glow = rating < 35
+      ? 'rgba(129,140,248,.42)'
+      : rating < 70 ? 'rgba(96,165,250,.42)' : 'rgba(62,207,142,.42)';
     const container = slider.closest('.rating-dynamic-container');
-    if (container) container.style.setProperty('--rating-glow', glow);
+
     if (display) {
-      display.style.color = color;
-      display.style.textShadow = `0 0 22px ${glow}`;
+      display.textContent = String(rating);
+      display.style.setProperty('--rating-percent', `${percent}%`);
+      display.style.setProperty('--rating-color', color);
+      display.style.setProperty('--rating-glow', glow);
+      display.setAttribute('aria-label', `${rating} / 100 puan`);
     }
-
-    slider.style.background = `
-        linear-gradient(90deg,
-            #818cf8 0%,
-            ${color} ${percent}%,
-            #27303d ${percent}%,
-            #27303d 100%)
-    `;
-
-    slider.style.setProperty(
-      '--rating-percent',
-      `${percent}%`
-    );
+    if (container) {
+      container.style.setProperty('--rating-percent', `${percent}%`);
+      container.style.setProperty('--rating-color', color);
+      container.style.setProperty('--rating-glow', glow);
+    }
+    slider.style.setProperty('--rating-percent', `${percent}%`);
+    slider.style.setProperty('--rating-color', color);
+    slider.style.background = `linear-gradient(90deg, ${color} 0%, ${color} ${percent}%, rgba(39,48,61,.95) ${percent}%, rgba(39,48,61,.95) 100%)`;
+    slider.setAttribute('aria-valuetext', `${rating} puan`);
   };
 
   initWizardVisualizerBars();
@@ -5775,17 +5829,18 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
     loadRecommendations();
     checkLogin();
     fetchSuggestions(feedPage);
-    initShareWizardState();
     loadFriendsActivity();
 
     // Coverflow hemen mevcut HTML ile başlasın.
     initCoverflowEngine();
 
-    // Companion
-
+    // Spotify now-playing verisini tek bir endpoint isteğiyle paylaş:
+    // Companion, seçili parça ve lyrics senkronizasyonu aynı snapshot'ı kullanır.
     setCompanionDockLoading();
-    loadMyNowPlaying();
-    setInterval(loadMyNowPlaying, 5000);
+    loadMyNowPlaying().then(() => {
+      initShareWizardState(window.__songShareLastNowPlaying);
+    });
+    setInterval(loadMyNowPlaying, NOW_PLAYING_POLL_INTERVAL_MS);
 
     // Friend activity refresh
     setInterval(loadFriendsActivity, 15000);

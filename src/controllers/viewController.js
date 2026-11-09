@@ -29,6 +29,11 @@ export const getSongShare = (req, res) => {
   res.sendFile(path.join(publicPath, '/songShare/songShare.html'));
 };
 
+export const getGames = (req, res) => {
+  logger.detail('VIEW', `Serving games page for user: ${req.user ? req.user.user_name : 'Guest'}`);
+  res.sendFile(path.join(publicPath, '/games/games.html'));
+};
+
 export const getAdmin = (req, res) => {
   logger.detail('VIEW', `Serving admin page for user: ${req.user ? req.user.user_name : 'idk'}`);
   res.sendFile(path.join(publicPath, '/admin/admin.html'));

@@ -15,6 +15,8 @@ import serviceRoutes from './routes/serviceRoutes.js';
 import debugRoutes from './routes/debugRoutes.js';
 import songShareRoutes from './routes/songShareRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import gameRoutes from './routes/gameRoutes.js';
+import adminGamesRoutes from './routes/adminGamesRoutes.js';
 
 const app = express();
 
@@ -40,6 +42,8 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/debug', debugRoutes);
 app.use('/api/songshare', songShareRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/games', gameRoutes);
+app.use('/api/admin/games', adminGamesRoutes);
 
 app.use(express.static(path.join(__dirname, '../public')));
 

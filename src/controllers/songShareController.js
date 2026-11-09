@@ -1,34 +1,42 @@
-import catchAsync from '../utils/catchAsync.js';
-import AppError from '../utils/appError.js';
-import db from '../config/db.js';
-import logger from '../utils/logger.js';
-import * as spotifyService from '../services/spotifyService.js';
-import { getRandomRecommendations } from '../services/recommendationService.js';
-
+import catchAsync from "../utils/catchAsync.js";
+import AppError from "../utils/appError.js";
+import db from "../config/db.js";
+import logger from "../utils/logger.js";
+import * as spotifyService from "../services/spotifyService.js";
+import { getRandomRecommendations } from "../services/recommendationService.js";
 
 // LRCLIB API Yapılandırması
-const LRCLIB_BASE_URL = 'https://lrclib.net';
+const LRCLIB_BASE_URL = "https://lrclib.net";
 const LRCLIB_HEADERS = {
   // LRCLIB kuralları gereği User-Agent zorunludur
-  'User-Agent': 'SongShareBackend/1.0.0 (https://github.com/onur02004/MainRoadmap2)'
+  "User-Agent":
+    "SongShareBackend/1.0.0 (https://github.com/onur02004/MainRoadmap2)",
 };
 
 /**
  * Yardımcı Fonksiyon: LRCLIB'den şarkı sözü çekme
  */
-async function fetchLyricsFromLRCLIB(trackName, artistName, albumName = null, duration = null) {
+async function fetchLyricsFromLRCLIB(
+  trackName,
+  artistName,
+  albumName = null,
+  duration = null,
+) {
   try {
     const params = new URLSearchParams({
       track_name: trackName,
       artist_name: artistName,
     });
 
-    if (albumName) params.append('album_name', albumName);
-    if (duration) params.append('duration', Math.round(duration));
+    if (albumName) params.append("album_name", albumName);
+    if (duration) params.append("duration", Math.round(duration));
 
-    const response = await fetch(`${LRCLIB_BASE_URL}/api/get?${params.toString()}`, {
-      headers: LRCLIB_HEADERS
-    });
+    const response = await fetch(
+      `${LRCLIB_BASE_URL}/api/get?${params.toString()}`,
+      {
+        headers: LRCLIB_HEADERS,
+      },
+    );
 
     if (response.status === 404) {
       logger.info(`LRCLIB`, `No Lyrics found: ${trackName} - ${artistName}`);
@@ -42,7 +50,7 @@ async function fetchLyricsFromLRCLIB(trackName, artistName, albumName = null, du
 
     return await response.json();
   } catch (error) {
-    logger.error(`LRCLIB`, 'Error fetching lyrics:', error);
+    logger.error(`LRCLIB`, "Error fetching lyrics:", error);
     return null;
   }
 }
@@ -55,27 +63,35 @@ export const fetchSongLyrics = catchAsync(async (req, res, next) => {
   const { track_name, artist_name, album_name, duration } = req.query;
 
   if (!track_name || !artist_name) {
-    logger.error(`LRCLIB`, 'track_name and artist_name paramaters are mandatory.');
-    return next(new AppError('track_name ve artist_name sorgu parametreleri zorunludur.', 400));
+    logger.error(
+      `LRCLIB`,
+      "track_name and artist_name paramaters are mandatory.",
+    );
+    return next(
+      new AppError(
+        "track_name ve artist_name sorgu parametreleri zorunludur.",
+        400,
+      ),
+    );
   }
 
   const lyricsData = await fetchLyricsFromLRCLIB(
     track_name,
     artist_name,
     album_name,
-    duration ? Number(duration) : null
+    duration ? Number(duration) : null,
   );
 
   if (!lyricsData) {
     logger.info(`LRCLIB`, `No Lyrics found: ${track_name} - ${artist_name}`);
     return res.status(404).json({
-      status: 'fail',
-      message: 'LRCLIB üzerinde bu şarkıya ait söz bulunamadı.'
+      status: "fail",
+      message: "LRCLIB üzerinde bu şarkıya ait söz bulunamadı.",
     });
   }
   logger.info(`LRCLIB`, `Fetched Lyrics: ${track_name} - ${artist_name}`);
   res.status(200).json({
-    status: 'success',
+    status: "success",
     data: {
       id: lyricsData.id,
       trackName: lyricsData.trackName,
@@ -84,8 +100,8 @@ export const fetchSongLyrics = catchAsync(async (req, res, next) => {
       duration: lyricsData.duration,
       instrumental: lyricsData.instrumental,
       plainLyrics: lyricsData.plainLyrics,
-      syncedLyrics: lyricsData.syncedLyrics
-    }
+      syncedLyrics: lyricsData.syncedLyrics,
+    },
   });
 });
 
@@ -95,28 +111,42 @@ export const fetchSongLyrics = catchAsync(async (req, res, next) => {
  */
 export const shareSong = catchAsync(async (req, res, next) => {
   // Public test: req.user yoksa varsayılan test id'si veya body'den gelen userId kullanılır
-  const userId = req.user?.id || req.user?._id || req.body.userId || '11111111-1111-1111-1111-111111111111';
+  const userId =
+    req.user?.id ||
+    req.user?._id ||
+    req.body.userId ||
+    "11111111-1111-1111-1111-111111111111";
 
   let {
     song_name,
     song_artist,
     album_name,
-    duration, // saniye cinsinden
+    duration,
     spotify_uri,
     song_url,
     song_cover_url,
-    visibility = 'public',
+
+    visibility = "public",
     target_users = [],
+
     rating_by_user,
     comment_by_user,
     recommended_time_by_user,
+
+    post_type = "music",
+
     lyrics,
-    time_synced_lyrics
+    time_synced_lyrics,
+    lyrics_excerpt,
+    lyrics_start_time,
+    lyrics_end_time,
+    lyrics_design = {},
   } = req.body;
 
   // Sanatçı/grup fotoğraflarını Spotify'dan otomatik al
   let song_artist_cover_url = req.body.song_artist_cover_url || null;
-  let song_artist_cover_url_backup = req.body.song_artist_cover_url_backup || null;
+  let song_artist_cover_url_backup =
+    req.body.song_artist_cover_url_backup || null;
   let song_artist_genre = req.body.song_artist_genre || null;
 
   if (!song_artist_cover_url) {
@@ -130,22 +160,30 @@ export const shareSong = catchAsync(async (req, res, next) => {
         song_artist_genre = artistMeta.genres || [];
       }
     } catch (error) {
-      logger.warn(
-        'SONGSHARE',
-        `Sanatçı fotoğrafı alınamadı: ${song_artist}`
-      );
+      logger.warn("SONGSHARE", `Sanatçı fotoğrafı alınamadı: ${song_artist}`);
     }
   }
 
   if (!song_name || !song_artist) {
-    logger.warn(`SONGSHARE`, 'song_name and song_artist parameters are mandatory.');
-    return next(new AppError('Şarkı adı ve sanatçı bilgisi zorunludur.', 400));
+    logger.warn(
+      `SONGSHARE`,
+      "song_name and song_artist parameters are mandatory.",
+    );
+    return next(new AppError("Şarkı adı ve sanatçı bilgisi zorunludur.", 400));
   }
 
   // Eğer istemci söz göndermediyse arka planda LRCLIB'e sorup otomatik doldur
   if (!lyrics && !time_synced_lyrics) {
-    logger.detail(`SONGSHARE-LRCLIB`, `Lyrics missing, Fetching lyrics from LRCLIB for: ${song_name} - ${song_artist}`);
-    const lrcResult = await fetchLyricsFromLRCLIB(song_name, song_artist, album_name, duration);
+    logger.detail(
+      `SONGSHARE-LRCLIB`,
+      `Lyrics missing, Fetching lyrics from LRCLIB for: ${song_name} - ${song_artist}`,
+    );
+    const lrcResult = await fetchLyricsFromLRCLIB(
+      song_name,
+      song_artist,
+      album_name,
+      duration,
+    );
     if (lrcResult) {
       lyrics = lrcResult.plainLyrics || null;
       time_synced_lyrics = lrcResult.syncedLyrics || null;
@@ -187,8 +225,7 @@ export const shareSong = catchAsync(async (req, res, next) => {
     comment_by_user || null,
     recommended_time_by_user || null,
     lyrics || null,
-    time_synced_lyrics ? JSON.stringify(time_synced_lyrics) : null
-
+    time_synced_lyrics ? JSON.stringify(time_synced_lyrics) : null,
   ];
 
   let result;
@@ -196,23 +233,26 @@ export const shareSong = catchAsync(async (req, res, next) => {
   try {
     result = await db.query(query, values);
   } catch (error) {
-    console.error('SONGSHARE INSERT ERROR:', {
+    console.error("SONGSHARE INSERT ERROR:", {
       message: error.message,
       code: error.code,
       detail: error.detail,
       hint: error.hint,
       column: error.column,
-      table: error.table
+      table: error.table,
     });
 
     throw error;
   }
 
-  logger.info(`SONGSHARE`, `New song shared by user ${song_name} - ${song_artist}`);
+  logger.info(
+    `SONGSHARE`,
+    `New song shared by user ${song_name} - ${song_artist}`,
+  );
   res.status(201).json({
-    status: 'success',
-    message: 'Şarkı başarıyla paylaşıldı.',
-    data: result.rows[0]
+    status: "success",
+    message: "Şarkı başarıyla paylaşıldı.",
+    data: result.rows[0],
   });
 });
 
@@ -220,17 +260,14 @@ export const shareSong = catchAsync(async (req, res, next) => {
  * 2. Feed Akışını Getir (Public test dostu)
  */
 export const getFeed = catchAsync(async (req, res, next) => {
-
-  const currentUserId =
-    req.user?.id ||
-    req.user?._id ||
-    req.query.userId;
+  const currentUserId = req.user?.id || req.user?._id || req.query.userId;
 
   if (!currentUserId) {
-    logger.error(`SONGSHARE`, 'User ID not found in request for feed retrieval.');
-    return next(
-      new AppError('Kullanıcı kimliği bulunamadı.', 401)
+    logger.error(
+      `SONGSHARE`,
+      "User ID not found in request for feed retrieval.",
     );
+    return next(new AppError("Kullanıcı kimliği bulunamadı.", 401));
   }
 
   const feedQuery = `
@@ -341,16 +378,15 @@ export const getFeed = catchAsync(async (req, res, next) => {
     LIMIT 20;
   `;
 
-  const result = await db.query(
-    feedQuery,
-    [currentUserId]
-  );
+  const result = await db.query(feedQuery, [currentUserId]);
 
-  logger.detail(`SONGSHARE`, `Fetched feed for user ${currentUserId}`, { user_id: currentUserId });
+  logger.detail(`SONGSHARE`, `Fetched feed for user ${currentUserId}`, {
+    user_id: currentUserId,
+  });
   res.status(200).json({
-    status: 'success',
+    status: "success",
     results: result.rows.length,
-    data: result.rows
+    data: result.rows,
   });
 });
 
@@ -359,13 +395,17 @@ export const getFeed = catchAsync(async (req, res, next) => {
  */
 export const toggleRepost = catchAsync(async (req, res, next) => {
   const { id: suggestionId } = req.params;
-  const userId = req.user?.id || req.user?._id || req.body.userId || '11111111-1111-1111-1111-111111111111';
+  const userId = req.user?.id || req.user?._id;
+
+  if (!userId) {
+    return next(new AppError("Oturum gerekli.", 401));
+  }
 
   const checkQuery = `SELECT reposted_by, repost_count FROM song_suggestions WHERE id = $1`;
   const checkResult = await db.query(checkQuery, [suggestionId]);
 
   if (checkResult.rows.length === 0) {
-    return next(new AppError('Paylaşım bulunamadı.', 404));
+    return next(new AppError("Paylaşım bulunamadı.", 404));
   }
 
   const { reposted_by = [], repost_count = 0 } = checkResult.rows[0];
@@ -373,7 +413,7 @@ export const toggleRepost = catchAsync(async (req, res, next) => {
 
   let updatedReposts, newCount;
   if (hasReposted) {
-    updatedReposts = reposted_by.filter(uid => uid !== userId);
+    updatedReposts = reposted_by.filter((uid) => uid !== userId);
     newCount = Math.max(0, repost_count - 1);
   } else {
     updatedReposts = [...reposted_by, userId];
@@ -386,12 +426,16 @@ export const toggleRepost = catchAsync(async (req, res, next) => {
     WHERE id = $3 
     RETURNING repost_count, reposted_by;
   `;
-  const updateResult = await db.query(updateQuery, [updatedReposts, newCount, suggestionId]);
+  const updateResult = await db.query(updateQuery, [
+    updatedReposts,
+    newCount,
+    suggestionId,
+  ]);
 
   res.status(200).json({
-    status: 'success',
+    status: "success",
     reposted: !hasReposted,
-    repostCount: updateResult.rows[0].repost_count
+    repostCount: updateResult.rows[0].repost_count,
   });
 });
 
@@ -399,18 +443,13 @@ export const toggleRepost = catchAsync(async (req, res, next) => {
  * 4. Puanlama İşlemi (0-100)
  */
 export const rateSong = catchAsync(async (req, res, next) => {
-
   const { id: suggestionId } = req.params;
   const { rating } = req.body;
 
-  const userId =
-    req.user?.id ||
-    req.user?._id;
+  const userId = req.user?.id || req.user?._id;
 
   if (!userId) {
-    return next(
-      new AppError('Oturum gerekli.', 401)
-    );
+    return next(new AppError("Oturum gerekli.", 401));
   }
 
   const numericRating = Number(rating);
@@ -421,10 +460,7 @@ export const rateSong = catchAsync(async (req, res, next) => {
     numericRating > 100
   ) {
     return next(
-      new AppError(
-        'Geçersiz puan. 0 ile 100 arasında olmalıdır.',
-        400
-      )
+      new AppError("Geçersiz puan. 0 ile 100 arasında olmalıdır.", 400),
     );
   }
 
@@ -435,13 +471,11 @@ export const rateSong = catchAsync(async (req, res, next) => {
       FROM song_suggestions
       WHERE id = $1
     `,
-    [suggestionId]
+    [suggestionId],
   );
 
   if (shareResult.rows.length === 0) {
-    return next(
-      new AppError('Paylaşım bulunamadı.', 404)
-    );
+    return next(new AppError("Paylaşım bulunamadı.", 404));
   }
 
   const ownerId = shareResult.rows[0].user_id;
@@ -449,10 +483,7 @@ export const rateSong = catchAsync(async (req, res, next) => {
   /* Kendi paylaşımına topluluk puanı verme */
   if (String(ownerId) === String(userId)) {
     return next(
-      new AppError(
-        'Kendi paylaşımına topluluk puanı veremezsin.',
-        400
-      )
+      new AppError("Kendi paylaşımına topluluk puanı veremezsin.", 400),
     );
   }
 
@@ -475,11 +506,7 @@ export const rateSong = catchAsync(async (req, res, next) => {
         rating = EXCLUDED.rating,
         updated_at = NOW()
     `,
-    [
-      suggestionId,
-      userId,
-      numericRating
-    ]
+    [suggestionId, userId, numericRating],
   );
 
   /* Yeni ortalamayı hesapla */
@@ -491,7 +518,7 @@ export const rateSong = catchAsync(async (req, res, next) => {
       FROM song_ratings
       WHERE song_share_id = $1
     `,
-    [suggestionId]
+    [suggestionId],
   );
 
   const stats = result.rows[0];
@@ -501,20 +528,18 @@ export const rateSong = catchAsync(async (req, res, next) => {
      LEFT JOIN users u ON u.id = sr.user_id
      WHERE sr.song_share_id = $1
      ORDER BY sr.updated_at DESC NULLS LAST`,
-    [suggestionId]
+    [suggestionId],
   );
 
   res.status(200).json({
-    status: 'success',
+    status: "success",
 
     data: {
       rating: numericRating,
-      average: stats.average
-        ? Number(stats.average)
-        : 0,
+      average: stats.average ? Number(stats.average) : 0,
       count: Number(stats.count || 0),
-      ratings: votersResult.rows
-    }
+      ratings: votersResult.rows,
+    },
   });
 });
 
@@ -522,30 +547,23 @@ export const rateSong = catchAsync(async (req, res, next) => {
  * 5. Yorum Ekleme
  */
 export const addComment = catchAsync(async (req, res, next) => {
-
   const { id: suggestionId } = req.params;
-  const { comment, parent_comment_id = null, timestamp_seconds = null } = req.body;
+  const {
+    comment,
+    parent_comment_id = null,
+    timestamp_seconds = null,
+  } = req.body;
 
-  const userId =
-    req.user?.id ||
-    req.user?._id;
+  const userId = req.user?.id || req.user?._id;
 
   if (!userId) {
-    return next(
-      new AppError('Oturum gerekli.', 401)
-    );
+    return next(new AppError("Oturum gerekli.", 401));
   }
 
-  const cleanComment =
-    String(comment || '').trim();
+  const cleanComment = String(comment || "").trim();
 
   if (!cleanComment) {
-    return next(
-      new AppError(
-        'Yorum içeriği boş olamaz.',
-        400
-      )
-    );
+    return next(new AppError("Yorum içeriği boş olamaz.", 400));
   }
 
   const shareResult = await db.query(
@@ -554,31 +572,39 @@ export const addComment = catchAsync(async (req, res, next) => {
       FROM song_suggestions
       WHERE id = $1
     `,
-    [suggestionId]
+    [suggestionId],
   );
 
   if (shareResult.rows.length === 0) {
-    return next(
-      new AppError('Paylaşım bulunamadı.', 404)
-    );
+    return next(new AppError("Paylaşım bulunamadı.", 404));
   }
 
   const parentCommentId = parent_comment_id || null;
-  const timestampSeconds = timestamp_seconds === null || timestamp_seconds === '' || timestamp_seconds === undefined
-    ? null
-    : Number(timestamp_seconds);
+  const timestampSeconds =
+    timestamp_seconds === null ||
+    timestamp_seconds === "" ||
+    timestamp_seconds === undefined
+      ? null
+      : Number(timestamp_seconds);
 
-  if (timestampSeconds !== null && (!Number.isInteger(timestampSeconds) || timestampSeconds < 0 || timestampSeconds > 86400)) {
-    return next(new AppError('Şarkı zamanı 0 ile 86400 saniye arasında olmalıdır.', 400));
+  if (
+    timestampSeconds !== null &&
+    (!Number.isInteger(timestampSeconds) ||
+      timestampSeconds < 0 ||
+      timestampSeconds > 86400)
+  ) {
+    return next(
+      new AppError("Şarkı zamanı 0 ile 86400 saniye arasında olmalıdır.", 400),
+    );
   }
 
   if (parentCommentId) {
     const parentResult = await db.query(
       `SELECT id FROM song_comments WHERE id = $1 AND song_share_id = $2`,
-      [parentCommentId, suggestionId]
+      [parentCommentId, suggestionId],
     );
     if (parentResult.rows.length === 0) {
-      return next(new AppError('Yanıtlanacak yorum bulunamadı.', 404));
+      return next(new AppError("Yanıtlanacak yorum bulunamadı.", 404));
     }
   }
 
@@ -590,7 +616,7 @@ export const addComment = catchAsync(async (req, res, next) => {
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id, comment, created_at, parent_comment_id, timestamp_seconds
     `,
-    [suggestionId, userId, cleanComment, parentCommentId, timestampSeconds]
+    [suggestionId, userId, cleanComment, parentCommentId, timestampSeconds],
   );
 
   const commentRow = result.rows[0];
@@ -605,13 +631,13 @@ export const addComment = catchAsync(async (req, res, next) => {
       FROM users
       WHERE id = $1
     `,
-    [userId]
+    [userId],
   );
 
   const user = userResult.rows[0];
 
   res.status(201).json({
-    status: 'success',
+    status: "success",
 
     data: {
       id: commentRow.id,
@@ -622,18 +648,14 @@ export const addComment = catchAsync(async (req, res, next) => {
 
       user_id: userId,
 
-      username:
-        user?.user_name || 'Kullanıcı',
+      username: user?.user_name || "Kullanıcı",
 
-      avatar:
-        user?.profile_pic_path || null,
+      avatar: user?.profile_pic_path || null,
 
-      avatar_type:
-        user?.avatar_type || null,
+      avatar_type: user?.avatar_type || null,
 
-      avatar_data:
-        user?.avatar_data || null
-    }
+      avatar_data: user?.avatar_data || null,
+    },
   });
 });
 
@@ -643,79 +665,84 @@ export const addComment = catchAsync(async (req, res, next) => {
 // ========================================================
 
 export const getRecommendationsDEMO = catchAsync(async (req, res, next) => {
-
   const recommendations = [
-
     {
-      id: 'rec-001',
-      title: 'Hot',
-      artist: 'Inna',
-      coverUrl: 'https://i.scdn.co/image/ab67616d00001e023d6413c7dc24318bdbd5b366',
-      spotifyUrl: 'https://open.spotify.com/track/5F4d5D9s0hM8f0gM6XvQeF'
+      id: "rec-001",
+      title: "Hot",
+      artist: "Inna",
+      coverUrl:
+        "https://i.scdn.co/image/ab67616d00001e023d6413c7dc24318bdbd5b366",
+      spotifyUrl: "https://open.spotify.com/track/5F4d5D9s0hM8f0gM6XvQeF",
     },
 
     {
-      id: 'rec-002',
-      title: 'Aklımda Biri Var',
-      artist: 'Artis',
-      coverUrl: 'https://i.scdn.co/image/ab67616d0000b273960635da26f6fbccbeb36b2d',
-      spotifyUrl: ''
+      id: "rec-002",
+      title: "Aklımda Biri Var",
+      artist: "Artis",
+      coverUrl:
+        "https://i.scdn.co/image/ab67616d0000b273960635da26f6fbccbeb36b2d",
+      spotifyUrl: "",
     },
 
     {
-      id: 'rec-003',
-      title: 'A Sky Full of Stars',
-      artist: 'Coldplay',
-      coverUrl: 'https://i.scdn.co/image/ab67616d00001e028ff7c3580d429c8212b9a3b6',
-      spotifyUrl: ''
+      id: "rec-003",
+      title: "A Sky Full of Stars",
+      artist: "Coldplay",
+      coverUrl:
+        "https://i.scdn.co/image/ab67616d00001e028ff7c3580d429c8212b9a3b6",
+      spotifyUrl: "",
     },
 
     {
-      id: 'rec-004',
-      title: 'Self Aware',
-      artist: 'Alternative',
-      coverUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpAp5NlImEisne6bbOOYVnPRHVm5B1gT4YQfF1Vi5dDQ&s=10',
-      spotifyUrl: ''
+      id: "rec-004",
+      title: "Self Aware",
+      artist: "Alternative",
+      coverUrl:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpAp5NlImEisne6bbOOYVnPRHVm5B1gT4YQfF1Vi5dDQ&s=10",
+      spotifyUrl: "",
     },
 
     {
-      id: 'rec-005',
-      title: 'Maraton',
-      artist: 'Ati242',
-      coverUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s',
-      spotifyUrl: ''
+      id: "rec-005",
+      title: "Maraton",
+      artist: "Ati242",
+      coverUrl:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-eHQUhSqV86ZoY3Ak8pVP_XqzFIStg-GSaCOu9EwjQw&s",
+      spotifyUrl: "",
     },
 
     {
-      id: 'rec-006',
-      title: 'Join Me',
-      artist: 'HIM',
-      coverUrl: 'https://i.scdn.co/image/ab67616d0000b273a8cfc41719dc2c2028e0aad5',
-      spotifyUrl: ''
+      id: "rec-006",
+      title: "Join Me",
+      artist: "HIM",
+      coverUrl:
+        "https://i.scdn.co/image/ab67616d0000b273a8cfc41719dc2c2028e0aad5",
+      spotifyUrl: "",
     },
 
     {
-      id: 'rec-007',
-      title: 'Denize Bıraksam',
-      artist: 'Turkish Rock',
-      coverUrl: 'https://i.scdn.co/image/ab67616d0000b2736054a3d4d3fadf0173dbdf07',
-      spotifyUrl: ''
+      id: "rec-007",
+      title: "Denize Bıraksam",
+      artist: "Turkish Rock",
+      coverUrl:
+        "https://i.scdn.co/image/ab67616d0000b2736054a3d4d3fadf0173dbdf07",
+      spotifyUrl: "",
     },
 
     {
-      id: 'rec-008',
-      title: 'Bi Tik',
-      artist: 'Pop Mix',
-      coverUrl: 'https://i1.sndcdn.com/artworks-ixY9Sl5eXz1mPMyZ-Sq9u8Q-t500x500.jpg',
-      spotifyUrl: ''
-    }
-
+      id: "rec-008",
+      title: "Bi Tik",
+      artist: "Pop Mix",
+      coverUrl:
+        "https://i1.sndcdn.com/artworks-ixY9Sl5eXz1mPMyZ-Sq9u8Q-t500x500.jpg",
+      spotifyUrl: "",
+    },
   ];
 
   res.status(200).json({
-    status: 'success',
+    status: "success",
     results: recommendations.length,
-    data: recommendations
+    data: recommendations,
   });
 });
 
@@ -724,14 +751,14 @@ export const getRecommendations = catchAsync(async (req, res, next) => {
   const result = await getRandomRecommendations(limit);
 
   res.status(200).json({
-    status: 'success',
+    status: "success",
     results: result.tracks.length,
     data: result.tracks,
     meta: {
-      source: 'daily-chart-cache',
+      source: "daily-chart-cache",
       cachedAt: result.fetchedAt,
       stale: result.stale,
-      regions: ['TR', 'US', 'DE', 'GB']
-    }
+      regions: ["TR", "US", "DE", "GB"],
+    },
   });
 });

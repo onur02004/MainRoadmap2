@@ -4,7 +4,11 @@ import logger from '../utils/logger.js';
 import {
   listAdminUsers,
   createAdminUser,
-  updateAdminUser
+  updateAdminUser,
+  listAdminServices,
+  createAdminService,
+  updateAdminService,
+  setAdminServiceActive
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -39,6 +43,12 @@ router.get('/logs', protect, restrictTo('ADMIN'), (req, res) => {
 router.get('/users', listAdminUsers);
 router.post('/users', createAdminUser);
 router.patch('/users/:id', updateAdminUser);
+
+// Service management
+router.get('/services', listAdminServices);
+router.post('/services', createAdminService);
+router.patch('/services/:id', updateAdminService);
+router.patch('/services/:id/active', setAdminServiceActive);
 
 
 export default router;

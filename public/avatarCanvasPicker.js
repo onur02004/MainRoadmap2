@@ -592,7 +592,12 @@ class InfiniteAvatarCanvas {
     this.inspectorPlaceholder.style.display = 'none';
     this.inspectorOwner.textContent = person.toUpperCase();
     this.inspectorAsset.textContent = filename;
-    this.applyBtn.removeAttribute('disabled');
+    this.applyBtn.disabled = false;
+    this.applyBtn.classList.add('is-ready');
+    const applyLabel = this.applyBtn.querySelector('.apply-btn-label');
+    if (applyLabel) applyLabel.textContent = 'Use This Avatar';
+    const applyHint = document.getElementById('applyAvatarHint');
+    if (applyHint) applyHint.textContent = 'Selected! Click “Use This Avatar” to set it as your profile picture.';
 
     document.querySelectorAll('.avatar-node-card').forEach(c => c.classList.remove('selected'));
     document.querySelectorAll('.cluster-branch-line').forEach(l => l.classList.remove('active'));
@@ -683,8 +688,11 @@ class InfiniteAvatarCanvas {
     if (!this.selectedUrl) return;
 
     const btn = this.applyBtn;
-    const originalText = btn.textContent;
-    btn.textContent = 'Saving...';
+    const label = btn.querySelector('.apply-btn-label');
+    const originalText = label ? label.textContent : 'Use This Avatar';
+    if (label) label.textContent = 'Saving…';
+    btn.classList.remove('is-ready');
+    btn.classList.add('is-saving');
     btn.disabled = true;
 
     try {
@@ -721,7 +729,9 @@ class InfiniteAvatarCanvas {
     } catch (err) {
       this.showFeedbackToast(err.message, 'error');
     } finally {
-      btn.textContent = originalText;
+      if (label) label.textContent = originalText;
+      btn.classList.remove('is-saving');
+      btn.classList.add('is-ready');
       btn.disabled = false;
     }
   }
