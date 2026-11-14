@@ -43,6 +43,20 @@ app.use('/api/debug', debugRoutes);
 app.use('/api/songshare', songShareRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/games', gameRoutes);
+
+// Public browser configuration for WeinGuesser. The key is read from the
+// server environment at request time; never expose the .env file itself.
+app.get('/api/config/weinguesser', (req, res) => {
+  const apiKey = process.env.GOOGLE_MAPS_EMBED_API_KEY || '';
+  res.set('Cache-Control', 'no-store');
+  if (!apiKey) {
+    return res.status(503).json({
+      status: 'error',
+      message: 'Google Maps Embed API key is not configured on the server.'
+    });
+  }
+  return res.json({ googleMapsEmbedApiKey: apiKey });
+});
 app.use('/api/admin/games', adminGamesRoutes);
 
 app.use(express.static(path.join(__dirname, '../public')));

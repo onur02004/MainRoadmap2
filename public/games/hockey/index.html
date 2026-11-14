@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b09">
+  <title>Air Hockey · 330nur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./hockey.css">
+  <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/js/socket/socket-client.js" defer></script>
+  <script src="./hockey.js" defer></script>
+</head>
+<body>
+  <div class="grain"></div>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-mark">↗</span><span>330nur<span class="muted">/games</span></span></a>
+    <div class="crumb">GAMES <span>/</span> AIR HOCKEY</div>
+    <a class="back-link" href="/games">← ALL GAMES</a>
+  </header>
+
+  <main class="shell">
+    <section class="intro">
+      <div>
+        <div class="eyebrow"><i></i> AIR HOCKEY</div>
+        <h1>Air Hockey<span>.</span></h1>
+        <p>One table. First to the target score wins.</p>
+      </div>
+      
+    </section>
+
+    <section class="mode-panel" id="modePanel">
+      <div class="panel-heading"><div><span class="eyebrow">AIR HOCKEY</span><h2>Choose your match</h2></div><span class="step">GAME MODE</span></div>
+      <div class="mode-grid" id="modeGrid">
+        <button class="mode-card selected" data-mode="solo">
+          <span class="mode-icon">◉</span><span class="mode-name">Solo</span>
+          <span class="mode-desc">Challenge the CPU. First to 7.</span><span class="mode-meta">1 PLAYER · VS CPU</span>
+        </button>
+        <button class="mode-card" data-mode="duel">
+          <span class="mode-icon">↔</span><span class="mode-name">Local Duel</span>
+          <span class="mode-desc">Two players on the same device.</span><span class="mode-meta">2 PLAYERS · SAME DEVICE</span>
+        </button>
+        <button class="mode-card" data-mode="online">
+          <span class="mode-icon">◎</span><span class="mode-name">Online Duel</span>
+          <span class="mode-desc">Play against someone on another device.</span><span class="mode-meta">2 PLAYERS · ONLINE</span>
+        </button>
+      </div>
+      <div class="online-room" id="onlineRoom" hidden>
+        <div class="online-topline">
+          <div><span class="eyebrow">PLAY ONLINE</span><h3>Find a match</h3></div>
+          <button class="quiet-button" id="backToModesButton" type="button">← GAME MODES</button>
+        </div>
+        <div class="online-actions">
+          <button class="start-button" id="createRoomButton" type="button">＋ CREATE ROOM</button>
+          <div class="join-room"><input id="roomCodeInput" maxlength="6" placeholder="ENTER ROOM CODE" autocomplete="off" aria-label="Room code"><button class="quiet-button" id="joinRoomButton" type="button">JOIN</button></div>
+        </div>
+        <div class="room-status" id="roomStatus" aria-live="polite">Create a room or join an open room below.</div>
+        <div class="available-rooms">
+          <div class="available-heading"><strong>Open rooms</strong><span id="roomCount">0 rooms</span></div>
+          <div id="availableRooms" class="available-room-list"><div class="rooms-empty">No open rooms right now. Create one and invite a friend.</div></div>
+        </div>
+        <div class="room-lobby" id="roomLobby" hidden>
+          <div class="room-lobby-head">
+            <div><span class="eyebrow">YOUR ROOM</span><strong id="roomCodeDisplay"></strong></div>
+            <button class="quiet-button" id="copyRoomButton" type="button">COPY CODE</button>
+          </div>
+          <div class="room-players" id="roomPlayers">
+            <div class="room-player empty"><span class="player-avatar">+</span><span>Waiting for player 2</span></div>
+          </div>
+          <div class="room-lobby-footer">
+            <span id="roomHostHint">Only the room host can start.</span>
+            <button class="start-button" id="onlineStartButton" disabled type="button">START MATCH</button>
+          </div>
+        </div>
+      </div>
+      <div class="setup-row" id="setupRow">
+        <div class="setup-field">
+          <label for="targetScore">WINNING SCORE</label>
+          <select id="targetScore"><option value="5">First to 5</option><option value="7" selected>First to 7</option><option value="10">First to 10</option></select>
+        </div>
+        <div class="setup-note" id="setupNote">Move with W / S. The CPU guards the opposite goal.</div>
+        <button class="start-button" id="startButton">START MATCH</button>
+      </div>
+    </section>
+
+    <section class="game-panel" id="gamePanel" hidden>
+      <div class="game-toolbar">
+        <div class="score-side"><span class="team-dot mint"></span><div><small id="leftLabel">PLAYER 01</small><strong id="leftScore">0</strong></div></div>
+        <div class="match-center"><span id="modeLabel">SOLO MATCH</span><strong id="matchClock">00:00</strong><small id="matchState">FIRST TO 7</small></div>
+        <div class="score-side right"><div><small id="rightLabel">CPU</small><strong id="rightScore">0</strong></div><span class="team-dot orange"></span></div>
+      </div>
+      <div class="rink-wrap">
+        <canvas id="rink" aria-label="Air hockey game table"></canvas>
+        <div class="countdown" id="countdown" hidden>3</div>
+        <div class="goal-flash" id="goalFlash" hidden>GOAL!</div>
+        <div class="pause-overlay" id="pauseOverlay" hidden><strong>PAUSED</strong><span>Press SPACE to resume</span></div>
+      </div>
+      <div class="game-bottom">
+        <div class="controls" id="controlsText"></div>
+        <div class="game-actions"><button class="quiet-button" id="fullscreenButton">FULL SCREEN</button><button class="quiet-button" id="pauseButton">PAUSE</button><button class="quiet-button" id="restartButton">RESTART</button><button class="quiet-button" id="changeModeButton">MODES</button></div>
+      </div>
+    </section>
+
+    <footer><span>330NUR / AIR HOCKEY</span><span>FIRST TO THE TARGET WINS</span></footer>
+  </main>
+</body>
+</html>

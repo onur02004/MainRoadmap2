@@ -1,0 +1,451 @@
+{
+  "version": "3.0",
+  "provider": "user-supplied-coordinates-only",
+  "mapCenter": [
+    47.822356,
+    9.647964
+  ],
+  "spots": [
+    {
+      "id": "point-001",
+      "name": "Konum 01",
+      "lat": 47.796984,
+      "lng": 9.67713,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-002",
+      "name": "Konum 02",
+      "lat": 47.80424,
+      "lng": 9.658559,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-003",
+      "name": "Konum 03",
+      "lat": 47.803742,
+      "lng": 9.659977,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-004",
+      "name": "Konum 04",
+      "lat": 47.811409,
+      "lng": 9.667841,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-005",
+      "name": "Konum 05",
+      "lat": 47.813419,
+      "lng": 9.669138,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-006",
+      "name": "Konum 06",
+      "lat": 47.814663,
+      "lng": 9.669483,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-007",
+      "name": "Konum 07",
+      "lat": 47.818287,
+      "lng": 9.658307,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-008",
+      "name": "Konum 08",
+      "lat": 47.813942,
+      "lng": 9.654408,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-009",
+      "name": "Konum 09",
+      "lat": 47.811597,
+      "lng": 9.654481,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-010",
+      "name": "Konum 10",
+      "lat": 47.812827,
+      "lng": 9.652462,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-011",
+      "name": "Konum 11",
+      "lat": 47.813473,
+      "lng": 9.650835,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-012",
+      "name": "Konum 12",
+      "lat": 47.81397,
+      "lng": 9.649675,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-013",
+      "name": "Konum 13",
+      "lat": 47.815256,
+      "lng": 9.64754,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-014",
+      "name": "Konum 14",
+      "lat": 47.810027,
+      "lng": 9.651288,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-015",
+      "name": "Konum 15",
+      "lat": 47.809538,
+      "lng": 9.650244,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-016",
+      "name": "Konum 16",
+      "lat": 47.811165,
+      "lng": 9.646836,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-017",
+      "name": "Konum 17",
+      "lat": 47.810509,
+      "lng": 9.653481,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-018",
+      "name": "Konum 18",
+      "lat": 47.810897,
+      "lng": 9.656223,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-019",
+      "name": "Konum 19",
+      "lat": 47.809898,
+      "lng": 9.652823,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-020",
+      "name": "Konum 20",
+      "lat": 47.807972,
+      "lng": 9.649428,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-021",
+      "name": "Konum 21",
+      "lat": 47.80785,
+      "lng": 9.647919,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-022",
+      "name": "Konum 22",
+      "lat": 47.808821,
+      "lng": 9.645904,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-023",
+      "name": "Konum 23",
+      "lat": 47.815325,
+      "lng": 9.643747,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-024",
+      "name": "Konum 24",
+      "lat": 47.809219,
+      "lng": 9.639808,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-025",
+      "name": "Konum 25",
+      "lat": 47.807854,
+      "lng": 9.639573,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-026",
+      "name": "Konum 26",
+      "lat": 47.806771,
+      "lng": 9.640917,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-027",
+      "name": "Konum 27",
+      "lat": 47.805579,
+      "lng": 9.637498,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-028",
+      "name": "Konum 28",
+      "lat": 47.805367,
+      "lng": 9.639492,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-029",
+      "name": "Konum 29",
+      "lat": 47.803038,
+      "lng": 9.636573,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-030",
+      "name": "Konum 30",
+      "lat": 47.798418,
+      "lng": 9.634325,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-031",
+      "name": "Konum 31",
+      "lat": 47.811101,
+      "lng": 9.627284,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-032",
+      "name": "Konum 32",
+      "lat": 47.813272,
+      "lng": 9.626072,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-033",
+      "name": "Konum 33",
+      "lat": 47.812924,
+      "lng": 9.631666,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-034",
+      "name": "Konum 34",
+      "lat": 47.815413,
+      "lng": 9.639848,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-035",
+      "name": "Konum 35",
+      "lat": 47.818087,
+      "lng": 9.640904,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-036",
+      "name": "Konum 36",
+      "lat": 47.816662,
+      "lng": 9.642346,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-037",
+      "name": "Konum 37",
+      "lat": 47.819174,
+      "lng": 9.643049,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-038",
+      "name": "Konum 38",
+      "lat": 47.819334,
+      "lng": 9.644404,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-039",
+      "name": "Konum 39",
+      "lat": 47.82171,
+      "lng": 9.640424,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-040",
+      "name": "Konum 40",
+      "lat": 47.797931,
+      "lng": 9.628545,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-041",
+      "name": "Konum 41",
+      "lat": 47.796265,
+      "lng": 9.622136,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-042",
+      "name": "Konum 42",
+      "lat": 47.784405,
+      "lng": 9.612453,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-043",
+      "name": "Konum 43",
+      "lat": 47.783714,
+      "lng": 9.607233,
+      "city": "Weingarten"
+    },
+    {
+      "id": "point-044",
+      "name": "Konum 44",
+      "lat": 47.781422,
+      "lng": 9.609036,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-045",
+      "name": "Konum 45",
+      "lat": 47.77167,
+      "lng": 9.599438,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-046",
+      "name": "Konum 46",
+      "lat": 47.779568,
+      "lng": 9.612982,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-047",
+      "name": "Konum 47",
+      "lat": 47.781278,
+      "lng": 9.614974,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-048",
+      "name": "Konum 48",
+      "lat": 47.781566,
+      "lng": 9.615911,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-049",
+      "name": "Konum 49",
+      "lat": 47.781833,
+      "lng": 9.614266,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-050",
+      "name": "Konum 50",
+      "lat": 47.782405,
+      "lng": 9.614007,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-051",
+      "name": "Konum 51",
+      "lat": 47.78591,
+      "lng": 9.616137,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-052",
+      "name": "Konum 52",
+      "lat": 47.788591,
+      "lng": 9.609704,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-053",
+      "name": "Konum 53",
+      "lat": 47.782749,
+      "lng": 9.605633,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-054",
+      "name": "Konum 54",
+      "lat": 47.782815,
+      "lng": 9.603497,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-055",
+      "name": "Konum 55",
+      "lat": 47.791071,
+      "lng": 9.606121,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-056",
+      "name": "Konum 56",
+      "lat": 47.793006,
+      "lng": 9.615033,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-057",
+      "name": "Konum 57",
+      "lat": 47.782096,
+      "lng": 9.611119,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-058",
+      "name": "Konum 58",
+      "lat": 47.785283,
+      "lng": 9.610332,
+      "city": "Ravensburg"
+    },
+    {
+      "id": "point-059",
+      "name": "Konum 59",
+      "lat": 48.399001,
+      "lng": 9.984935,
+      "city": "Ulm"
+    },
+    {
+      "id": "point-060",
+      "name": "Konum 60",
+      "lat": 48.399056,
+      "lng": 9.992445,
+      "city": "Ulm"
+    },
+    {
+      "id": "point-061",
+      "name": "Konum 61",
+      "lat": 47.649705,
+      "lng": 9.478528,
+      "city": "Friedrichshafen"
+    },
+    {
+      "id": "point-062",
+      "name": "Konum 62",
+      "lat": 47.660399,
+      "lng": 9.17734,
+      "city": "Konstanz"
+    },
+    {
+      "id": "point-063",
+      "name": "Konum 63",
+      "lat": 47.660326,
+      "lng": 9.17488,
+      "city": "Konstanz"
+    }
+  ]
+}

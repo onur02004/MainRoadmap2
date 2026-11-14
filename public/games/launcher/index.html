@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b09">
+  <title>Game launcher · 330nur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./launcher.css">
+  <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/js/socket/socket-client.js" defer></script>
+  <script src="./launcher.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-mark">↗</span><span>330nur<span class="muted">/games</span></span></a>
+    <span class="crumb">GAMES <span>/</span> LAUNCHER</span>
+    <a class="back-link" href="/games">← ALL GAMES</a>
+  </header>
+  <main class="page">
+    <div id="loading" class="state-panel"><i class="pulse"></i> LOADING GAME...</div>
+    <section id="error" class="state-panel error" hidden>
+      <h1>Could not load game.</h1>
+      <p id="errorMessage">Something went wrong.</p>
+      <a href="/games">← BACK TO GAMES</a>
+    </section>
+    <section id="launcher" hidden>
+      <div class="crumb">CHOOSE YOUR WAY TO PLAY</div>
+      <div class="game-heading">
+        <div class="game-icon" id="gameIcon">✦</div>
+        <div><h1 id="gameName">Game<span>.</span></h1><p id="gameTagline"></p></div>
+      </div>
+      <div class="section-line">
+        <div><span class="eyebrow" id="gameCategory">GAME / EASY</span><h2>Choose a game mode</h2></div>
+        <span class="player-range" id="playerRange"></span>
+      </div>
+      <div class="mode-grid" id="modeGrid"></div>
+      <div class="launcher-footer"><span>330NUR / GAME LAUNCHER</span><a href="/games">BACK TO CATALOGUE ↗</a></div>
+    </section>
+  </main>
+</body>
+</html>
