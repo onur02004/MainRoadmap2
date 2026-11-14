@@ -5,6 +5,33 @@ import logger from "../utils/logger.js";
 import * as spotifyService from "../services/spotifyService.js";
 import { getRandomRecommendations } from "../services/recommendationService.js";
 
+const MAX_COMMENT_LENGTH = 2000;
+const VALID_VISIBILITIES = new Set(['public', 'friends', 'custom']);
+
+async function findVisibleShare(shareId, userId) {
+  const result = await db.query(
+    `SELECT id, user_id, visibility, COALESCE(target_users, '{}'::uuid[]) AS target_users
+     FROM song_suggestions WHERE id = $1`,
+    [shareId]
+  );
+  const share = result.rows[0];
+  if (!share) return null;
+  const isOwner = String(share.user_id) === String(userId);
+  const isPublic = share.visibility === 'public';
+  const isTarget = Array.isArray(share.target_users) && share.target_users.some((id) => String(id) === String(userId));
+  return (isOwner || isPublic || isTarget) ? share : null;
+}
+
+function isAllowedExternalUrl(value, allowedHosts = []) {
+  if (value == null || value === '') return true;
+  if (typeof value !== 'string' || value.length > 2048) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && allowedHosts.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`));
+  } catch { return false; }
+}
+
+
 // LRCLIB API Yapılandırması
 const LRCLIB_BASE_URL = "https://lrclib.net";
 const LRCLIB_HEADERS = {
@@ -60,16 +87,20 @@ async function fetchLyricsFromLRCLIB(
  * GET /api/v1/songs/lyrics?track_name=...&artist_name=...&album_name=...&duration=...
  */
 export const fetchSongLyrics = catchAsync(async (req, res, next) => {
-  const { track_name, artist_name, album_name, duration } = req.query;
+  const track_name = String(req.query.track_name || '').trim();
+  const artist_name = String(req.query.artist_name || '').trim();
+  const album_name = String(req.query.album_name || '').trim();
+  const durationRaw = req.query.duration;
+  const duration = durationRaw == null || durationRaw === '' ? null : Number(durationRaw);
 
-  if (!track_name || !artist_name) {
+  if (!track_name || !artist_name || track_name.length > 200 || artist_name.length > 200 || album_name.length > 200 || (duration !== null && (!Number.isFinite(duration) || duration <= 0 || duration > 86400))) {
     logger.error(
       `LRCLIB`,
       "track_name and artist_name paramaters are mandatory.",
     );
     return next(
       new AppError(
-        "track_name ve artist_name sorgu parametreleri zorunludur.",
+        "Geçerli track_name ve artist_name zorunludur; alanlar en fazla 200 karakter olabilir.",
         400,
       ),
     );
@@ -79,7 +110,7 @@ export const fetchSongLyrics = catchAsync(async (req, res, next) => {
     track_name,
     artist_name,
     album_name,
-    duration ? Number(duration) : null,
+    duration,
   );
 
   if (!lyricsData) {
@@ -111,11 +142,8 @@ export const fetchSongLyrics = catchAsync(async (req, res, next) => {
  */
 export const shareSong = catchAsync(async (req, res, next) => {
   // Public test: req.user yoksa varsayılan test id'si veya body'den gelen userId kullanılır
-  const userId =
-    req.user?.id ||
-    req.user?._id ||
-    req.body.userId ||
-    "11111111-1111-1111-1111-111111111111";
+  const userId = req.user?.id || req.user?._id;
+  if (!userId) return next(new AppError("Oturum gerekli.", 401));
 
   let {
     song_name,
@@ -141,7 +169,15 @@ export const shareSong = catchAsync(async (req, res, next) => {
     lyrics_start_time,
     lyrics_end_time,
     lyrics_design = {},
-  } = req.body;
+  } = req.body || {};
+
+  if (!song_name || !song_artist || typeof song_name !== 'string' || typeof song_artist !== 'string' || song_name.trim().length > 200 || song_artist.trim().length > 200) {
+    return next(new AppError("Şarkı adı ve sanatçı bilgisi zorunludur; en fazla 200 karakter olabilir.", 400));
+  }
+  if (!VALID_VISIBILITIES.has(visibility) || !['music', 'lyrics'].includes(post_type)) return next(new AppError('Paylaşım türü veya görünürlüğü geçersiz.', 400));
+  if (!Array.isArray(target_users) || target_users.length > 100 || target_users.some((id) => !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id)))) return next(new AppError('Hedef kullanıcı listesi geçersiz.', 400));
+  if (comment_by_user != null && (typeof comment_by_user !== 'string' || comment_by_user.length > MAX_COMMENT_LENGTH)) return next(new AppError('Açıklama en fazla 2000 karakter olabilir.', 400));
+  if (rating_by_user !== undefined && rating_by_user !== null && (!Number.isInteger(Number(rating_by_user)) || Number(rating_by_user) < 0 || Number(rating_by_user) > 100)) return next(new AppError('Puan 0 ile 100 arasında tam sayı olmalıdır.', 400));
 
   // Sanatçı/grup fotoğraflarını Spotify'dan otomatik al
   let song_artist_cover_url = req.body.song_artist_cover_url || null;
@@ -164,13 +200,18 @@ export const shareSong = catchAsync(async (req, res, next) => {
     }
   }
 
-  if (!song_name || !song_artist) {
-    logger.warn(
-      `SONGSHARE`,
-      "song_name and song_artist parameters are mandatory.",
-    );
-    return next(new AppError("Şarkı adı ve sanatçı bilgisi zorunludur.", 400));
+  if (!isAllowedExternalUrl(song_url, ['open.spotify.com']) || !isAllowedExternalUrl(song_cover_url, ['i.scdn.co', 'image-cdn-ak.spotifycdn.com']) || !isAllowedExternalUrl(song_artist_cover_url, ['i.scdn.co', 'image-cdn-ak.spotifycdn.com']) || !isAllowedExternalUrl(song_artist_cover_url_backup, ['i.scdn.co', 'image-cdn-ak.spotifycdn.com'])) {
+    return next(new AppError('Spotify bağlantısı veya görsel adresi geçersiz.', 400));
   }
+  if (spotify_uri != null && (typeof spotify_uri !== 'string' || !/^spotify:(track|episode):[A-Za-z0-9]{10,40}$/.test(spotify_uri))) return next(new AppError('Spotify URI geçersiz.', 400));
+  if (lyrics != null && (typeof lyrics !== 'string' || lyrics.length > 100_000)) return next(new AppError('Şarkı sözleri çok uzun veya geçersiz.', 400));
+  if (time_synced_lyrics != null && (typeof time_synced_lyrics !== 'string' && typeof time_synced_lyrics !== 'object' || JSON.stringify(time_synced_lyrics).length > 150_000)) return next(new AppError('Senkronize şarkı sözleri geçersiz.', 400));
+  if (lyrics_excerpt != null && (typeof lyrics_excerpt !== 'string' || lyrics_excerpt.length > 5000)) return next(new AppError('Lyrics kesiti çok uzun.', 400));
+  if (lyrics_start_time != null && (!Number.isFinite(Number(lyrics_start_time)) || Number(lyrics_start_time) < 0 || Number(lyrics_start_time) > 86400)) return next(new AppError('Lyrics başlangıç zamanı geçersiz.', 400));
+  if (lyrics_end_time != null && (!Number.isFinite(Number(lyrics_end_time)) || Number(lyrics_end_time) < 0 || Number(lyrics_end_time) > 86400 || (lyrics_start_time != null && Number(lyrics_end_time) < Number(lyrics_start_time)))) return next(new AppError('Lyrics bitiş zamanı geçersiz.', 400));
+  song_name = song_name.trim();
+  song_artist = song_artist.trim();
+  if (typeof comment_by_user === 'string') comment_by_user = comment_by_user.trim().slice(0, MAX_COMMENT_LENGTH);
 
   // Eğer istemci söz göndermediyse arka planda LRCLIB'e sorup otomatik doldur
   if (!lyrics && !time_synced_lyrics) {
@@ -197,35 +238,26 @@ export const shareSong = catchAsync(async (req, res, next) => {
       song_artist_cover_url_backup, song_artist_genre,
       visibility, target_users, rating_by_user,
       comment_by_user, recommended_time_by_user,
-      lyrics, time_synced_lyrics, date_added
-    )VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9,
-      $10, $11, $12, $13, $14, $15, $16, NOW()
-    )
-    RETURNING *;
+      lyrics, time_synced_lyrics, post_type, lyrics_excerpt,
+      lyrics_start_time, lyrics_end_time, lyrics_design, date_added
+    ) VALUES (
+      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21::jsonb,NOW()
+    ) RETURNING *;
   `;
 
   const values = [
-    userId,
-    song_name,
-    song_artist,
-    spotify_uri || null,
-    song_url || null,
-    song_cover_url || null,
-    song_artist_cover_url,
-    song_artist_cover_url_backup,
-    Array.isArray(song_artist_genre)
-      ? song_artist_genre
-      : song_artist_genre
-        ? [song_artist_genre]
-        : null,
-    visibility,
-    target_users,
-    rating_by_user !== undefined ? rating_by_user : null,
-    comment_by_user || null,
-    recommended_time_by_user || null,
-    lyrics || null,
-    time_synced_lyrics ? JSON.stringify(time_synced_lyrics) : null,
+    userId, song_name, song_artist, spotify_uri || null, song_url || null,
+    song_cover_url || null, song_artist_cover_url, song_artist_cover_url_backup,
+    Array.isArray(song_artist_genre) ? song_artist_genre : (song_artist_genre ? [song_artist_genre] : null),
+    visibility, Array.isArray(target_users) ? target_users : [],
+    post_type === 'lyrics' ? null : (rating_by_user !== undefined ? rating_by_user : null),
+    comment_by_user || null, recommended_time_by_user || null,
+    lyrics || null, time_synced_lyrics ? JSON.stringify(time_synced_lyrics) : null,
+    post_type === 'lyrics' ? 'lyrics' : 'music',
+    post_type === 'lyrics' ? (lyrics_excerpt || null) : null,
+    post_type === 'lyrics' ? (lyrics_start_time ?? null) : null,
+    post_type === 'lyrics' ? (lyrics_end_time ?? null) : null,
+    JSON.stringify(post_type === 'lyrics' && lyrics_design && typeof lyrics_design === 'object' ? lyrics_design : {})
   ];
 
   let result;
@@ -256,11 +288,67 @@ export const shareSong = catchAsync(async (req, res, next) => {
   });
 });
 
+/** Kullanıcının kendi paylaşımını düzenlemesi. ID değişmez; yorum/puan ilişkileri korunur. */
+export const updateSongShare = catchAsync(async (req, res, next) => {
+  const userId = req.user?.id || req.user?._id;
+  const { id } = req.params;
+  if (!userId) return next(new AppError("Oturum gerekli.", 401));
+  const {
+    comment_by_user, visibility, target_users, rating_by_user,
+    recommended_time_by_user, lyrics_excerpt, lyrics_start_time,
+    lyrics_end_time, lyrics_design
+  } = req.body || {};
+  if (visibility !== undefined && !VALID_VISIBILITIES.has(visibility)) return next(new AppError('Geçersiz paylaşım görünürlüğü.', 400));
+  if (target_users !== undefined && (!Array.isArray(target_users) || target_users.length > 100 || target_users.some((value) => !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value))))) return next(new AppError('Hedef kullanıcı listesi geçersiz.', 400));
+  if (rating_by_user !== undefined && rating_by_user !== null && (!Number.isInteger(Number(rating_by_user)) || Number(rating_by_user) < 0 || Number(rating_by_user) > 100)) return next(new AppError('Puan 0 ile 100 arasında tam sayı olmalıdır.', 400));
+  if (comment_by_user !== undefined && comment_by_user !== null && (typeof comment_by_user !== 'string' || comment_by_user.length > MAX_COMMENT_LENGTH)) return next(new AppError('Açıklama en fazla 2000 karakter olabilir.', 400));
+  if (recommended_time_by_user !== undefined && recommended_time_by_user !== null && String(recommended_time_by_user).length > 10) return next(new AppError('Zaman etiketi çok uzun.', 400));
+  if (lyrics_excerpt !== undefined && lyrics_excerpt !== null && (typeof lyrics_excerpt !== 'string' || lyrics_excerpt.length > 5000)) return next(new AppError('Lyrics kesiti çok uzun.', 400));
+  if (lyrics_design !== undefined && (typeof lyrics_design !== 'object' || lyrics_design === null || Array.isArray(lyrics_design) || JSON.stringify(lyrics_design).length > 20000)) return next(new AppError('Lyrics tasarımı geçersiz.', 400));
+  if (lyrics_start_time !== undefined && lyrics_start_time !== null && (!Number.isFinite(Number(lyrics_start_time)) || Number(lyrics_start_time) < 0 || Number(lyrics_start_time) > 86400)) return next(new AppError('Lyrics başlangıç zamanı geçersiz.', 400));
+  if (lyrics_end_time !== undefined && lyrics_end_time !== null && (!Number.isFinite(Number(lyrics_end_time)) || Number(lyrics_end_time) < 0 || Number(lyrics_end_time) > 86400 || (lyrics_start_time != null && Number(lyrics_end_time) < Number(lyrics_start_time)))) return next(new AppError('Lyrics bitiş zamanı geçersiz.', 400));
+  const result = await db.query(`
+    UPDATE song_suggestions SET
+      comment_by_user = COALESCE($1, comment_by_user),
+      visibility = COALESCE($2::visibility_type, visibility),
+      target_users = COALESCE($3::uuid[], target_users),
+      rating_by_user = CASE WHEN post_type = 'lyrics' THEN NULL ELSE COALESCE($4::smallint, rating_by_user) END,
+      recommended_time_by_user = COALESCE($5, recommended_time_by_user),
+      lyrics_excerpt = CASE WHEN post_type = 'lyrics' THEN COALESCE($6, lyrics_excerpt) ELSE lyrics_excerpt END,
+      lyrics_start_time = CASE WHEN post_type = 'lyrics' THEN COALESCE($7::numeric, lyrics_start_time) ELSE lyrics_start_time END,
+      lyrics_end_time = CASE WHEN post_type = 'lyrics' THEN COALESCE($8::numeric, lyrics_end_time) ELSE lyrics_end_time END,
+      lyrics_design = CASE WHEN post_type = 'lyrics' AND $9::jsonb IS NOT NULL THEN $9::jsonb ELSE lyrics_design END,
+      date_edited = NOW()
+    WHERE id = $10 AND user_id = $11
+    RETURNING *`, [
+      comment_by_user ?? null, visibility ?? null,
+      Array.isArray(target_users) ? target_users : null,
+      rating_by_user ?? null, recommended_time_by_user ?? null,
+      lyrics_excerpt ?? null, lyrics_start_time ?? null, lyrics_end_time ?? null,
+      lyrics_design && typeof lyrics_design === 'object' ? JSON.stringify(lyrics_design) : null,
+      id, userId
+    ]);
+  if (!result.rowCount) return next(new AppError("Paylaşım bulunamadı veya sana ait değil.", 404));
+  res.status(200).json({ status: "success", data: result.rows[0] });
+});
+
+/** Yalnızca paylaşım sahibi silebilir. */
+export const deleteSongShare = catchAsync(async (req, res, next) => {
+  const userId = req.user?.id || req.user?._id;
+  if (!userId) return next(new AppError("Oturum gerekli.", 401));
+  const result = await db.query(
+    `DELETE FROM song_suggestions WHERE id = $1 AND user_id = $2 RETURNING id`,
+    [req.params.id, userId]
+  );
+  if (!result.rowCount) return next(new AppError("Paylaşım bulunamadı veya sana ait değil.", 404));
+  res.status(200).json({ status: "success", message: "Paylaşım silindi.", id: result.rows[0].id });
+});
+
 /**
  * 2. Feed Akışını Getir (Public test dostu)
  */
 export const getFeed = catchAsync(async (req, res, next) => {
-  const currentUserId = req.user?.id || req.user?._id || req.query.userId;
+  const currentUserId = req.user?.id || req.user?._id;
 
   if (!currentUserId) {
     logger.error(
@@ -270,9 +358,15 @@ export const getFeed = catchAsync(async (req, res, next) => {
     return next(new AppError("Kullanıcı kimliği bulunamadı.", 401));
   }
 
+  const page = Math.max(1, Math.min(10000, Number.parseInt(req.query.page, 10) || 1));
+  const limit = Math.max(1, Math.min(30, Number.parseInt(req.query.limit, 10) || 10));
+  const offset = (page - 1) * limit;
+
   const feedQuery = `
     SELECT
       s.*,
+      (s.user_id = $1) AS is_owner,
+      ($1::uuid = ANY(COALESCE(s.reposted_by, '{}'::uuid[]))) AS is_reposted_by_me,
 
       /* PAYLAŞAN KİŞİ */
       u.user_name AS sharer_username,
@@ -373,20 +467,26 @@ export const getFeed = catchAsync(async (req, res, next) => {
         AND $1 = ANY(s.target_users)
       )
 
-    ORDER BY s.date_added DESC
-
-    LIMIT 20;
+    ORDER BY s.date_added DESC, s.id DESC
+    LIMIT $2 OFFSET $3;
   `;
 
-  const result = await db.query(feedQuery, [currentUserId]);
+  const result = await db.query(feedQuery, [currentUserId, limit, offset]);
 
   logger.detail(`SONGSHARE`, `Fetched feed for user ${currentUserId}`, {
     user_id: currentUserId,
   });
+  const safeRows = result.rows.map((row) => {
+    const { target_users, reposted_by, ...safeRow } = row;
+    return safeRow;
+  });
   res.status(200).json({
     status: "success",
-    results: result.rows.length,
-    data: result.rows,
+    results: safeRows.length,
+    page,
+    limit,
+    hasMore: safeRows.length === limit,
+    data: safeRows,
   });
 });
 
@@ -394,49 +494,27 @@ export const getFeed = catchAsync(async (req, res, next) => {
  * 3. Repost İşlemi (Ekle / Çıkar)
  */
 export const toggleRepost = catchAsync(async (req, res, next) => {
-  const { id: suggestionId } = req.params;
+  const suggestionId = req.params.id;
   const userId = req.user?.id || req.user?._id;
+  if (!userId) return next(new AppError('Oturum gerekli.', 401));
 
-  if (!userId) {
-    return next(new AppError("Oturum gerekli.", 401));
-  }
+  const result = await db.query(`
+    UPDATE song_suggestions
+    SET
+      reposted_by = CASE
+        WHEN $2::uuid = ANY(COALESCE(reposted_by, '{}'::uuid[]))
+          THEN array_remove(COALESCE(reposted_by, '{}'::uuid[]), $2::uuid)
+        ELSE array_append(COALESCE(reposted_by, '{}'::uuid[]), $2::uuid)
+      END,
+      repost_count = GREATEST(0, COALESCE(repost_count, 0) + CASE
+        WHEN $2::uuid = ANY(COALESCE(reposted_by, '{}'::uuid[])) THEN -1 ELSE 1 END)
+    WHERE id = $1
+      AND (user_id = $2 OR visibility = 'public' OR $2::uuid = ANY(COALESCE(target_users, '{}'::uuid[])))
+    RETURNING repost_count, ($2::uuid = ANY(COALESCE(reposted_by, '{}'::uuid[]))) AS reposted
+  `, [suggestionId, userId]);
 
-  const checkQuery = `SELECT reposted_by, repost_count FROM song_suggestions WHERE id = $1`;
-  const checkResult = await db.query(checkQuery, [suggestionId]);
-
-  if (checkResult.rows.length === 0) {
-    return next(new AppError("Paylaşım bulunamadı.", 404));
-  }
-
-  const { reposted_by = [], repost_count = 0 } = checkResult.rows[0];
-  const hasReposted = reposted_by.includes(userId);
-
-  let updatedReposts, newCount;
-  if (hasReposted) {
-    updatedReposts = reposted_by.filter((uid) => uid !== userId);
-    newCount = Math.max(0, repost_count - 1);
-  } else {
-    updatedReposts = [...reposted_by, userId];
-    newCount = repost_count + 1;
-  }
-
-  const updateQuery = `
-    UPDATE song_suggestions 
-    SET reposted_by = $1, repost_count = $2 
-    WHERE id = $3 
-    RETURNING repost_count, reposted_by;
-  `;
-  const updateResult = await db.query(updateQuery, [
-    updatedReposts,
-    newCount,
-    suggestionId,
-  ]);
-
-  res.status(200).json({
-    status: "success",
-    reposted: !hasReposted,
-    repostCount: updateResult.rows[0].repost_count,
-  });
+  if (!result.rowCount) return next(new AppError('Paylaşım bulunamadı veya erişim iznin yok.', 404));
+  return res.status(200).json({ status: 'success', reposted: result.rows[0].reposted, repostCount: result.rows[0].repost_count });
 });
 
 /**
@@ -467,7 +545,7 @@ export const rateSong = catchAsync(async (req, res, next) => {
   /* Paylaşımı kontrol et */
   const shareResult = await db.query(
     `
-      SELECT user_id
+      SELECT user_id, visibility, target_users
       FROM song_suggestions
       WHERE id = $1
     `,
@@ -479,6 +557,8 @@ export const rateSong = catchAsync(async (req, res, next) => {
   }
 
   const ownerId = shareResult.rows[0].user_id;
+  const visible = await findVisibleShare(suggestionId, userId);
+  if (!visible) return next(new AppError('Paylaşım bulunamadı veya erişim iznin yok.', 404));
 
   /* Kendi paylaşımına topluluk puanı verme */
   if (String(ownerId) === String(userId)) {
@@ -565,6 +645,10 @@ export const addComment = catchAsync(async (req, res, next) => {
   if (!cleanComment) {
     return next(new AppError("Yorum içeriği boş olamaz.", 400));
   }
+  if (cleanComment.length > MAX_COMMENT_LENGTH) return next(new AppError(`Yorum en fazla ${MAX_COMMENT_LENGTH} karakter olabilir.`, 400));
+
+  const visibleShare = await findVisibleShare(suggestionId, userId);
+  if (!visibleShare) return next(new AppError('Paylaşım bulunamadı veya erişim iznin yok.', 404));
 
   const shareResult = await db.query(
     `
@@ -747,7 +831,7 @@ export const getRecommendationsDEMO = catchAsync(async (req, res, next) => {
 });
 
 export const getRecommendations = catchAsync(async (req, res, next) => {
-  const limit = Math.min(Number.parseInt(req.query.limit, 10) || 10, 10);
+  const limit = Math.max(1, Math.min(Number.parseInt(req.query.limit, 10) || 10, 10));
   const result = await getRandomRecommendations(limit);
 
   res.status(200).json({

@@ -3,7 +3,10 @@ import * as userService from '../services/userService.js';
 
 export const socketAuth = async (socket, next) => {
   try {
-    const token = socket.handshake.auth?.token;
+    const cookieHeader = socket.request?.headers?.cookie || '';
+    const cookieToken = cookieHeader.split(';').map((part) => part.trim()).find((part) => part.startsWith('token='))?.slice(6);
+    let token = cookieToken ? decodeURIComponent(cookieToken) : socket.handshake.auth?.token;
+    if (token === 'cookie-session') token = null;
 
     if (!token || typeof token !== 'string') {
       return next(new Error('AUTH_REQUIRED'));

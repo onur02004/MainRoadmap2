@@ -10,6 +10,15 @@ import { initializeSocket } from './sockets/index.js';
 
 const PORT = process.env.PORT || 5000;
 
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    throw new Error('Production requires JWT_SECRET with at least 32 characters.');
+  }
+  if (!process.env.SPOTIFY_TOKEN_ENCRYPTION_KEY) {
+    throw new Error('Production requires SPOTIFY_TOKEN_ENCRYPTION_KEY (32 random bytes, base64 or 64-char hex).');
+  }
+}
+
 const httpServer = createServer(app);
 
 // Socket.IO bağlantısını aynı HTTP server üzerine kur.

@@ -2,7 +2,7 @@ import { query } from '../config/db.js';
 import bcrypt from 'bcrypt';
 
 const allowedRoles = new Set(['user', 'moderator', 'admin']);
-const allowedRelations = new Set(['normal', 'friend', 'family', 'partner']);
+const allowedRelations = new Set(['normal', 'friends', 'acquaintance', 'family', 'business']);
 
 function httpError(status, message) {
   const error = new Error(message);

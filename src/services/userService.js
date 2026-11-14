@@ -117,3 +117,11 @@ export const createAvatarDesign = async (
 
     return rows[0];
 };
+
+export const updatePassword = async (userId, passwordHash) => {
+  const { rows } = await query(
+    `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2 RETURNING id`,
+    [passwordHash, userId]
+  );
+  return rows[0] || null;
+};

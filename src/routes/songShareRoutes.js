@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as songShareController from '../controllers/songShareController.js';
 import { protect } from '../middleware/authMiddleware.js';
+import { createRateLimit } from '../middleware/rateLimit.js';
 
 const router = Router();
 
@@ -12,7 +13,7 @@ const router = Router();
 // ========================================================
 
 // Postman'den şifresiz test edebilmen için protect'in ÜSTÜNDE tanımlandı:
-router.get('/lyrics', songShareController.fetchSongLyrics);
+router.get('/lyrics', createRateLimit({ windowMs: 60_000, max: 20 }), songShareController.fetchSongLyrics);
 
 // (İsteğe bağlı: Paylaşımı da token olmadan Postman'den denemek istersen bu satırı açabilirsin)
 // router.post('/public-share', songShareController.shareSong);
@@ -27,6 +28,8 @@ router.use(protect);
 
 // Yeni şarkı paylaşma endpoint'i
 router.post('/', songShareController.shareSong);
+router.patch('/:id', songShareController.updateSongShare);
+router.delete('/:id', songShareController.deleteSongShare);
 
 // Repost işlemi
 router.post('/repost/:id', songShareController.toggleRepost);

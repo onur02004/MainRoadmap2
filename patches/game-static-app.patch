@@ -1,0 +1,23 @@
+--- a/src/app.js
++++ b/src/app.js
+@@ -8,6 +8,7 @@
+ import { securityHeaders, csrfOriginGuard } from './middleware/securityHeaders.js';
+ import { corsOriginCallback } from './config/origins.js';
+ import { createRateLimit } from './middleware/rateLimit.js';
++import { createGameStaticMiddleware } from './middleware/gameStatic.js';
+ import logger from './utils/logger.js';
+ 
+ 
+@@ -45,6 +46,12 @@
+ app.get('/spotifyStatus.html', protect, (req, res) => res.sendFile(path.join(privatePagePath, 'spotifyStatus.html')));
+ app.get('/admin/admin.html', protect, restrictTo('ADMIN'), (req, res) => res.sendFile(path.join(privatePagePath, 'admin/admin.html')));
+ app.get('/games/games.html', protect, (req, res) => res.sendFile(path.join(privatePagePath, 'games/games.html')));
++
++// Keep the games catalogue protected, but serve playable game bundles publicly.
++// This mount must stay before the generic static handler (which has index:false).
++app.use('/games', createGameStaticMiddleware(privatePagePath, {
++  maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0
++}));
+ 
+ app.use(express.static(privatePagePath, { etag: true, maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0, index: false }));
+ 

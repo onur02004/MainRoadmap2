@@ -381,8 +381,20 @@
   <script>
     let activeTimeRange = 'short_term';
 
+    let spotifyConnectionUsable = false;
+    let nowPlayingPollTimer = null;
+
     function getToken() {
       return localStorage.getItem('token');
+    }
+
+    function getSessionFetchOptions() {
+      const token = getToken();
+      const headers = {};
+      if (token && token !== 'cookie-session') {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      return { headers, credentials: 'include' };
     }
 
     // 1. Spotify Bağlantı Durumu Kontrolü
@@ -391,46 +403,44 @@
       const btnText = document.getElementById('btnConnectText');
       const btn = document.getElementById('btnConnect');
 
-      if (!token) {
-        btnText.innerText = 'Giriş Yap';
-        return;
-      }
-
       try {
-        const res = await fetch('/api/spotify/status', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch('/api/spotify/status', getSessionFetchOptions());
         const data = await res.json();
 
-        if (res.ok && data.connected) {
+        if (res.ok && data.connected && data.usable) {
+          spotifyConnectionUsable = true;
+          await fetchNowPlaying();
+          await fetchTopTracks();
+          if (!nowPlayingPollTimer) nowPlayingPollTimer = setInterval(fetchNowPlaying, 5000);
           btnText.innerText = `● Bağlı (${data.account?.displayName || 'Spotify'})`;
           btn.style.backgroundColor = '#27272a';
           btn.style.color = '#1db954';
           btn.style.borderColor = '#1db954';
         } else {
-          btnText.innerText = 'Spotify ile Bağlan';
+          spotifyConnectionUsable = false;
+          if (nowPlayingPollTimer) {
+            clearInterval(nowPlayingPollTimer);
+            nowPlayingPollTimer = null;
+          }
+          btnText.innerText = data.connected ? 'Spotify erişimini yenile' : 'Spotify ile Bağlan';
           btn.style.backgroundColor = 'var(--spotify-green)';
           btn.style.color = '#000000';
           btn.style.borderColor = 'transparent';
         }
       } catch (err) {
+        spotifyConnectionUsable = false;
+        if (nowPlayingPollTimer) {
+          clearInterval(nowPlayingPollTimer);
+          nowPlayingPollTimer = null;
+        }
         btnText.innerText = 'Spotify ile Bağlan';
       }
     }
 
     // 2. Spotify OAuth Linki Al ve Yönlendir
     async function handleConnect() {
-      const token = getToken();
-      if (!token) {
-        alert('Lütfen önce sisteme giriş yapın.');
-        window.location.href = '/';
-        return;
-      }
-
       try {
-        const res = await fetch('/api/spotify/login-url', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch('/api/spotify/login-url', getSessionFetchOptions());
         const data = await res.json();
 
         if (res.ok && data.url) {
@@ -445,14 +455,20 @@
 
     // 3. Anlık Çalan Şarkı Bilgisini Çek
     async function fetchNowPlaying() {
-      const token = getToken();
-      if (!token) return;
+      if (!spotifyConnectionUsable) return;
 
       try {
-        const res = await fetch('/api/spotify/now-playing', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch('/api/spotify/now-playing', getSessionFetchOptions());
 
+        if (res.status === 401 || res.status === 403) {
+          spotifyConnectionUsable = false;
+          if (nowPlayingPollTimer) {
+            clearInterval(nowPlayingPollTimer);
+            nowPlayingPollTimer = null;
+          }
+          await checkSpotifyConnection();
+          return;
+        }
         const data = await res.json();
         const box = document.getElementById('nowPlayingBox');
         const empty = document.getElementById('nowPlayingEmpty');
@@ -481,15 +497,12 @@
 
     // 4. En Çok Dinlenen Şarkıları Çek
     async function fetchTopTracks() {
-      const token = getToken();
-      if (!token) return;
+      if (!spotifyConnectionUsable) return;
 
       const container = document.getElementById('topTracksList');
 
       try {
-        const res = await fetch(`/api/spotify/top-tracks?time_range=${activeTimeRange}&limit=10`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(`/api/spotify/top-tracks?time_range=${activeTimeRange}&limit=10`, getSessionFetchOptions());
 
         const data = await res.json();
 
@@ -525,12 +538,9 @@
 
     // Başlangıç Yüklemeleri
     document.addEventListener('DOMContentLoaded', () => {
+      // Status must be verified first. Do not issue repeated Spotify requests
+      // for users without a linked/usable Spotify account.
       checkSpotifyConnection();
-      fetchNowPlaying();
-      fetchTopTracks();
-
-      // Çalan şarkıyı her 5 saniyede bir güncelle (polling)
-      setInterval(fetchNowPlaying, 5000);
     });
   </script>
 </body>

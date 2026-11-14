@@ -2438,3 +2438,35 @@ body.tour-open .canvas-vault-modal { z-index: 3000; }
 /* Keep the guided target visible behind the floating tour card. */
 .tour-backdrop { background: rgba(2,5,7,.12); backdrop-filter: none; pointer-events: none; }
 .tour-card { pointer-events: auto; }
+
+
+/* Temporary, explicit status for unfinished account settings */
+.account-settings-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 18px 0 22px;
+  padding: 15px 18px;
+  border: 1px solid rgba(245, 158, 11, .38);
+  border-left: 3px solid #f59e0b;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, .07);
+  color: var(--text-primary, #e5e7eb);
+  font-size: 13px;
+}
+.account-settings-notice strong {
+  color: #fbbf24;
+  letter-spacing: .08em;
+  font-size: 11px;
+}
+.account-settings-notice span {
+  color: var(--text-secondary, #a1a1aa);
+  line-height: 1.55;
+}
+.account-settings-grid .settings-unavailable {
+  opacity: .55;
+}
+.account-settings-grid .settings-unavailable input,
+.account-settings-grid .settings-unavailable button {
+  cursor: not-allowed;
+}

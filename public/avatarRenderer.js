@@ -312,20 +312,15 @@ function renderBlobatar(
     username;
 
   const expressionName =
-    data.expression ||
-    'idle';
+    BLOBATAR_EXPRESSIONS[data.expression] ? data.expression : 'idle';
 
+  const rawHue = Number(data.hue);
+  const rawTone = Number(data.tone);
   const options = {
 
-    hue:
-      Number(
-        data.hue ?? 160
-      ),
+    hue: Number.isFinite(rawHue) ? Math.max(0, Math.min(360, rawHue)) : 160,
 
-    tone:
-      Number(
-        data.tone ?? 0.5
-      ),
+    tone: Number.isFinite(rawTone) ? Math.max(0, Math.min(1, rawTone)) : 0.5,
 
     expression:
       BLOBATAR_EXPRESSIONS[
@@ -338,24 +333,16 @@ function renderBlobatar(
 
   };
 
-  if (
-    data.shape &&
-    data.shape !== 'auto' &&
-    BLOBATAR_SHAPES[
-      data.shape
-    ] !== undefined
-  ) {
+  // "auto" can produce an invalid/empty shape in some Blobatar builds.
+  // Use a deterministic round shape unless a supported shape was saved.
+  const shapeName =
+    data.shape && data.shape !== 'auto' && BLOBATAR_SHAPES[data.shape] !== undefined
+      ? data.shape
+      : 'round';
 
-    options.traits = {
-
-      shape:
-        BLOBATAR_SHAPES[
-          data.shape
-        ]
-
-    };
-
-  }
+  options.traits = {
+    shape: BLOBATAR_SHAPES[shapeName]
+  };
 
   try {
 
@@ -415,6 +402,8 @@ function renderBlobatar(
 
     svg.style.overflow =
       'visible';
+    svg.style.background = 'transparent';
+    svg.style.color = 'inherit';
 
     // ---------------------------------------------------------
     // PREPARE EYES

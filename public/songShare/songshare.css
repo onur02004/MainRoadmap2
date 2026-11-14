@@ -8954,3 +8954,342 @@ canvas {
   #wizardStep2 #wizardRatingValue,
   #wizardStep2 #wizardRatingSlider::-webkit-slider-thumb { transition: none !important; }
 }
+
+/* SongShare owner controls + user-designed lyrics cards */
+.songshare-owner-tools{display:flex;align-items:center;gap:6px;margin-right:10px}
+.songshare-owner-tools button{width:30px;height:30px;border:1px solid rgba(255,255,255,.13);border-radius:9px;background:rgba(255,255,255,.045);color:var(--text-dim,#a8a8b3);cursor:pointer;transition:.18s}
+.songshare-owner-tools button:hover{color:#fff;border-color:rgba(125,211,170,.5);background:rgba(125,211,170,.1)}
+.songshare-owner-tools .songshare-owner-delete:hover{color:#ff8e8e;border-color:rgba(255,100,100,.5);background:rgba(255,80,80,.1)}
+.songshare-lyrics-card{position:relative;overflow:hidden;margin:16px 18px 20px;padding:22px 24px;border:1px solid rgba(255,255,255,.12);border-radius:15px;color:var(--lyrics-color);font-family:var(--lyrics-font);}
+.songshare-lyrics-topline{display:flex;justify-content:space-between;gap:12px;margin-bottom:18px;color:rgba(255,255,255,.58);font:600 9px/1.2 'IBM Plex Mono',monospace;letter-spacing:1.5px;text-transform:uppercase}
+.songshare-lyrics-body{display:flex;align-items:center;gap:18px;min-width:0}
+.songshare-lyrics-cover{width:82px;height:82px;flex:0 0 82px;object-fit:cover;border-radius:11px;border:1px solid rgba(255,255,255,.2)}
+.songshare-lyrics-copy{min-width:0;flex:1}
+.songshare-lyrics-text{font-size:var(--lyrics-size);line-height:var(--lyrics-line);letter-spacing:var(--lyrics-letter);text-align:var(--lyrics-align);font-weight:650;white-space:pre-wrap;overflow-wrap:anywhere}
+.songshare-lyrics-meta{margin-top:12px;color:color-mix(in srgb,var(--lyrics-color),transparent 32%);font:500 11px/1.5 'DM Sans',sans-serif}
+.songshare-lyrics-player{display:inline-flex;align-items:center;gap:8px;margin-top:18px;padding-top:13px;border-top:1px solid rgba(255,255,255,.2);width:100%;color:var(--lyrics-color);font:500 11px 'DM Sans',sans-serif;text-decoration:none}
+.feed-card[data-post-type="lyrics"] .feed-card-main-content{display:none}
+.feed-card[data-post-type="lyrics"] .compact-rating-badge{display:none}
+@media(max-width:600px){.songshare-lyrics-card{margin:12px;padding:17px}.songshare-lyrics-cover{width:62px;height:62px;flex-basis:62px}.songshare-lyrics-text{font-size:min(var(--lyrics-size),26px)}}
+
+
+/* Reply composer: compact inline modal, consistent with SongShare dark UI */
+.ss-reply-backdrop{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:20px;background:rgba(4,5,8,.72);backdrop-filter:blur(12px)}
+.ss-reply-dialog{width:min(480px,100%);padding:20px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:#15171d;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.ss-reply-head,.ss-reply-actions{display:flex;align-items:center;justify-content:space-between;gap:12px}.ss-reply-head{margin-bottom:14px;color:#f4f3f7;font-size:15px}.ss-reply-close{width:30px;height:30px;border:0;border-radius:9px;background:#ffffff0d;color:#ddd;font-size:22px;cursor:pointer}
+.ss-reply-dialog textarea{display:block;width:100%;resize:vertical;min-height:100px;padding:12px;border:1px solid #ffffff18;border-radius:11px;outline:none;background:#0d0f14;color:#f4f3f7;font:inherit;line-height:1.5}.ss-reply-dialog textarea:focus{border-color:#a78bfa88;box-shadow:0 0 0 3px #a78bfa16}.ss-reply-actions{margin-top:13px}.ss-reply-status{color:#e6a7a7;font-size:12px}.ss-reply-actions button{padding:9px 14px;border:0;border-radius:9px;background:#c5b5ff;color:#17131f;font-weight:700;cursor:pointer}.ss-reply-actions button:disabled{opacity:.55;cursor:wait}
+.songshare-lyrics-card{cursor:pointer;transition:border-color .2s,transform .2s}.songshare-lyrics-card:hover{border-color:rgba(190,170,255,.4);transform:translateY(-1px)}
+
+
+/* =========================================================
+   COMPANION DOCK — REFINED INTERACTION LAYER
+   ========================================================= */
+.track-companion-dock {
+  isolation: isolate;
+}
+.track-companion-dock::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(145deg, rgba(255,255,255,.035), transparent 42%);
+}
+.companion-nav-tabs,
+.companion-window-actions,
+.dock-live-pill {
+  position: relative;
+  z-index: 4;
+}
+.tab-btn:focus-visible,
+.btn-window-action:focus-visible,
+.fs-ctrl-btn:focus-visible,
+.fs-ctrl-play:focus-visible {
+  outline: 2px solid var(--accent-action);
+  outline-offset: 3px;
+}
+.companion-pane {
+  animation: companionPaneIn .28s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes companionPaneIn {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.companion-pane.active { display: block; }
+#pane-lyrics {
+  max-height: 176px;
+  overflow: hidden;
+}
+#lyricsStreamBox {
+  max-height: 170px;
+  overflow-y: auto;
+  padding: 2px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.2) transparent;
+}
+#lyricsStreamBox .lyric-line {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  padding: 5px 7px;
+}
+#lyricsStreamBox .lyric-line.active-line {
+  color: #fff;
+  background: rgba(255,255,255,.075);
+  border-left: 2px solid var(--accent-action);
+}
+.companion-lyrics-empty {
+  min-height: 108px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  text-align: center;
+  color: rgba(255,255,255,.85);
+}
+.companion-lyrics-empty strong { font-size: .78rem; }
+.companion-lyrics-empty small { color: var(--text-dim); font-size: .64rem; max-width: 220px; line-height: 1.5; }
+.lyrics-empty-orb {
+  width: 30px; height: 30px; display: grid; place-items: center;
+  border-radius: 50%; color: var(--accent-action);
+  background: rgba(62,207,142,.12);
+  box-shadow: 0 0 24px rgba(62,207,142,.12);
+}
+.track-companion-dock.companion-expanded {
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 24px !important;
+  top: auto !important;
+  width: min(440px, calc(100vw - 40px)) !important;
+  height: min(620px, calc(100vh - 48px)) !important;
+  min-height: 360px;
+  z-index: 1000000 !important;
+  padding: 20px !important;
+  border-radius: 28px !important;
+  box-shadow: 0 28px 100px rgba(0,0,0,.78), 0 0 0 1px rgba(255,255,255,.05);
+  background: rgba(12,15,19,.88) !important;
+  backdrop-filter: blur(32px) saturate(1.25) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(1.25) !important;
+}
+.track-companion-dock.companion-expanded .companion-body {
+  align-items: center;
+  padding: 24px 2px;
+  overflow: auto;
+}
+.track-companion-dock.companion-expanded .dock-song { font-size: 1.45rem; }
+.track-companion-dock.companion-expanded #pane-lyrics { max-height: 360px; }
+.track-companion-dock.companion-expanded #lyricsStreamBox { max-height: 340px; }
+.track-companion-dock.companion-expanded .trivia-card { padding: 18px; }
+.track-companion-dock.companion-expanded .trivia-text { font-size: .9rem; line-height: 1.6; }
+.track-companion-dock.companion-expanded .dna-item { padding: 13px; }
+.track-companion-dock.companion-expanded .dna-val { font-size: 1rem; }
+.companion-immersive-open { overflow: hidden; }
+#fullscreenPlayerModal.active { display: block; opacity: 1; }
+#fsLyricsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.fs-lyric-line {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  color: rgba(255,255,255,.35);
+  font: 600 clamp(1rem, 2vw, 1.55rem)/1.4 'Plus Jakarta Sans', sans-serif;
+  padding: 4px 0;
+  cursor: pointer;
+  transition: color .25s ease, transform .25s ease, opacity .25s ease;
+}
+.fs-lyric-line.active-line {
+  color: #fff;
+  transform: translateX(8px);
+  text-shadow: 0 0 28px rgba(255,255,255,.25);
+}
+.fs-lyric-line.upcoming { color: rgba(255,255,255,.55); }
+.fs-lyrics-empty {
+  color: rgba(255,255,255,.55);
+  font-size: .9rem;
+  text-align: center;
+}
+#fsInteractiveScrubber { user-select: none; }
+#fsInteractiveScrubber:hover .fs-scrubber-track { height: 8px; }
+#fsInteractiveScrubber .fs-scrubber-track { transition: height .18s ease; }
+.fs-ctrl-btn:disabled { opacity: .35; cursor: not-allowed; }
+@media (max-width: 700px) {
+  .track-companion-dock.companion-expanded {
+    right: 14px !important;
+    bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+    width: min(360px, calc(100vw - 28px)) !important;
+    height: min(560px, calc(100vh - 125px)) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .companion-pane { animation: none; }
+}
+
+
+/* Companion lyrics now follow Spotify's shared playback clock. */
+#lyricsStreamBox .lyric-line.passed,
+#fsLyricsContainer .fs-lyric-line.passed { opacity: .34; }
+#lyricsStreamBox .lyric-line.upcoming,
+#fsLyricsContainer .fs-lyric-line.upcoming { opacity: .56; }
+#lyricsStreamBox .lyric-line.active-line {
+  opacity: 1; color: #fff; transform: translateX(3px);
+  border-left: 2px solid var(--accent-action);
+  background: linear-gradient(90deg, rgba(62,207,142,.13), transparent 88%);
+}
+#lyricsStreamBox .lyric-line { cursor: default; transition: opacity .28s ease, color .28s ease, transform .28s ease; }
+#fsLyricsContainer .fs-lyric-line { cursor: default; }
+#fsLyricsContainer .fs-lyric-line.active-line {
+  color: #fff; opacity: 1; transform: translateX(8px) scale(1.015);
+  text-shadow: 0 0 32px rgba(255,255,255,.24);
+}
+#fsLyricsContainer .fs-lyric-line.passed { opacity: .25; }
+#fsLyricsContainer .fs-lyric-line.upcoming { opacity: .52; }
+.fs-lyrics-empty { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.fs-lyrics-empty strong { color:rgba(255,255,255,.9); font-size:1.05rem; }
+.fs-lyrics-empty span { color:rgba(255,255,255,.48); font-size:.78rem; }
+.fs-ctrl-play { display:grid; place-items:center; font-size:1.35rem; }
+.fs-ctrl-play .fa-spotify { color:#101510; font-size:1.55rem; }
+.fs-scrubber-wrapper.is-readonly { cursor:default; }
+#fsInteractiveScrubber { cursor:default; }
+.fs-brand .live-dot-indicator.is-playing { animation: companionLivePulse 1.5s ease-in-out infinite; }
+@keyframes companionLivePulse { 50% { box-shadow:0 0 0 7px rgba(62,207,142,.08),0 0 18px rgba(62,207,142,.75); } }
+.fullscreen-player-modal:fullscreen { background:#050609; }
+.fullscreen-player-modal:fullscreen .fullscreen-container { padding-top:clamp(24px,4vh,56px); padding-bottom:clamp(24px,4vh,56px); }
+.fullscreen-content-grid { grid-template-columns:minmax(280px, min(34vw, 460px)) minmax(0,1fr); gap:clamp(32px,6vw,100px); }
+.fs-art-column { align-items:flex-start; min-width:0; }
+.fs-cover-stage { width:min(100%, min(38vh, 420px)); height:auto; aspect-ratio:1; }
+.fs-lyrics-column { max-height:min(62vh,760px); min-height:0; padding:8vh 20px 8vh 0; mask-image:linear-gradient(transparent 0%,#000 14%,#000 86%,transparent 100%); }
+#fsLyricsContainer { gap:clamp(12px,2.1vh,24px); }
+.fs-lyric-line { font-size:clamp(1.05rem,1.8vw,1.8rem); line-height:1.5; padding:7px 0; }
+.fullscreen-bottom-dock { max-width:900px; }
+.fs-scrubber-track { height:4px; background:rgba(255,255,255,.16); }
+.fs-scrubber-fill { background:linear-gradient(90deg,#fff,#a7f3d0); box-shadow:0 0 14px rgba(62,207,142,.32); transition:width .22s linear; }
+.fs-time-row { font-size:.7rem; color:rgba(255,255,255,.55); }
+.fs-controls-cluster { gap:0; min-height:46px; }
+.fs-ctrl-btn[hidden] { display:none !important; }
+.fs-ctrl-play { width:48px; height:48px; box-shadow:0 8px 28px rgba(0,0,0,.35); transition:transform .2s ease,box-shadow .2s ease; }
+.fs-ctrl-play:hover { transform:scale(1.07); box-shadow:0 10px 34px rgba(0,0,0,.5); }
+@media(max-width:900px) {
+  .fullscreen-container { padding:22px 24px 24px; }
+  .fullscreen-content-grid { grid-template-columns:minmax(0, .85fr) minmax(0,1fr); gap:24px; }
+  .fs-cover-stage { width:min(100%,32vh); }
+  .fs-title { font-size:clamp(1.4rem,4vw,2rem); }
+  .fs-artist { font-size:1rem; }
+  .fs-trivia-card { display:none; }
+}
+@media(max-width:620px) {
+  .fullscreen-container { padding:18px 16px max(18px,env(safe-area-inset-bottom)); }
+  .fullscreen-content-grid { display:flex; flex-direction:column; justify-content:flex-start; gap:16px; padding:12px 0; overflow:hidden; }
+  .fs-art-column { display:grid; grid-template-columns:92px minmax(0,1fr); align-items:center; gap:14px; flex:0 0 auto; }
+  .fs-cover-stage { width:92px; height:92px; border-radius:16px; }
+  .fs-track-identity { min-width:0; }
+  .fs-title { font-size:1.12rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .fs-artist { font-size:.78rem; }
+  .fs-lyrics-column { width:100%; max-height:none; flex:1 1 auto; padding:12px 4px; }
+  #fsLyricsContainer { gap:12px; }
+  .fs-lyric-line { font-size:1.08rem; }
+  .fullscreen-bottom-dock { gap:9px; }
+  .btn-close-fullscreen { padding:8px 11px; font-size:.7rem; }
+  .fs-brand { font-size:.62rem; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .fs-brand .live-dot-indicator.is-playing { animation:none; }
+  .fs-scrubber-fill,.fs-lyric-line,#lyricsStreamBox .lyric-line { transition:none !important; }
+}
+
+
+/* Companion follow fix + readable immersive player. */
+.fullscreen-player-modal .fullscreen-dynamic-blur {
+  filter: blur(58px) brightness(.24) saturate(1.2) !important;
+  transform: scale(1.22);
+  opacity: .9;
+}
+.fullscreen-player-modal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(3,5,9,.70) 0%, rgba(3,5,9,.52) 48%, rgba(3,5,9,.72) 100%),
+    linear-gradient(180deg, rgba(3,5,9,.44) 0%, transparent 24%, transparent 72%, rgba(3,5,9,.68) 100%);
+}
+.fullscreen-player-modal .fullscreen-mesh-glow { z-index: 2; opacity: .42; }
+.fullscreen-player-modal .fullscreen-container { isolation: isolate; }
+.fullscreen-player-modal .fs-lyrics-column {
+  position: relative;
+  z-index: 4;
+  box-sizing: border-box;
+  padding: clamp(22px, 4vh, 46px) clamp(22px, 3vw, 42px);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 26px;
+  background: linear-gradient(145deg, rgba(7,9,14,.72), rgba(7,9,14,.48));
+  -webkit-backdrop-filter: blur(22px) saturate(1.12);
+  backdrop-filter: blur(22px) saturate(1.12);
+  box-shadow: 0 24px 70px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06);
+  mask-image: none;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+.fullscreen-player-modal .fs-lyric-line {
+  color: rgba(255,255,255,.60);
+  text-shadow: 0 2px 12px rgba(0,0,0,.9);
+  -webkit-text-stroke: .12px rgba(0,0,0,.35);
+}
+.fullscreen-player-modal .fs-lyric-line.passed { color: rgba(255,255,255,.34); }
+.fullscreen-player-modal .fs-lyric-line.upcoming { color: rgba(255,255,255,.70); }
+.fullscreen-player-modal .fs-lyric-line.active-line {
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(0,0,0,.95), 0 0 28px rgba(255,255,255,.20);
+}
+.fullscreen-player-modal .fs-title,
+.fullscreen-player-modal .fs-artist,
+.fullscreen-player-modal .fs-brand,
+.fullscreen-player-modal .fs-trivia-card {
+  text-shadow: 0 2px 18px rgba(0,0,0,.9);
+}
+.fullscreen-player-modal .fs-track-identity {
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: linear-gradient(90deg, rgba(5,7,11,.68), rgba(5,7,11,.16));
+  border: 1px solid rgba(255,255,255,.07);
+}
+.fullscreen-player-modal .fs-trivia-card {
+  background: rgba(5,7,11,.62);
+  border-color: rgba(255,255,255,.14);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+.fullscreen-player-modal .fullscreen-bottom-dock {
+  position: relative;
+  z-index: 4;
+  padding: 16px 22px 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 22px;
+  background: rgba(5,7,11,.66);
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
+  box-shadow: 0 18px 55px rgba(0,0,0,.28);
+}
+@media(max-width:620px) {
+  .fullscreen-player-modal .fs-lyrics-column {
+    padding: 16px 18px;
+    border-radius: 19px;
+  }
+  .fullscreen-player-modal .fs-track-identity { padding: 9px 11px; }
+  .fullscreen-player-modal .fullscreen-bottom-dock { padding: 12px 14px 9px; }
+}
+
+
+/* Release hardening: active repost state and accessible focus */
+.feed-repost-button.is-active { color: #3ecf8e !important; border-color: rgba(62,207,142,.38) !important; background: rgba(62,207,142,.10) !important; }
+.feed-repost-button:disabled { opacity: .6; cursor: wait; }
+.feed-repost-button:focus-visible, [data-feed-immersive]:focus-visible { outline: 2px solid #3ecf8e; outline-offset: 3px; }

@@ -31,11 +31,15 @@ function showToast(message, type = 'success') {
   }
 
   const toast = document.createElement('div');
-  toast.className = `theme-toast ${type}`;
-  toast.innerHTML = `
-    <span class="toast-icon">${type === 'success' ? '✔' : (type === 'info' ? '⚡' : '✖')}</span>
-    <span class="toast-text">${message}</span>
-  `;
+  toast.className = `theme-toast ${['success', 'info', 'error'].includes(type) ? type : 'info'}`;
+  const icon = document.createElement('span');
+  icon.className = 'toast-icon';
+  icon.textContent = type === 'success' ? '✔' : (type === 'info' ? '⚡' : '✖');
+  const text = document.createElement('span');
+  text.className = 'toast-text';
+  // Toast callers pass plain text; never parse messages as HTML.
+  text.textContent = String(message ?? '');
+  toast.append(icon, text);
 
   toastContainer.appendChild(toast);
 
@@ -68,10 +72,11 @@ export class ThemeManager {
   }
 
   async fetchThemes() {
-    const localCustomThemes = JSON.parse(localStorage.getItem('local-custom-themes') || '{}');
+    let localCustomThemes = {};
+    try { localCustomThemes = JSON.parse(localStorage.getItem('local-custom-themes') || '{}') || {}; } catch { localCustomThemes = {}; }
 
     try {
-      const res = await fetch('/api/themes?userId=onur');
+      const res = await fetch('/api/themes', { credentials: 'include' });
       if (res.ok) {
         const apiThemes = await res.json();
         this.themes = { ...apiThemes, ...localCustomThemes };
@@ -122,12 +127,17 @@ export class ThemeManager {
     }
 
     if (filtered.length === 0) {
-      grid.innerHTML = `
-        <div class="modal-empty-state">
-          <span>&#128269;</span>
-          <p>No themes matching "<strong>${this.searchTerm}</strong>"</p>
-        </div>
-      `;
+      const empty = document.createElement('div');
+      empty.className = 'modal-empty-state';
+      const icon = document.createElement('span');
+      icon.textContent = '🔎';
+      const message = document.createElement('p');
+      message.append(document.createTextNode('No themes matching “'));
+      const query = document.createElement('strong');
+      query.textContent = this.searchTerm;
+      message.append(query, document.createTextNode('”'));
+      empty.append(icon, message);
+      grid.replaceChildren(empty);
       return;
     }
 
@@ -137,16 +147,34 @@ export class ThemeManager {
       card.className = `theme-card-item ${isSelected ? 'selected' : ''}`;
       card.dataset.theme = key;
 
-      card.innerHTML = `
-        <div class="theme-card-header">
-          <span class="theme-card-dot" style="background:${conf.dotColor}; box-shadow: 0 0 8px ${conf.dotColor};"></span>
-          <span class="theme-card-cat">${(conf.category || 'CUSTOM').toUpperCase()}</span>
-          ${conf.isPublic ? '<span class="theme-card-badge public">PUBLIC</span>' : ''}
-          ${conf.hasCli ? '<span class="theme-card-badge cli">CLI</span>' : '<span class="theme-card-badge gui">GUI</span>'}
-        </div>
-        <div class="theme-card-title">${conf.name}</div>
-        <div class="theme-card-status">${conf.statusText || 'RUNTIME ACTIVE'}</div>
-      `;
+      const header = document.createElement('div');
+      header.className = 'theme-card-header';
+      const dot = document.createElement('span');
+      dot.className = 'theme-card-dot';
+      const safeColor = /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(String(conf.dotColor || '')) ? conf.dotColor : '#3ecf8e';
+      dot.style.backgroundColor = safeColor;
+      dot.style.boxShadow = `0 0 8px ${safeColor}`;
+      const category = document.createElement('span');
+      category.className = 'theme-card-cat';
+      category.textContent = String(conf.category || 'CUSTOM').slice(0, 20).toUpperCase();
+      header.append(dot, category);
+      if (conf.isPublic) {
+        const publicBadge = document.createElement('span');
+        publicBadge.className = 'theme-card-badge public';
+        publicBadge.textContent = 'PUBLIC';
+        header.append(publicBadge);
+      }
+      const typeBadge = document.createElement('span');
+      typeBadge.className = `theme-card-badge ${conf.hasCli ? 'cli' : 'gui'}`;
+      typeBadge.textContent = conf.hasCli ? 'CLI' : 'GUI';
+      header.append(typeBadge);
+      const title = document.createElement('div');
+      title.className = 'theme-card-title';
+      title.textContent = String(conf.name || key).slice(0, 100);
+      const status = document.createElement('div');
+      status.className = 'theme-card-status';
+      status.textContent = String(conf.statusText || 'RUNTIME ACTIVE').slice(0, 100);
+      card.append(header, title, status);
 
       card.addEventListener('click', () => {
         this.applyTheme(key, null, true);
@@ -175,8 +203,12 @@ export class ThemeManager {
     document.documentElement.setAttribute('data-theme', themeKey);
 
     // 1. Özel CSS Değişkenlerini (Variables) Enjekte Et
-    if (conf.cssVariables) {
+    if (conf.cssVariables && typeof conf.cssVariables === 'object') {
+      const allowedVars = new Set(['--bg-color','--panel-bg','--text-main','--text-bright','--accent-action','--accent-glow','--box-border','--status-ok','--app-font','--app-radius','--app-blur']);
       Object.entries(conf.cssVariables).forEach(([cssVar, value]) => {
+        if (!allowedVars.has(cssVar) || typeof value !== 'string' || value.length > 100) return;
+        if (cssVar === '--app-font' && !/^[a-zA-Z0-9 ,_'"-]+$/.test(value)) return;
+        if (cssVar !== '--app-font' && !/^(#[0-9a-f]{3,8}|rgba?\([0-9.,%\s]+\)|[0-9]{1,2}px)$/i.test(value)) return;
         document.documentElement.style.setProperty(cssVar, value);
       });
     } else {
@@ -185,8 +217,9 @@ export class ThemeManager {
 
     // 2. Özel Arka Plan Resmi
     const bgUrl = conf.bgImage || this.customBgDataUrl;
-    if (bgUrl) {
-      document.body.style.backgroundImage = `linear-gradient(rgba(10, 10, 14, 0.82), rgba(6, 6, 10, 0.94)), url('${bgUrl}')`;
+    if (bgUrl && typeof bgUrl === 'string' && (bgUrl.startsWith('data:image/png;base64,') || bgUrl.startsWith('data:image/jpeg;base64,') || bgUrl.startsWith('data:image/webp;base64,') || /^https:\/\//i.test(bgUrl))) {
+      const safeBgUrl = bgUrl.replace(/["\\()]/g, '');
+      document.body.style.backgroundImage = `linear-gradient(rgba(10, 10, 14, 0.82), rgba(6, 6, 10, 0.94)), url("${safeBgUrl}")`;
       document.body.style.backgroundSize = 'cover';
       document.body.style.backgroundPosition = 'center';
       document.body.style.backgroundAttachment = 'fixed';
@@ -238,7 +271,7 @@ export class ThemeManager {
     this.renderModalGrid();
 
     if (notify) {
-      showToast(`Applied Theme: <strong>${conf.name}</strong>`, 'success');
+      showToast(`Applied Theme: ${conf.name}`, 'success');
     }
 
     if (this.onThemeChangeCallback) {
@@ -399,7 +432,7 @@ export class ThemeManager {
         document.getElementById('valGlowIntensity').textContent = `${p.glow}%`;
 
         this.liveQuickUpdate();
-        showToast(`Loaded Preset: <strong>${pill.textContent}</strong>`, 'info');
+        showToast(`Loaded Preset: ${pill.textContent}`, 'info');
       });
     });
 
@@ -421,7 +454,7 @@ export class ThemeManager {
       btnPreview.addEventListener('click', () => {
         const previewConf = this.getEditorFormData();
         this.applyTheme('custom-preview', previewConf, false);
-        showToast(`Previewing: <strong>${previewConf.name}</strong>`, 'info');
+        showToast(`Previewing: ${previewConf.name}`, 'info');
       });
     }
 
@@ -440,6 +473,7 @@ export class ThemeManager {
           const res = await fetch('/api/themes/custom', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify(themeData)
           });
           if (res.ok) isSavedToDb = true;
@@ -461,9 +495,9 @@ export class ThemeManager {
         submitBtn.disabled = false;
 
         if (isSavedToDb) {
-          showToast(`Theme <strong>${themeData.name}</strong> saved to Cloud DB & Applied!`, 'success');
+          showToast(`Theme ${themeData.name} saved to Cloud DB & Applied!`, 'success');
         } else {
-          showToast(`Theme <strong>${themeData.name}</strong> saved to Local Studio & Applied!`, 'success');
+          showToast(`Theme ${themeData.name} saved to Local Studio & Applied!`, 'success');
         }
       });
     }
@@ -541,7 +575,7 @@ export class ThemeManager {
       }
 
       this.liveQuickUpdate();
-      showToast(`Uploaded: <strong>${file.name}</strong>`, 'success');
+      showToast(`Uploaded: ${file.name}`, 'success');
     };
     reader.readAsDataURL(file);
   }
@@ -577,13 +611,13 @@ export class ThemeManager {
       // Tıklanan elementin türüne göre renk inputuna odaklan
       if (e.target.closest('.service-block') || e.target.closest('.telemetry-bar') || e.target.closest('.gui-user-card-panel')) {
         document.getElementById('edColorPanel').click();
-        showToast('Focused: <strong>Panel Background Color</strong>', 'info');
+        showToast('Focused: Panel Background Color', 'info');
       } else if (e.target.closest('.brand-header') || e.target.closest('h3') || e.target.closest('.highlight')) {
         document.getElementById('edColorAccent').click();
-        showToast('Focused: <strong>Accent Action Color</strong>', 'info');
+        showToast('Focused: Accent Action Color', 'info');
       } else {
         document.getElementById('edColorBg').click();
-        showToast('Focused: <strong>Main Background Color</strong>', 'info');
+        showToast('Focused: Main Background Color', 'info');
       }
     }, true);
   }
@@ -628,7 +662,6 @@ export class ThemeManager {
       statusText: statusText || 'CUSTOM RUNTIME ACTIVE',
       bgImage: finalBg,
       isPublic,
-      userId: 'onur',
       stylesheet: null,
       module: null,
       cssVariables: {

@@ -423,12 +423,7 @@ export function init() {
     authStatus.textContent = `👤 ${currentUser} (${currentRole})`;
 
     try {
-      const res = await fetch(`/api/themes/photobooth-snaps?userId=${currentUser}`, {
-        headers: {
-          'x-user-name': currentUser,
-          'x-user-role': currentRole
-        }
-      });
+      const res = await fetch('/api/themes/photobooth-snaps', { credentials: 'include' });
       const data = await res.json();
 
       thumbsContainer.innerHTML = '';

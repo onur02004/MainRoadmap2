@@ -5,16 +5,16 @@ import * as userService from "../services/userService.js";
 import logger from "../utils/logger.js";
 
 export const protect = async (req, res, next) => {
+  let token = null;
   try {
     const authHeader = req.headers.authorization || req.headers.Authorization;
 
-    let token = req.cookies?.token || null;
-
-    if (authHeader?.startsWith("Bearer ")) {
-      token = authHeader.slice(7).trim();
-    } else if (authHeader && !token) {
-      token = authHeader.trim();
-    }
+    // Prefer the HttpOnly session cookie. Authorization Bearer remains a
+    // temporary compatibility path for previously issued JWTs.
+    token = req.cookies?.token || null;
+    if (!token && authHeader?.startsWith("Bearer ")) token = authHeader.slice(7).trim();
+    else if (!token && authHeader) token = authHeader.trim();
+    if (token === 'cookie-session') token = null;
 
     if (!token || token === "null" || token === "undefined") {
       return next(
@@ -45,6 +45,9 @@ export const protect = async (req, res, next) => {
     req.user = currentUser;
     return next();
   } catch (error) {
+    if (req.cookies?.token) {
+      res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
+    }
     if (error.name === "TokenExpiredError") {
       // Süresi dolmuş token'ın payload'ını yalnızca loglama amacıyla oku.
       const decoded = jwt.decode(token);
@@ -100,18 +103,15 @@ export const restrictTo = (...roles) => {
 
 export const checkAuth = async (req, res, next) => {
   try {
-    let token = null;
+    let token = req.cookies?.token || null;
     const authHeader = req.headers.authorization || req.headers.Authorization;
 
-    if (authHeader) {
-      if (authHeader.startsWith("Bearer ")) {
-        token = authHeader.substring(7);
-      } else if (authHeader.startsWith("Bearer")) {
-        token = authHeader.substring(6);
-      } else {
-        token = authHeader;
-      }
+    if (!token && authHeader) {
+      if (authHeader.startsWith("Bearer ")) token = authHeader.substring(7);
+      else if (authHeader.startsWith("Bearer")) token = authHeader.substring(6);
+      else token = authHeader;
     }
+    if (token === 'cookie-session') token = null;
 
     if (token && token !== "null" && token !== "undefined") {
       // Baştaki/sondaki olası tırnakları ve boşlukları temizle

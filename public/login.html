@@ -230,7 +230,7 @@
     if (activeToken) {
       try {
         const res = await fetch('/api/users/profile', {
-          headers: { 'Authorization': `Bearer ${activeToken}` }
+          headers: { 'Authorization': `Bearer ${activeToken}` }, credentials: 'include'
         });
         const data = await res.json();
         if (res.ok && data.status === 'success') {
@@ -262,6 +262,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ identifier, password }),
+          credentials: 'include',
         });
 
         const data = await response.json();

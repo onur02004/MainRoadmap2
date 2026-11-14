@@ -1,4 +1,5 @@
 import { Server } from 'socket.io';
+import { corsOriginCallback } from '../config/origins.js';
 
 import { socketAuth } from './socketAuth.js';
 import {
@@ -7,6 +8,7 @@ import {
 } from './presence/presenceHandlers.js';
 import { registerGameHandlers } from './games/gameHandlers.js';
 import { registerHockeyHandlers } from './games/hockeyHandlers.js';
+import { registerRoadtripHandlers } from './games/roadtripHandlers.js';
 import { registerDeviceHandlers } from './devices/deviceHandlers.js';
 
 let ioInstance = null;
@@ -14,7 +16,7 @@ let ioInstance = null;
 export const initializeSocket = (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: true,
+      origin: corsOriginCallback,
       credentials: true
     }
   });
@@ -28,6 +30,7 @@ export const initializeSocket = (httpServer) => {
 
 
     registerHockeyHandlers(io, socket);
+    registerRoadtripHandlers(io, socket);
     registerPresenceHandlers(io, socket);
     registerGameHandlers(io, socket);
     registerDeviceHandlers(io, socket);

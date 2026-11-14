@@ -192,6 +192,11 @@
       <p class="section-desc">See and change your account preferences and security settings.</p>
     </div>
 
+    <div class="account-settings-notice" role="status">
+      <strong>ACCOUNT SETTINGS — TEMPORARILY UNAVAILABLE</strong>
+      <span>These settings are currently under development. Profile and password changes are disabled for now; your avatar and theme controls remain available.</span>
+    </div>
+
     <div class="account-settings-grid">
 
       <!-- 1. Bilgi Düzenleme Kartı -->
@@ -218,14 +223,16 @@
 
       <!-- 2. Şifre ve Güvenlik Kartı -->
       <div class="service-block account-panel-block">
-        <div class="block-header"><span class="tag">CREDENTIALS_AUTH</span><span class="feature-status">COMING SOON</span></div>
-        <h3>Password</h3><p>Password changes are temporarily unavailable.</p>
+        <div class="block-header"><span class="tag">CREDENTIALS_AUTH</span><span class="dot online"></span></div>
+        <h3>Password</h3><p>Verify your current password before choosing a new one.</p>
 
-        <div class="settings-form-layout feature-disabled" aria-disabled="true">
-          <div class="field-row"><label>CURRENT PASSWORD</label><input type="password" placeholder="Unavailable right now" disabled /></div>
-          <div class="field-row"><label>NEW PASSWORD</label><input type="password" placeholder="Unavailable right now" disabled /></div>
-          <button type="button" class="gui-action-btn" disabled>Not available yet</button>
-        </div>
+        <form id="passwordForm" class="settings-form-layout">
+          <div class="field-row"><label for="inpCurrentPassword">CURRENT PASSWORD</label><input id="inpCurrentPassword" type="password" autocomplete="current-password" maxlength="128" required /></div>
+          <div class="field-row"><label for="inpNewPassword">NEW PASSWORD</label><input id="inpNewPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required /></div>
+          <div class="field-row"><label for="inpConfirmPassword">CONFIRM NEW PASSWORD</label><input id="inpConfirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required /></div>
+          <p id="passwordFormStatus" role="status" aria-live="polite"></p>
+          <button type="submit" class="gui-action-btn primary" id="btnChangePassword">Update Password</button>
+        </form>
       </div>
 
       <!-- 3. Avatar Vault Hızlı Başlatıcı Kartı -->

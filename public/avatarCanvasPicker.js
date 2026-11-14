@@ -716,11 +716,20 @@ class InfiniteAvatarCanvas {
       const result = await res.json();
 
       if (res.ok && result.status === 'success') {
-        // Sayfadaki ana avatar görselini güncelle
-        const userImg = document.getElementById('userAvatar');
-        if (userImg) userImg.src = result.data.user.profile_pic_path;
+        // Keep every account/avatar preview in sync with the saved server profile.
+        const savedUser = result.data?.user || {
+          profile_pic_path: this.selectedUrl,
+          avatar_type: 'builtin',
+          avatar_data: {}
+        };
+        const { renderAvatar, getCurrentUser } = await import('/avatarRenderer.js');
+        const freshUser = await getCurrentUser(true) || savedUser;
+        ['userAvatar', 'guiUserAvatar'].forEach((id) => {
+          const avatarEl = document.getElementById(id);
+          if (avatarEl) renderAvatar(avatarEl, freshUser);
+        });
+        window.dispatchEvent(new CustomEvent('profile:avatar-updated', { detail: savedUser }));
 
-        // Toast Bildirimi Göster
         this.showFeedbackToast(result.message, 'success');
         this.close();
       } else {

@@ -60,6 +60,10 @@
     }));
   });
 
+  socket.on('roadtrip:rooms:list', (rooms) => {
+    window.dispatchEvent(new CustomEvent('roadtrip:rooms:list', { detail: rooms || [] }));
+  });
+
   socket.on('presence:list', (users) => {
     window.dispatchEvent(new CustomEvent('presence:list', {
       detail: users

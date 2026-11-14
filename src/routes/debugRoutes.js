@@ -2,7 +2,7 @@
 
 
 import express from 'express';
-import { checkAuth } from '../middleware/authMiddleware.js';
+import { checkAuth, protect } from '../middleware/authMiddleware.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -17,7 +17,7 @@ router.get('/', checkAuth, (req, res) => {
   res.json({ message: 'Debug endpoint hit' });
 });
 
-router.get('/sh', (req, res) => {
+router.get('/sh', protect, (req, res) => {
     res.sendFile(path.join(publicPath, '/songShare/songShare.html'));
 });
 

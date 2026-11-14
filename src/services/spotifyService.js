@@ -19,7 +19,7 @@ const getBasicAuthHeader = () => {
 
 /**
  * Kullanıcıyı yönlendireceğimiz Spotify OAuth URL'ini üretir.
- * State parametresi ile giriş yapan kullanıcı ID'sini aktarıyoruz.
+ * State is a random, short-lived CSRF secret. Never place a user ID in state.
  */
 export const getAuthorizeURL = (state = '') => {
   const { clientId, redirectUri } = getClientCredentials();
@@ -27,6 +27,7 @@ export const getAuthorizeURL = (state = '') => {
   const scopes = [
     'user-read-currently-playing',
     'user-read-playback-state',
+    'user-read-recently-played',
     'user-top-read',
     'user-read-private',
     'user-read-email'
@@ -114,6 +115,15 @@ export const getCurrentlyPlaying = async (accessToken) => {
     return null;
   }
 
+  return await res.json();
+};
+
+/** Get the most recently played track (requires user-read-recently-played). */
+export const getRecentlyPlayedTrack = async (accessToken) => {
+  const res = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=1', {
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+  if (!res.ok) return null;
   return await res.json();
 };
 
@@ -290,36 +300,47 @@ export const getArtistGalleryByName = async (artistName, limit = 24) => {
   }
 };
 
+let cachedAppToken = null;
+let cachedAppTokenExpiresAt = 0;
+let appTokenRequest = null;
+
 export const getAppAccessToken = async () => {
-  try {
-    const response = await fetch(
-      'https://accounts.spotify.com/api/token',
-      {
+  if (cachedAppToken && Date.now() < cachedAppTokenExpiresAt - 60_000) {
+    return cachedAppToken;
+  }
+  if (appTokenRequest) return appTokenRequest;
+
+  appTokenRequest = (async () => {
+    try {
+      const response = await fetch('https://accounts.spotify.com/api/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: getBasicAuthHeader()
         },
-        body: new URLSearchParams({
-          grant_type: 'client_credentials'
-        })
+        body: new URLSearchParams({ grant_type: 'client_credentials' })
+      });
+
+      if (!response.ok) {
+        // Do not log the full upstream response; it may contain sensitive diagnostics.
+        console.error('[Spotify App Token] Request failed:', response.status);
+        cachedAppToken = null;
+        cachedAppTokenExpiresAt = 0;
+        return null;
       }
-    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(
-        '[Spotify App Token Hatası]',
-        response.status,
-        errorText
-      );
+      const data = await response.json();
+      if (!data.access_token || !Number.isFinite(Number(data.expires_in))) return null;
+      cachedAppToken = data.access_token;
+      cachedAppTokenExpiresAt = Date.now() + Number(data.expires_in) * 1000;
+      return cachedAppToken;
+    } catch (error) {
+      console.error('[Spotify App Token] Request failed:', error.name);
       return null;
+    } finally {
+      appTokenRequest = null;
     }
+  })();
 
-    const data = await response.json();
-    return data.access_token || null;
-  } catch (error) {
-    console.error('[Spotify App Token Hatası]', error);
-    return null;
-  }
+  return appTokenRequest;
 };

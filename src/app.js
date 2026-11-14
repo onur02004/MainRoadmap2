@@ -1,9 +1,15 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import listEndpoints from 'express-list-endpoints';
 import cookieParser from 'cookie-parser';
+import { protect, restrictTo } from './middleware/authMiddleware.js';
+import { securityHeaders, csrfOriginGuard } from './middleware/securityHeaders.js';
+import { corsOriginCallback } from './config/origins.js';
+import { createRateLimit } from './middleware/rateLimit.js';
+import { createGameStaticMiddleware } from './middleware/gameStatic.js';
+import logger from './utils/logger.js';
 
 
 import avatarRoutes from './routes/avatarRoutes.js';
@@ -24,12 +30,29 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
-
-app.use(express.static('public'));
+// Security and request middleware. Cookies must be parsed before protected routes/static pages.
+app.set('trust proxy', process.env.TRUST_PROXY === '1' ? 1 : false);
+app.use(securityHeaders);
+app.use(cors({ origin: corsOriginCallback, credentials: true, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'] }));
+app.use(express.json({ limit: '6mb' }));
 app.use(cookieParser());
+app.use(csrfOriginGuard);
+app.use('/api', createRateLimit({ windowMs: 60_000, max: 180 }));
+
+// Serve formerly exposed private HTML paths only after session authorization.
+const privatePagePath = path.join(__dirname, '../public');
+app.get('/songShare/songShare.html', protect, (req, res) => res.sendFile(path.join(privatePagePath, 'songShare/songShare.html')));
+app.get('/account.html', protect, (req, res) => res.sendFile(path.join(privatePagePath, 'account.html')));
+app.get('/spotifyStatus.html', protect, (req, res) => res.sendFile(path.join(privatePagePath, 'spotifyStatus.html')));
+app.get('/admin/admin.html', protect, restrictTo('ADMIN'), (req, res) => res.sendFile(path.join(privatePagePath, 'admin/admin.html')));
+app.get('/games/games.html', protect, (req, res) => res.sendFile(path.join(privatePagePath, 'games/games.html')));
+
+// Playable game bundles are public static assets. The games catalogue above stays protected.
+app.use('/games', createGameStaticMiddleware(privatePagePath, {
+  maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0
+}));
+
+app.use(express.static(privatePagePath, { etag: true, maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0, index: false }));
 
 // UI / Page Routes
 app.use('/', viewRoutes);
@@ -39,7 +62,7 @@ app.use('/api/spotify', spotifyRoutes);
 app.use('/api/themes', themeRoutes);
 app.use('/api/avatars', avatarRoutes);
 app.use('/api/services', serviceRoutes);
-app.use('/api/debug', debugRoutes);
+if (process.env.NODE_ENV !== 'production') app.use('/api/debug', debugRoutes);
 app.use('/api/songshare', songShareRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/games', gameRoutes);
@@ -59,14 +82,19 @@ app.get('/api/config/weinguesser', (req, res) => {
 });
 app.use('/api/admin/games', adminGamesRoutes);
 
-app.use(express.static(path.join(__dirname, '../public')));
+
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  res.status(statusCode).json({
+  if (res.headersSent) return next(err);
+  const statusCode = Number(err.statusCode || err.status) || 500;
+  const safeStatus = statusCode >= 400 && statusCode < 600 ? statusCode : 500;
+  logger.error('HTTP', 'Request failed', { method: req.method, path: req.path, status: safeStatus, name: err.name, code: err.code });
+  res.status(safeStatus).json({
     status: 'error',
-    message: err.message,
+    message: safeStatus >= 500 && process.env.NODE_ENV === 'production'
+      ? 'Sunucuda beklenmeyen bir hata oluştu.'
+      : err.message || 'İstek tamamlanamadı.'
   });
 });
 
@@ -105,12 +133,12 @@ function getAllRoutes(app) {
 }
 
 
-app.get('/api/routes-manifest', (req, res) => {
+if (process.env.NODE_ENV !== 'production') app.get('/api/routes-manifest', protect, restrictTo('ADMIN'), (req, res) => {
   const routes = getAllRoutes(app);
   res.json({ totalRoutes: routes.length, routes });
 });
 
-app.get('/dev/routes', (req, res) => {
+if (process.env.NODE_ENV !== 'production') app.get('/dev/routes', protect, restrictTo('ADMIN'), (req, res) => {
   const routes = getAllRoutes(app);
   const rows = routes.map(r => `
     <tr>

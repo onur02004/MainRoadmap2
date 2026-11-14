@@ -46,11 +46,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadUserProfile();
 
   initAccountEvents();
+  disableUnfinishedAccountSettings();
   initBlobatarStudio();
   initPixelStudio();
   initAccountQuickGuide();
 });
 
+
+
+function disableUnfinishedAccountSettings() {
+  ['profileForm', 'passwordForm'].forEach((formId) => {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    const panel = form.closest('.account-panel-block');
+    panel?.classList.add('settings-unavailable');
+    form.querySelectorAll('input, button, select, textarea').forEach((control) => {
+      control.disabled = true;
+      control.setAttribute('aria-disabled', 'true');
+    });
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+  });
+}
 
 // ============================================================
 // USER PROFILE
@@ -434,8 +453,37 @@ function initAccountEvents() {
     );
 
 
-  // Password changes are intentionally disabled in the UI until a real
-  // backend endpoint and validation flow are implemented.
+  const passwordForm = document.getElementById('passwordForm');
+  passwordForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const status = document.getElementById('passwordFormStatus');
+    const button = document.getElementById('btnChangePassword');
+    const currentPassword = document.getElementById('inpCurrentPassword')?.value || '';
+    const newPassword = document.getElementById('inpNewPassword')?.value || '';
+    const confirmPassword = document.getElementById('inpConfirmPassword')?.value || '';
+    if (newPassword.length < 8 || newPassword.length > 128 || newPassword !== confirmPassword || newPassword === currentPassword) {
+      if (status) status.textContent = 'Yeni parola en az 8 karakter olmalı, mevcut paroladan farklı olmalı ve doğrulamayla eşleşmeli.';
+      return;
+    }
+    if (button) button.disabled = true;
+    if (status) status.textContent = 'Updating password…';
+    try {
+      const response = await fetch('/api/users/password', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+      });
+      const payload = await response.json();
+      if (!response.ok || payload.status !== 'success') throw new Error(payload.message || 'Password update failed.');
+      passwordForm.reset();
+      if (status) status.textContent = 'Password updated successfully.';
+    } catch (error) {
+      if (status) status.textContent = error.message || 'Password update failed.';
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
 
 
   // ----------------------------------------------------------
@@ -446,12 +494,10 @@ function initAccountEvents() {
     .getElementById('btnAccountLogout')
     ?.addEventListener(
       'click',
-      () => {
-
+      async () => {
+        try { await fetch('/api/users/logout', { method: 'POST', credentials: 'include' }); } catch (_) { }
         localStorage.removeItem('token');
-
         window.location.href = '/';
-
       }
     );
 
@@ -4924,7 +4970,7 @@ function initAccountQuickGuide() {
   let highlighted = null;
   const steps = [
     { target: '.account-profile-hero-card', title: 'Your profile', body: 'Your username, email, role and current avatar are shown here. Use the avatar controls to open the Avatar Vault.' },
-    { target: '#accountSettingsSection', title: 'Account settings', body: 'Change your display username and explore the available account settings. Password changes are currently disabled.' },
+    { target: '#accountSettingsSection', title: 'Account settings', body: 'Change your display username and explore the available account settings. You can update your password after verifying the current one.' },
     { target: '#btnHeroVaultTrigger', title: 'Open the Avatar Vault', body: 'This is where you can browse the avatar collection, explore the 2D map, or create a Blobatar.' },
     { target: '#btnSideBlobatar', title: 'Create a Blobatar', body: 'Use Blobatar Studio to customize a character’s shape, expression, color and motion, then save it as your avatar.' , openVault: true},
     { target: '#btnSidePixelStudio', title: 'Pixel Studio (Beta)', body: 'Pixel Studio is still a work in progress. Some tools and save/apply actions may not work reliably yet.', openVault: true}

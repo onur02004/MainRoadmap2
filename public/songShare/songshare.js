@@ -163,6 +163,8 @@ let lastActiveLyricsIndex = -1;
 let lyricsPlaybackTimer = null;
 let nowPlayingRequestInFlight = false;
 let lastForcedNowPlayingRefreshAt = 0;
+let nowPlayingPollTimer = null;
+let spotifyConnectionUsable = false;
 
 const NOW_PLAYING_POLL_INTERVAL_MS = 5000;
 const LYRICS_UI_TICK_INTERVAL_MS = 250;
@@ -1459,18 +1461,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function loadSpotifyStatus() {
-    const token = localStorage.getItem('token');
+  function setNowPlayingPolling(enabled) {
+    spotifyConnectionUsable = Boolean(enabled);
 
-    if (!token) {
-      updateSpotifyCard({
-        status: 'GİRİŞ GEREKLİ',
-        label: 'Spotify bağlantısını kontrol etmek için giriş yapmalısın',
-        buttonText: 'ÖNCE GİRİŞ YAP'
-      });
-      if (btnConnectSpotify) btnConnectSpotify.disabled = true;
+    if (!spotifyConnectionUsable) {
+      if (nowPlayingPollTimer) {
+        clearInterval(nowPlayingPollTimer);
+        nowPlayingPollTimer = null;
+      }
+      setCompanionDockEmpty();
+      window.updateLyricsPlaybackFromSpotify?.(null);
+      initShareWizardState(null);
       return;
     }
+
+    if (!nowPlayingPollTimer) {
+      loadMyNowPlaying().finally(() => {
+        initShareWizardState(window.__songShareLastNowPlaying || null);
+      });
+      nowPlayingPollTimer = setInterval(loadMyNowPlaying, NOW_PLAYING_POLL_INTERVAL_MS);
+    }
+  }
+
+  async function loadSpotifyStatus() {
+    const token = localStorage.getItem('token');
 
     updateSpotifyCard({
       status: 'KONTROL EDİLİYOR',
@@ -1480,13 +1494,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnConnectSpotify) btnConnectSpotify.disabled = true;
 
     try {
+      const statusHeaders = {};
+      if (token && token !== 'cookie-session') {
+        statusHeaders.Authorization = `Bearer ${token}`;
+      }
       const res = await fetch('/api/spotify/status', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: statusHeaders,
+        credentials: 'include'
       });
 
-      if (res.status === 401) {
+      if (res.status === 401 || res.status === 403) {
+        setNowPlayingPolling(false);
         updateSpotifyCard({
           status: 'OTURUM GEREKLİ',
           label: 'Oturumun sona ermiş olabilir; yeniden giriş yap',
@@ -1502,6 +1520,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (!data.connected) {
+        setNowPlayingPolling(false);
         updateSpotifyCard({
           status: 'BAĞLI DEĞİL',
           label: 'Spotify hesabını bağla',
@@ -1519,15 +1538,18 @@ document.addEventListener('DOMContentLoaded', () => {
           buttonText: 'BAĞLANDI',
           connected: true
         });
+        setNowPlayingPolling(true);
         return;
       }
 
+      setNowPlayingPolling(false);
       updateSpotifyCard({
         status: 'YENİDEN BAĞLANMALI',
         label: 'Spotify erişimi yenilenemedi. Hesabını tekrar bağla.',
         buttonText: 'YENİDEN BAĞLA'
       });
     } catch (err) {
+      setNowPlayingPolling(false);
       console.error('Spotify durum kontrolü başarısız:', err);
 
       updateSpotifyCard({
@@ -1547,16 +1569,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const token = localStorage.getItem('token');
 
-    if (!token) return;
-
+    // Cookie-only authentication is supported; a JS-readable JWT is not required.
     try {
       btnConnectSpotify.disabled = true;
       btnConnectSpotify.textContent = 'YÖNLENDİRİLİYOR…';
 
+      const loginHeaders = {};
+      if (token && token !== 'cookie-session') {
+        loginHeaders.Authorization = `Bearer ${token}`;
+      }
       const res = await fetch('/api/spotify/login-url', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: loginHeaders,
+        credentials: 'include'
       });
 
       const data = await res.json();
@@ -1576,10 +1600,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   });
-
-  // Sayfa açıldığında Spotify durumunu kontrol et.
-  loadSpotifyStatus();
-
+  // Spotify status is checked from startup after page state is ready.
 
   let lastTrackTitle = null;
 
@@ -1670,6 +1691,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     companionDockLoaded = true;
+    window.refreshCompanionFullscreenTrack?.();
   }
 
 
@@ -1706,6 +1728,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     companionDockLoaded = true;
+    window.refreshCompanionFullscreenTrack?.();
   }
 
   async function loadMyNowPlaying() {
@@ -1713,7 +1736,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const token = localStorage.getItem('token');
 
-    if (!token) {
+    if (!spotifyConnectionUsable) {
       setCompanionDockEmpty();
       window.updateLyricsPlaybackFromSpotify?.(null);
       return;
@@ -1723,15 +1746,28 @@ document.addEventListener('DOMContentLoaded', () => {
     nowPlayingRequestInFlight = true;
 
     try {
+      const playbackHeaders = {};
+      if (token && token !== 'cookie-session') {
+        playbackHeaders.Authorization = `Bearer ${token}`;
+      }
       const res = await fetch('/api/spotify/now-playing', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers: playbackHeaders,
         credentials: 'include'
       });
 
       if (!res.ok) {
-        console.warn('Now playing alınamadı:', res.status);
+        // Don't repeat a failing Spotify request every five seconds.
+        // Re-check status once; polling restarts only if the account is usable.
+        if (res.status === 401 || res.status === 403) {
+          if (nowPlayingPollTimer) {
+            clearInterval(nowPlayingPollTimer);
+            nowPlayingPollTimer = null;
+          }
+          spotifyConnectionUsable = false;
+          await loadSpotifyStatus();
+        } else {
+          console.warn('Now playing alınamadı:', res.status);
+        }
         window.updateLyricsPlaybackFromSpotify?.(null);
         setCompanionDockEmpty();
         return;
@@ -1739,6 +1775,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       window.__songShareLastNowPlaying = data;
+      window.updateCompanionPlaybackFromSpotify?.(data);
+      window.dispatchEvent(new CustomEvent('songshare:now-playing-updated', { detail: data }));
       window.updateLyricsPlaybackFromSpotify?.(data);
 
       const dockSong =
@@ -1922,8 +1960,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!container) return;
 
     try {
+      const friendsHeaders = {};
+      if (token && token !== 'cookie-session') {
+        friendsHeaders.Authorization = `Bearer ${token}`;
+      }
       const res = await fetch('/api/spotify/friends-activity', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        headers: friendsHeaders,
         credentials: 'include'
       });
 
@@ -2151,16 +2193,9 @@ document.addEventListener('DOMContentLoaded', () => {
          * ------------------------------------------------------
          */
 
-        const clickHandler =
-          isLive
-
-            ? `onclick='playToDock(
-          ${JSON.stringify(title)},
-          ${JSON.stringify(artist)},
-          ${JSON.stringify(albumArt)}
-        )'`
-
-            : '';
+        const clickHandler = isLive
+          ? `data-friend-play="true" data-friend-title="${escapeHtml(title)}" data-friend-artist="${escapeHtml(artist)}" data-friend-cover="${escapeHtml(albumArt)}"`
+          : '';
 
 
         return `
@@ -2237,6 +2272,10 @@ ${!isLive
       }).join('');
 
       friendsActivityLoaded = true;
+
+      container.querySelectorAll('[data-friend-play]').forEach((card) => {
+        card.addEventListener('click', () => window.playToDock?.(card.dataset.friendTitle || '', card.dataset.friendArtist || '', card.dataset.friendCover || ''));
+      });
 
       // ------------------------------------------------------
       // FRIEND AVATARS - GLOBAL AVATAR RENDERER
@@ -2329,8 +2368,12 @@ ${!isLive
   window.shareCurrentlyPlaying = async function () {
     const token = localStorage.getItem('token');
     try {
+      const playbackHeaders = {};
+      if (token && token !== 'cookie-session') {
+        playbackHeaders.Authorization = `Bearer ${token}`;
+      }
       const res = await fetch('/api/spotify/now-playing', {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: playbackHeaders,
         credentials: 'include'
       });
       if (!res.ok) throw new Error(`Spotify API ${res.status}`);
@@ -2384,6 +2427,7 @@ ${!isLive
 
       if (data.videoId) {
         syncedLyrics = data.lyrics || [];
+        window.updateCompanionLyrics?.(-1);
 
         const attemptCue = () => {
           if (isYTReady && ytPlayer?.cueVideoById) {
@@ -2437,6 +2481,9 @@ ${!isLive
 
     if (lTimeline) lTimeline.value = ytPlayer.getCurrentTime();
     if (curr) curr.innerText = formatDuration(ytPlayer.getCurrentTime() * 1000);
+
+    const companionActiveIndex = syncedLyrics.findLastIndex(l => l.time <= time);
+    window.updateCompanionLyrics?.(companionActiveIndex);
 
     if (!scroll || !view || !syncedLyrics.length) return;
 
@@ -3033,6 +3080,63 @@ ${!isLive
   };
 
   // ----------------------------------------------------
+  // OWNER POST MANAGEMENT (all post types)
+  // ----------------------------------------------------
+  window.openSongShareEditor = async function (id) {
+    const card = document.querySelector(`[data-feed-id="${CSS.escape(String(id))}"]`);
+    if (!card) return;
+    const token = localStorage.getItem('token');
+    const comment = prompt('Paylaşım açıklaması / yorumu:', card.dataset.previewComment || '');
+    if (comment === null) return;
+    const visibility = prompt('Görünürlük: public, friends veya custom', 'public');
+    if (visibility === null) return;
+    if (!['public', 'friends', 'custom'].includes(visibility.trim())) { alert('Geçersiz görünürlük.'); return; }
+    const payload = { comment_by_user: comment, visibility: visibility.trim() };
+    const isLyrics = card.dataset.postType === 'lyrics';
+    if (isLyrics) {
+      const currentDesign = card.dataset.lyricsDesign || '{}';
+      const designText = prompt('Lyrics tasarım ayarlarını JSON olarak düzenle:', currentDesign);
+      if (designText === null) return;
+      try { payload.lyrics_design = JSON.parse(designText); }
+      catch { alert('Lyrics tasarım JSON formatı geçersiz.'); return; }
+      const excerpt = prompt('Paylaşılan sözler:', card.dataset.lyricsExcerpt || '');
+      if (excerpt === null) return;
+      payload.lyrics_excerpt = excerpt;
+    } else {
+      const rating = prompt('Paylaşım puanı (0-100):', card.dataset.ownerRating || '50');
+      if (rating === null) return;
+      const number = Number(rating);
+      if (!Number.isInteger(number) || number < 0 || number > 100) { alert('Puan 0 ile 100 arasında olmalı.'); return; }
+      payload.rating_by_user = number;
+    }
+    try {
+      const response = await fetch(`/api/songshare/${encodeURIComponent(id)}`, {
+        method: 'PATCH', credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.message || 'Paylaşım güncellenemedi.');
+      alert('Paylaşım güncellendi.');
+      location.reload();
+    } catch (error) { alert(error.message); }
+  };
+
+  window.deleteSongSharePost = async function (id) {
+    if (!confirm('Bu paylaşımı silmek istediğine emin misin? Bu işlem geri alınamaz.')) return;
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`/api/songshare/${encodeURIComponent(id)}`, {
+        method: 'DELETE', credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.message || 'Paylaşım silinemedi.');
+      document.querySelector(`[data-feed-id="${CSS.escape(String(id))}"]`)?.remove();
+    } catch (error) { alert(error.message); }
+  };
+
+  // ----------------------------------------------------
   // 9. FEED AKIŞI ÇEKME
   // ----------------------------------------------------
 
@@ -3482,7 +3586,10 @@ ${!isLive
        */
 
       userName,
-
+      isOwner: Boolean(feedValue(raw, 'is_owner', 'isOwner')),
+      postType: String(feedValue(raw, 'post_type', 'postType') || 'music'),
+      lyricsDesign: feedValue(raw, 'lyrics_design', 'lyricsDesign') || {},
+      lyricsExcerpt: String(feedValue(raw, 'lyrics_excerpt', 'lyricsExcerpt') || ''),
       avatar,
 
       avatarType,
@@ -3521,6 +3628,7 @@ ${!isLive
        */
 
       reposts,
+      repostedByMe: Boolean(feedValue(raw, 'is_reposted_by_me', 'isRepostedByMe')),
 
       comments,
 
@@ -3637,18 +3745,14 @@ ${!isLive
 
 
   function spotifyTrackUrl(item) {
-
-    if (item.spotifyUrl) {
-      return item.spotifyUrl;
+    const match = String(item.uri || '').match(/^spotify:track:([A-Za-z0-9]{10,40})$/);
+    const candidate = item.spotifyUrl || (match ? `https://open.spotify.com/track/${match[1]}` : '');
+    try {
+      const url = new URL(candidate);
+      return url.protocol === 'https:' && url.hostname === 'open.spotify.com' ? url.toString() : '#';
+    } catch {
+      return '#';
     }
-
-    const match =
-      String(item.uri || '')
-        .match(/spotify:track:([^:]+)/);
-
-    return match
-      ? `https://open.spotify.com/track/${match[1]}`
-      : '#';
   }
 
 
@@ -4047,7 +4151,7 @@ ${!isLive
               'avatarUrl',
               'image'
             ) ||
-            `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`;
+            `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name).replace(/'/g, '%27')}`;
 
           return `
           <div class="pod-orbit-bubble">
@@ -4055,7 +4159,7 @@ ${!isLive
             <img
               src="${escapeHtml(av)}"
               alt="${escapeHtml(name)}"
-              onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}'"
+              onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name).replace(/'/g, '%27')}'"
             >
 
             <span class="pod-holo-tooltip">
@@ -4134,7 +4238,7 @@ ${!isLive
               'avatarUrl',
               'user.avatar'
             ) ||
-            `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`;
+            `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name).replace(/'/g, '%27')}`;
 
           const moment = Number.isInteger(Number(c.timestamp_seconds)) && c.timestamp_seconds !== null
             ? `<button class="comment-moment-chip" type="button" onclick="openCommentMoment('${escapeHtml(String(item.id))}', ${Number(c.timestamp_seconds)})"><i class="fa-solid fa-music"></i> ${escapeHtml(formatCommentMoment(Number(c.timestamp_seconds)))}</button>`
@@ -4150,7 +4254,7 @@ ${!isLive
           return `
           <div class="comment-thread">
             <div class="comment-bubble">
-              <img src="${escapeHtml(av)}" class="c-avatar" alt="${escapeHtml(name)}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}'">
+              <img src="${escapeHtml(av)}" class="c-avatar" alt="${escapeHtml(name)}" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name).replace(/'/g, '%27')}'">
               <div class="c-content">
                 <div class="c-top"><strong>${escapeHtml(name)}</strong><span class="c-time">${escapeHtml(time)}</span></div>
                 <p>${escapeHtml(text)}</p>
@@ -4193,6 +4297,24 @@ ${!isLive
       `
         : '';
 
+    const lyricsDesign = item.lyricsDesign || {};
+    const lyricFontMap = { clean: "'DM Sans', Arial, sans-serif", serif: "Georgia, 'Times New Roman', serif", bold: "'Arial Black', Arial, sans-serif" };
+    const lyricBg = lyricsDesign.background || 'blur';
+    const lyricBgColor = /^#[0-9a-f]{6}$/i.test(lyricsDesign.background_color || '') ? lyricsDesign.background_color : '#211c35';
+    const lyricFontColor = /^#[0-9a-f]{6}$/i.test(lyricsDesign.font_color || '') ? lyricsDesign.font_color : '#ffffff';
+    const lyricCover = lyricsDesign.include_cover !== false && cover ? `<img class="songshare-lyrics-cover" src="${cover}" alt="${safeTitle} album cover">` : '';
+    const lyricMeta = lyricsDesign.include_metadata !== false ? `<div class="songshare-lyrics-meta">${safeArtist} · ${safeTitle}</div>` : '';
+    const lyricPlayer = lyricsDesign.include_player !== false && spotify !== '#' ? `<a class="songshare-lyrics-player" href="${spotify}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-spotify"></i> Dinlemek için aç</a>` : '';
+    const lyricBackgroundStyle = lyricBg === 'gradient'
+      ? `background:linear-gradient(135deg,${lyricBgColor},${/^#[0-9a-f]{6}$/i.test(lyricsDesign.gradient_color || '') ? lyricsDesign.gradient_color : '#452333'});`
+      : lyricBg === 'solid' ? `background:${lyricBgColor};` : `background:linear-gradient(135deg,rgba(10,10,14,.88),rgba(25,20,35,.92)),url('${cover}') center/cover;`;
+    const lyricsCardHtml = item.postType === 'lyrics' ? `
+      <section class="songshare-lyrics-card" style="${lyricBackgroundStyle}--lyrics-font:${lyricFontMap[lyricsDesign.font_style] || lyricFontMap.clean};--lyrics-color:${lyricFontColor};--lyrics-size:${Math.max(14,Math.min(38,Number(lyricsDesign.font_size)||23))}px;--lyrics-align:${['left','center','right'].includes(lyricsDesign.text_align) ? lyricsDesign.text_align : 'left'};--lyrics-line:${Math.max(1,Math.min(2.2,Number(lyricsDesign.line_spacing)||1.45))};--lyrics-letter:${Math.max(-2,Math.min(8,Number(lyricsDesign.letter_spacing)||0))}px;">
+        <div class="songshare-lyrics-topline"><span>LYRICS MOMENT</span><span>${escapeHtml(highlightLabel)}</span></div>
+        <div class="songshare-lyrics-body">${lyricCover}<div class="songshare-lyrics-copy"><div class="songshare-lyrics-text" style="${lyricsDesign.italic ? 'font-style:italic;' : ''}text-transform:${['uppercase','lowercase','none'].includes(lyricsDesign.text_transform) ? lyricsDesign.text_transform : 'none'};text-shadow:${lyricsDesign.text_effect === 'none' ? 'none' : '0 2px 18px rgba(0,0,0,.45)'}">${escapeHtml(item.lyricsExcerpt || item.comment || '')}</div>${lyricMeta}</div></div>
+        ${lyricPlayer}
+      </section>` : '';
+
     // ----------------------------------------------------
     // CARD
     // ----------------------------------------------------
@@ -4206,6 +4328,10 @@ ${!isLive
       "
       id="${cardId}"
       data-feed-id="${escapeHtml(String(item.id))}"
+      data-post-type="${escapeHtml(String(feedValue(item.raw, 'post_type', 'postType') || 'music'))}"
+      data-lyrics-design="${escapeHtml(JSON.stringify(feedValue(item.raw, 'lyrics_design', 'lyricsDesign') || {}))}"
+      data-lyrics-excerpt="${escapeHtml(String(feedValue(item.raw, 'lyrics_excerpt', 'lyricsExcerpt') || ''))}"
+      data-owner-rating="${Number(item.sharerRating || 50)}"
       data-preview-title="${safeTitle}"
 data-preview-artist="${safeArtist}"
 data-preview-cover="${cover}"
@@ -4292,6 +4418,7 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
         </div>
 
         <div class="header-right-cluster">
+          ${item.isOwner ? `<div class="songshare-owner-tools"><button type="button" class="songshare-owner-edit" onclick="openSongShareEditor('${escapeHtml(String(item.id))}')" aria-label="Paylaşımı düzenle" title="Düzenle"><i class="fa-solid fa-sliders"></i></button><button type="button" class="songshare-owner-delete" onclick="deleteSongSharePost('${escapeHtml(String(item.id))}')" aria-label="Paylaşımı sil" title="Sil"><i class="fa-solid fa-trash"></i></button></div>` : ''}
           ${matchHtml}
         </div>
 
@@ -4299,6 +4426,7 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
 
       <!-- MAIN -->
 
+      ${lyricsCardHtml}
       <div class="feed-card-main-content">
 
         <!-- COVER -->
@@ -4592,20 +4720,15 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
             <!-- REPOST -->
 
             <button
-              class="btn-secondary-action is-development-disabled" aria-disabled="true"
-              onclick='
-                showDevelopmentNotice(event); /* toggleRepost(
-                  ${JSON.stringify(String(item.id))}
-                ) */
-              '
+              type="button"
+              class="btn-secondary-action feed-repost-button ${item.repostedByMe ? 'is-active' : ''}"
+              data-repost-id="${escapeHtml(String(item.id))}"
+              aria-pressed="${item.repostedByMe ? 'true' : 'false'}"
+              title="Paylaşımı yeniden paylaş"
             >
-              Repostla
+              ${item.repostedByMe ? 'Repostu geri al' : 'Repostla'}
               (
-              <span
-                id="repostCount-${escapeHtml(String(item.id))}"
-              >
-                ${item.reposts}
-              </span>
+              <span id="repostCount-${escapeHtml(String(item.id))}">${item.reposts}</span>
               )
             </button>
 
@@ -4627,14 +4750,7 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
 
             <!-- IMMERSIVE -->
 
-            <button
-              class="btn-secondary-action is-development-disabled" aria-disabled="true"
-              onclick='
-                showDevelopmentNotice(event); /* openFullscreenCompanion(
-                  ${JSON.stringify(String(item.id))}
-                ) */
-              '
-            >
+            <button type="button" class="btn-secondary-action" data-feed-immersive="${escapeHtml(String(item.id))}" title="Immersive dinleme deneyimini aç">
               Immersive
             </button>
 
@@ -4805,23 +4921,39 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
   };
 
   window.replyToComment = async function (songShareId, parentCommentId) {
-    const comment = window.prompt('Yanıtını yaz:');
-    if (!comment || !comment.trim()) return;
     const token = localStorage.getItem('token');
     if (!token) { alert('Yanıt vermek için giriş yapmalısın.'); return; }
-    try {
-      const response = await fetch(`/api/songshare/comment/${encodeURIComponent(songShareId)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        credentials: 'include',
-        body: JSON.stringify({ comment: comment.trim(), parent_comment_id: parentCommentId })
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message || 'Yanıt gönderilemedi.');
-      window.location.reload();
-    } catch (error) {
-      alert(error.message || 'Yanıt gönderilemedi.');
-    }
+    document.getElementById('songShareReplyDialog')?.remove();
+    const dialog = document.createElement('div');
+    dialog.id = 'songShareReplyDialog';
+    dialog.className = 'ss-reply-backdrop';
+    dialog.innerHTML = `<form class="ss-reply-dialog"><div class="ss-reply-head"><strong>Yanıt yaz</strong><button type="button" class="ss-reply-close" aria-label="Kapat">×</button></div><textarea name="reply" maxlength="2000" rows="4" placeholder="Düşünceni paylaş…" required></textarea><div class="ss-reply-actions"><span class="ss-reply-status" aria-live="polite"></span><button type="submit">Yanıtı gönder</button></div></form>`;
+    document.body.appendChild(dialog);
+    const form = dialog.querySelector('form');
+    const textarea = form.elements.reply;
+    textarea.focus();
+    const close = () => dialog.remove();
+    dialog.addEventListener('click', e => { if (e.target === dialog || e.target.closest('.ss-reply-close')) close(); });
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const comment = textarea.value.trim();
+      if (!comment) return;
+      const submit = form.querySelector('[type="submit"]');
+      const status = form.querySelector('.ss-reply-status');
+      submit.disabled = true; status.textContent = 'Gönderiliyor…';
+      try {
+        const response = await fetch(`/api/songshare/comment/${encodeURIComponent(songShareId)}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          credentials: 'include', body: JSON.stringify({ comment, parent_comment_id: parentCommentId })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.message || 'Yanıt gönderilemedi.');
+        close();
+        // Re-render feed from the server without forcing a full page reload.
+        if (typeof window.refreshSongShareFeed === 'function') await window.refreshSongShareFeed();
+        else window.dispatchEvent(new CustomEvent('songshare:comment-added', { detail: { songShareId, result } }));
+      } catch (error) { status.textContent = error.message; submit.disabled = false; }
+    });
   };
 
   window.toggleExtraComments = function (songShareId) {
@@ -5629,6 +5761,14 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
         !isFirstLoad
       );
 
+      // If the first batch does not fill the scroll viewport, fetch the next page.
+      requestAnimationFrame(() => {
+        const feed = document.getElementById('feedScrollContainer');
+        if (feed && feed.scrollHeight <= feed.clientHeight + 500 &&
+            !isLoadingFeed && hasMoreSuggestions) {
+          fetchSuggestions(page + 1);
+        }
+      });
 
       /*
        * SONRAKİ SAYFA
@@ -5829,18 +5969,16 @@ data-preview-rating="${Number(item.sharerRating || 0)}"
     loadRecommendations();
     checkLogin();
     fetchSuggestions(feedPage);
+    initFeedInfiniteScroll();
     loadFriendsActivity();
 
     // Coverflow hemen mevcut HTML ile başlasın.
     initCoverflowEngine();
 
-    // Spotify now-playing verisini tek bir endpoint isteğiyle paylaş:
-    // Companion, seçili parça ve lyrics senkronizasyonu aynı snapshot'ı kullanır.
+    // Verify the Spotify connection first. Playback polling starts only when
+    // the backend confirms that the connected account is usable.
     setCompanionDockLoading();
-    loadMyNowPlaying().then(() => {
-      initShareWizardState(window.__songShareLastNowPlaying);
-    });
-    setInterval(loadMyNowPlaying, NOW_PLAYING_POLL_INTERVAL_MS);
+    await loadSpotifyStatus();
 
     // Friend activity refresh
     setInterval(loadFriendsActivity, 15000);
@@ -6117,11 +6255,13 @@ function prepareImage(img) {
 
     try {
       const token = localStorage.getItem('token');
+      const playbackHeaders = {};
+      if (token && token !== 'cookie-session') {
+        playbackHeaders.Authorization = `Bearer ${token}`;
+      }
       const response = await fetch('/api/spotify/now-playing', {
         credentials: 'include',
-        headers: token
-          ? { Authorization: `Bearer ${token}` }
-          : {}
+        headers: playbackHeaders
       });
 
       if (id !== requestId) return;
@@ -6497,7 +6637,54 @@ function prepareImage(img) {
     ]);
   };
 
-  document.addEventListener('click', event => {
+  document.addEventListener('click', async event => {
+    const repostButton = event.target.closest('[data-repost-id]');
+    if (repostButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (repostButton.disabled) return;
+      const shareId = repostButton.dataset.repostId;
+      const countEl = document.getElementById(`repostCount-${shareId}`);
+      const originalText = repostButton.textContent;
+      repostButton.disabled = true;
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/songshare/repost/${encodeURIComponent(shareId)}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.message || 'Repost işlemi tamamlanamadı.');
+        if (countEl) countEl.textContent = String(payload.repostCount ?? 0);
+        repostButton.classList.toggle('is-active', Boolean(payload.reposted));
+        repostButton.setAttribute('aria-pressed', String(Boolean(payload.reposted)));
+        repostButton.childNodes[0].textContent = payload.reposted ? 'Repostu geri al (' : 'Repostla (';
+      } catch (error) {
+        console.warn('Repost işlemi başarısız:', error.message);
+        if (typeof window.showSongShareToast === 'function') window.showSongShareToast(error.message);
+      } finally {
+        repostButton.disabled = false;
+      }
+      return;
+    }
+
+    const immersiveButton = event.target.closest('[data-feed-immersive]');
+    if (immersiveButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      const card = immersiveButton.closest('.feed-card[data-preview-title]');
+      if (!card || typeof window.openSongPreview !== 'function') return;
+      window.openSongPreview({
+        title: card.dataset.previewTitle || '', artist: card.dataset.previewArtist || '',
+        cover: card.dataset.previewCover || '', url: card.dataset.previewUrl || '',
+        uri: card.dataset.previewUri || '', comment: card.dataset.previewComment || '',
+        rating: Math.max(0, Math.min(100, Number(card.dataset.previewRating) || 0)),
+        genres: card.dataset.previewGenres || '', bio: card.dataset.previewBio || ''
+      });
+      return;
+    }
+
     const closeTarget = event.target.closest('[data-preview-close]');
 
     if (closeTarget) {
@@ -6530,6 +6717,22 @@ function prepareImage(img) {
         bio: playCard.dataset.previewBio || ''
       });
       return;
+    }
+
+    const lyricsSurface = event.target.closest('.songshare-lyrics-card');
+    if (lyricsSurface && !event.target.closest('a, button, [data-no-preview]')) {
+      const lyricsCard = lyricsSurface.closest('.feed-card[data-preview-title]');
+      if (lyricsCard) {
+        event.preventDefault();
+        window.openSongPreview({
+          title: lyricsCard.dataset.previewTitle || '', artist: lyricsCard.dataset.previewArtist || '',
+          cover: lyricsCard.dataset.previewCover || '', url: lyricsCard.dataset.previewUrl || '',
+          uri: lyricsCard.dataset.previewUri || '', comment: lyricsCard.dataset.previewComment || '',
+          rating: Number(lyricsCard.dataset.previewRating) || 0,
+          genres: lyricsCard.dataset.previewGenres || '', bio: lyricsCard.dataset.previewBio || ''
+        });
+        return;
+      }
     }
 
     const card = event.target.closest('.feed-card[data-preview-title]');
@@ -6701,4 +6904,318 @@ function prepareImage(img) {
     if (localStorage.getItem(STORAGE_KEY) === '1') return;
     window.setTimeout(startTour, 700);
   }, { once: true });
+})();
+
+
+/* =========================================================
+   SONGSHARE COMPANION — SPOTIFY-SYNCED LYRICS + IMMERSIVE LISTENING
+   Companion lyrics use the same LRCLIB/songshare lyrics endpoint and the
+   same Spotify playback clock as the Share page. No second YouTube clock.
+   ========================================================= */
+(() => {
+  const initCompanionControls = () => {
+    const dock = document.getElementById('mainPlayerDock');
+    if (!dock || dock.dataset.companionReady === 'true') return;
+    dock.dataset.companionReady = 'true';
+
+    const tabs = [...dock.querySelectorAll('.tab-btn[data-tab]')];
+    const panes = [...dock.querySelectorAll('.companion-pane')];
+    const expandBtn = document.getElementById('btnToggleExpand');
+    const fullscreenBtn = document.getElementById('btnToggleFullscreen');
+    const modal = document.getElementById('fullscreenPlayerModal');
+    const closeBtn = document.getElementById('btnCloseFullscreen');
+    const fsTitle = document.getElementById('fsTrackTitle');
+    const fsArtist = document.getElementById('fsTrackArtist');
+    const fsCover = document.getElementById('fsCoverImg');
+    const fsBlur = document.getElementById('fullscreenDynamicBlur');
+    const fsLyrics = document.getElementById('fsLyricsContainer');
+    const fsScrubber = document.getElementById('fsInteractiveScrubber');
+    const fsFill = document.getElementById('fsScrubberFill');
+    const fsCurrent = document.getElementById('fsCurrentTime');
+    const fsRemaining = document.getElementById('fsTotalTime');
+    const fsPlay = document.getElementById('btnFsPlayPause');
+    const fsPrev = document.getElementById('btnFsPrev');
+    const fsNext = document.getElementById('btnFsNext');
+    const fsBrand = modal?.querySelector('.fs-brand');
+
+    const safeText = (el, value, fallback = '') => { if (el) el.textContent = value || fallback; };
+    const currentTrack = () => window.__songShareLastNowPlaying || {};
+    const coverUrl = () => document.getElementById('playerCoverImg')?.getAttribute('src') || currentTrack().albumArt || '';
+    const playback = { position: 0, duration: 0, isPlaying: false, capturedAt: 0, trackKey: '', spotifyUrl: '' };
+    let companionLyrics = [];
+    let lyricsRequestId = 0;
+    let lastActiveIndex = -1;
+    let lastRenderedTrackKey = '';
+    let lastScrollIndex = -1;
+
+    function setTab(name) {
+      if (!tabs.some(tab => tab.dataset.tab === name)) return;
+      tabs.forEach(tab => {
+        const active = tab.dataset.tab === name;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-pressed', String(active));
+      });
+      panes.forEach(pane => pane.classList.toggle('active', pane.id === `pane-${name}`));
+      dock.dataset.activeTab = name;
+      if (name === 'lyrics') {
+        renderLyrics();
+        lastScrollIndex = -1;
+        updateActiveLyrics(true);
+      }
+    }
+    tabs.forEach(tab => tab.addEventListener('click', () => setTab(tab.dataset.tab)));
+    tabs.forEach(tab => tab.setAttribute('aria-pressed', String(tab.classList.contains('active'))));
+
+    expandBtn?.addEventListener('click', () => {
+      const expanded = dock.classList.toggle('companion-expanded');
+      expandBtn.setAttribute('aria-pressed', String(expanded));
+      expandBtn.title = expanded ? 'Küçült' : 'Büyüt';
+      expandBtn.setAttribute('aria-label', expanded ? 'Companion penceresini küçült' : 'Companion penceresini büyüt');
+    });
+
+    function trackKey(data) {
+      const uri = String(data?.songUrl || data?.spotifyUri || data?.trackUri || data?.uri || data?.track_id || '');
+      const id = uri.match(/(?:track:|track\/)([A-Za-z0-9]{10,})/i)?.[1];
+      return id || `${data?.title || ''}::${data?.artist || ''}`.toLocaleLowerCase();
+    }
+    function getPosition() {
+      if (!playback.capturedAt || !playback.isPlaying) return playback.position;
+      return Math.min(playback.duration || Infinity, playback.position + (Date.now() - playback.capturedAt) / 1000);
+    }
+    function formatTime(seconds) {
+      const value = Math.max(0, Math.floor(Number(seconds) || 0));
+      return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
+    }
+    function setLyricsStatus(message, state = 'waiting') {
+      const stream = document.getElementById('lyricsStreamBox');
+      if (!companionLyrics.length && stream) {
+        stream.innerHTML = `<div class="companion-lyrics-empty"><span class="lyrics-empty-orb">♪</span><strong>${escapeHtml(message)}</strong><small>${state === 'loading' ? 'Şarkının zaman damgalı sözleri hazırlanıyor.' : 'Bu parça için senkronize söz bulunamadı.'}</small></div>`;
+      }
+      if (fsLyrics && !companionLyrics.length) {
+        fsLyrics.innerHTML = `<div class="fs-lyrics-empty"><strong>${escapeHtml(message)}</strong><span>${state === 'loading' ? 'Sözler yükleniyor…' : 'Başka bir parça başladığında tekrar denenecek.'}</span></div>`;
+      }
+    }
+    function parseLrc(raw) {
+      return String(raw || '').split(/\r?\n/).flatMap(rawLine => {
+        const stamps = [...rawLine.matchAll(/\[(\d{2}):(\d{2})(?:\.(\d{1,3}))?\]/g)];
+        const text = rawLine.replace(/\[\d{2}:\d{2}(?:\.\d{1,3})?\]/g, '').replace(/\[[^\]]*]/g, '').trim();
+        if (!text) return [];
+        if (!stamps.length) return [];
+        return stamps.map(match => ({ time: Number(match[1]) * 60 + Number(match[2]) + (match[3] ? Number(`0.${match[3]}`) : 0), text }));
+      }).sort((a, b) => a.time - b.time);
+    }
+    async function loadCompanionLyrics(data) {
+      const requestId = ++lyricsRequestId;
+      const key = trackKey(data);
+      companionLyrics = [];
+      lastActiveIndex = -1;
+      lastRenderedTrackKey = key;
+      setLyricsStatus('Senkronize sözler aranıyor…', 'loading');
+      if (!data?.title || !data?.artist) return;
+
+      const cleanTrack = String(data.title).replace(/\s*[([\-].*?[)\]]/g, '').trim() || data.title;
+      const cleanArtist = String(data.artist).split(',')[0].trim() || data.artist;
+      const params = new URLSearchParams({ track_name: cleanTrack, artist_name: cleanArtist });
+      if (Number(data.duration_ms) > 0) params.set('duration', String(Math.round(Number(data.duration_ms) / 1000)));
+      let songData = null;
+      const urls = [`/api/songshare/lyrics?${params}`];
+      if (params.has('duration')) { const noDuration = new URLSearchParams(params); noDuration.delete('duration'); urls.push(`/api/songshare/lyrics?${noDuration}`); }
+      for (const url of urls) {
+        try {
+          const response = await fetch(url, { headers: { Accept: 'application/json' } });
+          if (requestId !== lyricsRequestId) return;
+          if (!response.ok) continue;
+          const payload = await response.json();
+          const candidate = payload?.data || payload?.lyrics || payload;
+          if (candidate?.syncedLyrics || candidate?.plainLyrics) { songData = candidate; break; }
+        } catch (_) { /* try LRCLIB fallback */ }
+      }
+      if (!songData?.syncedLyrics && !songData?.plainLyrics) {
+        try {
+          const response = await fetch(`https://lrclib.net/api/get?${params}`, { headers: { Accept: 'application/json' } });
+          if (response.ok) songData = await response.json();
+          if (!songData?.syncedLyrics && !songData?.plainLyrics) {
+            const searchParams = new URLSearchParams({ track_name: cleanTrack, artist_name: cleanArtist });
+            const searchResponse = await fetch(`https://lrclib.net/api/search?${searchParams}`, { headers: { Accept: 'application/json' } });
+            if (searchResponse.ok) {
+              const candidates = await searchResponse.json();
+              songData = (Array.isArray(candidates) ? candidates : [candidates]).find(item => item?.syncedLyrics || item?.plainLyrics) || songData;
+            }
+          }
+        } catch (_) { /* handled below */ }
+      }
+      if (requestId !== lyricsRequestId) return;
+      companionLyrics = parseLrc(songData?.syncedLyrics || '');
+      if (!companionLyrics.length) {
+        setLyricsStatus(songData?.plainLyrics ? 'Bu parça için yalnızca düz sözler var' : 'Senkronize söz bulunamadı', 'empty');
+        return;
+      }
+      renderLyrics();
+      updatePlaybackUI();
+    }
+
+    function lyricButton(line, index, activeIndex, target) {
+      const state = index < activeIndex ? 'passed' : index === activeIndex ? 'active-line' : 'upcoming';
+      const dataAttribute = target === 'fs' ? `data-fs-lyric="${index}"` : `data-companion-lyric="${index}"`;
+      return `<div class="${target === 'fs' ? 'fs-lyric-line' : 'lyric-line'} ${state}" ${dataAttribute} data-lyric-index="${index}" aria-current="${index === activeIndex ? 'true' : 'false'}">${escapeHtml(line.text)}</div>`;
+    }
+    function renderLyrics() {
+      const stream = document.getElementById('lyricsStreamBox');
+      if (!companionLyrics.length) return;
+      const activeIndex = lastActiveIndex;
+      if (stream && lastRenderedTrackKey) {
+        stream.innerHTML = companionLyrics.map((line, index) => lyricButton(line, index, activeIndex, 'companion')).join('');
+      }
+      if (fsLyrics) fsLyrics.innerHTML = companionLyrics.map((line, index) => lyricButton(line, index, activeIndex, 'fs')).join('');
+      lastScrollIndex = -1;
+      updateActiveLyrics(true);
+    }
+    function updateActiveLyrics(force = false) {
+      if (!companionLyrics.length) return;
+      const position = getPosition();
+      let index = -1;
+      for (let i = 0; i < companionLyrics.length; i++) {
+        if (Number(companionLyrics[i].time) <= position + 0.12) index = i;
+        else break;
+      }
+      if (index !== lastActiveIndex || force) {
+        lastActiveIndex = index;
+        const update = (root, selector) => {
+          root?.querySelectorAll(selector).forEach((el, i) => {
+            el.classList.toggle('passed', i < index);
+            el.classList.toggle('active-line', i === index);
+            el.classList.toggle('upcoming', i > index);
+            el.setAttribute('aria-current', String(i === index));
+          });
+        };
+        update(document.getElementById('lyricsStreamBox'), '[data-companion-lyric]');
+        update(fsLyrics, '[data-fs-lyric]');
+      }
+      if (index >= 0 && index !== lastScrollIndex) {
+        const shouldFollowDock = dock.dataset.activeTab === 'lyrics';
+        const shouldFollowFullscreen = modal?.classList.contains('active');
+        const centerLine = (container, line) => {
+          if (!container || !line) return;
+          const lineTop = line.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
+          const targetTop = lineTop - (container.clientHeight / 2) + (line.offsetHeight / 2);
+          container.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+        };
+        if (shouldFollowDock) {
+          centerLine(document.getElementById('lyricsStreamBox'), document.querySelector(`#lyricsStreamBox [data-companion-lyric="${index}"]`));
+        }
+        if (shouldFollowFullscreen) {
+          centerLine(document.querySelector('.fs-lyrics-column'), fsLyrics?.querySelector(`[data-fs-lyric="${index}"]`));
+        }
+        if (shouldFollowDock || shouldFollowFullscreen) lastScrollIndex = index;
+      }
+    }
+
+    function updateFullscreenTrack() {
+      const track = currentTrack();
+      const title = document.getElementById('playerTrackTitle')?.textContent || track.title;
+      const artist = document.getElementById('playerTrackArtist')?.textContent || track.artist;
+      const cover = coverUrl();
+      safeText(fsTitle, title, 'Müzik Çalmıyor');
+      safeText(fsArtist, artist, 'Spotify Beklemede');
+      if (fsCover && cover) fsCover.src = cover;
+      if (fsBlur && cover) fsBlur.style.backgroundImage = `url("${cover.replace(/["\\]/g, '')}")`;
+      safeText(document.getElementById('fsTriviaText'), document.getElementById('triviaTextBox')?.textContent?.trim(), 'Bu oturumda henüz parça bilgisi yok.');
+      if (fsBrand) fsBrand.innerHTML = `<span class="live-dot-indicator ${playback.isPlaying ? 'is-playing' : ''}"></span><span>${playback.isPlaying ? 'NOW PLAYING ON SPOTIFY' : 'SONG SHARE IMMERSIVE'}</span>`;
+      if (fsPlay) {
+        fsPlay.innerHTML = '<i class="fa-brands fa-spotify" aria-hidden="true"></i>';
+        fsPlay.title = 'Spotify’da aç';
+        fsPlay.setAttribute('aria-label', 'Şarkıyı Spotify’da aç');
+      }
+      if (fsPrev) fsPrev.hidden = true;
+      if (fsNext) fsNext.hidden = true;
+    }
+    function updatePlaybackUI() {
+      const position = getPosition();
+      const duration = playback.duration || Number(currentTrack().duration_ms) / 1000 || 0;
+      if (duration > 0) {
+        if (fsFill) fsFill.style.width = `${Math.min(100, Math.max(0, position / duration * 100))}%`;
+        safeText(fsCurrent, formatTime(position));
+        safeText(fsRemaining, `-${formatTime(Math.max(0, duration - position))}`);
+      } else {
+        if (fsFill) fsFill.style.width = '0%';
+        safeText(fsCurrent, formatTime(position));
+        safeText(fsRemaining, '--:--');
+      }
+      updateActiveLyrics();
+      updateFullscreenTrack();
+    }
+    window.updateCompanionPlaybackFromSpotify = data => {
+      if (!data?.title) {
+        playback.isPlaying = false;
+        playback.capturedAt = Date.now();
+        updatePlaybackUI();
+        return;
+      }
+      const nextKey = trackKey(data);
+      const changed = nextKey !== playback.trackKey;
+      playback.trackKey = nextKey;
+      playback.position = Math.max(0, Number(data.progress_ms) || 0) / 1000;
+      playback.duration = Math.max(0, Number(data.duration_ms) || 0) / 1000;
+      playback.isPlaying = Boolean(data.isPlaying);
+      playback.capturedAt = Date.now();
+      playback.spotifyUrl = data.songUrl || data.spotifyUrl || data.spotify_uri || '';
+      if (changed) loadCompanionLyrics(data);
+      updatePlaybackUI();
+    };
+
+    function openFullscreen() {
+      if (!modal) return;
+      updateFullscreenTrack();
+      renderLyrics();
+      modal.classList.add('active');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('companion-immersive-open');
+      document.addEventListener('keydown', onEscape);
+      // Browser fullscreen is optional; the immersive modal still works if denied.
+      if (!document.fullscreenElement && modal.requestFullscreen) modal.requestFullscreen().catch(() => {});
+      lastScrollIndex = -1;
+      setTimeout(() => {
+        updatePlaybackUI();
+        updateActiveLyrics(true);
+      }, 100);
+    }
+    function closeFullscreen() {
+      if (!modal) return;
+      modal.classList.remove('active');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('companion-immersive-open');
+      document.removeEventListener('keydown', onEscape);
+      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    }
+    function onEscape(event) { if (event.key === 'Escape') closeFullscreen(); }
+    fullscreenBtn?.addEventListener('click', openFullscreen);
+    closeBtn?.addEventListener('click', closeFullscreen);
+    modal?.addEventListener('click', event => { if (event.target === modal) closeFullscreen(); });
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && modal?.classList.contains('active')) {
+        // Browser ESC may leave native fullscreen; keep the immersive modal open.
+        document.body.classList.add('companion-immersive-open');
+      }
+    });
+    fsPlay?.addEventListener('click', () => {
+      const url = playback.spotifyUrl || currentTrack().songUrl || currentTrack().spotifyUrl;
+      if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    });
+    fsScrubber?.classList.add('is-readonly');
+
+    // Receive the same now-playing snapshot used by the rest of SongShare.
+    const initial = currentTrack();
+    if (initial?.isPlaying) window.updateCompanionPlaybackFromSpotify(initial);
+    window.refreshCompanionFullscreenTrack = updateFullscreenTrack;
+    updateFullscreenTrack();
+    updatePlaybackUI();
+    window.setInterval(updatePlaybackUI, 250);
+    window.addEventListener('songshare:now-playing-updated', event => {
+      const data = event.detail || currentTrack();
+      window.updateCompanionPlaybackFromSpotify(data);
+    });
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initCompanionControls, { once: true });
+  else initCompanionControls();
 })();

@@ -442,7 +442,7 @@ function initCliAuth() {
           const res = await fetch('/api/users/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_name: username, password: password })
+            body: JSON.stringify({ identifier: username, password: password })
           });
           const data = await res.json();
 
@@ -470,6 +470,7 @@ function initCliAuth() {
       }
     }
     else if (action === 'logout') {
+      try { await fetch('/api/users/logout', { method: 'POST', credentials: 'include' }); } catch (_) { }
       localStorage.removeItem('token');
       clearServicesCache();
       appendTerminalLog(`[AUTH] Session terminated. Redirecting...`);

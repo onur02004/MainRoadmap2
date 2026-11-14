@@ -19,9 +19,7 @@
     const icon = game.icon || '🎮';
     const minutes = game.estimated_duration ?? '—';
     const canPlay = game.can_play === true || (game.status === 'active' && game.is_active === true);
-    const route = game.game_key === 'weinguesser'
-      ? '/games/weinguesser/'
-      : `/games/launcher/?game=${encodeURIComponent(game.game_key || '')}`;
+    const route = game.route || (game.game_key === 'weinguesser' ? '/games/weinguesser/' : `/games/launcher/?game=${encodeURIComponent(game.game_key || '')}`);
     const status = canPlay ? 'PLAY NOW' : game.status === 'maintenance' ? 'MAINTENANCE' : 'COMING SOON';
     const category = pretty(game.category || 'Game');
     const description = game.tagline || game.description || 'Ready when you are.';
@@ -184,7 +182,7 @@
     const grid = $('#activeRoomsGrid');
     const count = $('#activeRoomsCount');
     if (!grid) return;
-    const active = rooms.filter(room => room.gameKey === 'hockey' && ['waiting', 'playing'].includes(room.status));
+    const active = rooms.filter(room => ['hockey', 'roadtrip'].includes(room.gameKey) && ['waiting', 'playing'].includes(room.status));
     if (count) count.textContent = `${active.length} ${active.length === 1 ? 'ROOM' : 'ROOMS'}`;
     if (!active.length) {
       grid.innerHTML = '<div class="rooms-empty">No active rooms right now.</div>';
@@ -193,17 +191,24 @@
     grid.innerHTML = active.map(room => {
       const names = (room.players || []).map(player => escapeHTML(player.name)).join(' · ');
       const status = room.status === 'playing' ? 'IN GAME' : 'WAITING';
+      const isRoadtrip = room.gameKey === 'roadtrip';
+      const gameName = isRoadtrip ? 'Co-Driver' : 'Air Hockey';
+      const meta = isRoadtrip ? (room.trackName || 'Track') : `FIRST TO ${room.target}`;
+      const href = isRoadtrip ? `/games/roadtrip/?room=${encodeURIComponent(room.code)}` : `/games/hockey/?room=${encodeURIComponent(room.code)}`;
       return `<article class="active-room-card">
-        <div class="active-room-top"><strong>Air Hockey</strong><span class="room-live ${room.status}">${status}</span></div>
+        <div class="active-room-top"><strong>${gameName}</strong><span class="room-live ${room.status}">${status}</span></div>
         <div class="active-room-players">${escapeHTML(names || 'Room open')}</div>
-        <div class="active-room-bottom"><span>${room.playerCount}/${room.maxPlayers} PLAYERS</span><span>FIRST TO ${room.target}</span></div>
-        <a href="/games/hockey/?room=${encodeURIComponent(room.code)}" class="room-join-link">VIEW ROOM ↗</a>
+        <div class="active-room-bottom"><span>${room.playerCount}/${room.maxPlayers} PLAYERS</span><span>${escapeHTML(meta)}</span></div>
+        <a href="${href}" class="room-join-link">VIEW ROOM ↗</a>
       </article>`;
     }).join('');
   }
 
   // Global presence events update the Games live-activity rail.
-  window.addEventListener('hockey:rooms:list', event => renderActiveRooms(event.detail || []));
+  let hockeyRooms = []; let roadtripRooms = [];
+  const updateRoomCards = () => renderActiveRooms([...hockeyRooms, ...roadtripRooms]);
+  window.addEventListener('hockey:rooms:list', event => { hockeyRooms = event.detail || []; updateRoomCards(); });
+  window.addEventListener('roadtrip:rooms:list', event => { roadtripRooms = event.detail || []; updateRoomCards(); });
   window.addEventListener('presence:list', event => renderFriends(event.detail || []));
   window.addEventListener('presence:user-online', () => renderFriends(window.onlineUsers || []));
   window.addEventListener('presence:user-offline', () => renderFriends(window.onlineUsers || []));

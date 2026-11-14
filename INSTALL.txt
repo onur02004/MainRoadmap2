@@ -1,0 +1,33 @@
+MAINROADMAP2 — GAME STATIC ROUTE FIX
+
+Why this happened
+-----------------
+Your current src/app.js protects /games/games.html, but it does not mount a
+dedicated static handler for /games. The generic express.static handler uses
+index:false, so /games/roadtrip/ cannot resolve to roadtrip/index.html.
+
+Apply from the project root
+---------------------------
+1) Copy src/middleware/gameStatic.js into your project (create the folder if needed).
+2) Apply the small app.js patch:
+
+   git apply patches/game-static-app.patch
+
+   If git apply reports that app.js differs, make the two edits manually:
+   - Add: import { createGameStaticMiddleware } from './middleware/gameStatic.js';
+   - Immediately after the protected /games/games.html route and before the
+     generic express.static(... index:false), add:
+
+     app.use('/games', createGameStaticMiddleware(privatePagePath, {
+       maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0
+     }));
+
+3) Keep app.get('/games/games.html', protect, ...) BEFORE the /games static mount.
+4) Restart the server and run:
+
+   npm test
+   curl -I http://localhost:5000/games/roadtrip/
+
+Expected: gameStatic.test.js passes and the URL returns 200 (or 304 if cached).
+The playable game bundles remain public; the games catalogue HTML stays protected.
+No SQL change is needed.
