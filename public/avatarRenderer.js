@@ -1044,7 +1044,7 @@ export async function renderAllAvatars(
     return;
 
   }
-
+2
 
   elements.forEach(
     element => {

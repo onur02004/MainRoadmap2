@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0f10">
+  <title>WeinGuesser — Şehir Tahmin Oyunu</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://tile.openstreetmap.org">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="/games/weinguesser/styles.css?v=embed-2">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+  <script src="/games/weinguesser/app.js?v=embed-2" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="WeinGuesser ana sayfa" id="brandHome">
+        <span class="brand-mark">W<span>↗</span></span>
+        <span class="brand-copy"><strong>WEINGUESSER</strong><small>YOUR CITIES. YOUR STREET VIEW.</small></span>
+      </a>
+      <div class="topbar-right">
+        <span class="location-pill" id="locationPill"><span class="live-dot"></span><span id="topSelectedCount">63 NOKTA</span></span>
+        <button class="icon-button" id="creditsButton" type="button" title="Bilgi ve kaynaklar"><span aria-hidden="true">ⓘ</span><span class="button-label">Bilgi</span></button>
+        <button class="icon-button" id="settingsButton" type="button" title="Ayarlar"><span aria-hidden="true">⚙</span><span class="button-label">Ayarlar</span></button>
+      </div>
+    </header>
+
+    <main id="homeScreen" class="home-screen">
+      <section class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-line"></span> ŞEHRİNİ SEÇ · SOKAKLARI KEŞFET</div>
+        <h1>Burayı<br><em>bulabilir misin?</em></h1>
+        <p class="hero-description">Bir veya daha fazla şehir seç. Street View’da etrafına bak ve konumu haritada bulmaya çalış.</p>
+        <div class="hero-stats">
+          <div class="hero-stat"><strong id="heroSpotCount">63</strong><span>EKLİ NOKTA</span></div>
+          <div class="stat-divider"></div>
+          <div class="hero-stat"><strong>360°</strong><span>STREET VIEW</span></div>
+          <div class="stat-divider"></div>
+          <div class="hero-stat"><strong>5.000</strong><span>TUR BAŞINA PUAN</span></div>
+        </div>
+        <div class="hero-footnote"><span class="footnote-icon">⌖</span><span>Yalnızca senin eklediğin konumlar kullanılır.</span></div>
+      </section>
+
+      <section class="builder-card" aria-label="Oyun oluşturucu">
+        <div class="builder-header">
+          <div><span class="eyebrow">OYUNU HAZIRLA</span><h2>Şehirlerini seç, oyuna başla.</h2></div>
+          <span class="builder-index">WG—360</span>
+        </div>
+
+        <section class="builder-section locations-section">
+          <div class="section-title-row">
+            <div><span class="section-kicker">ŞEHİR SEÇİMİ</span><h3>Hangi şehirlerde oynamak istersin?</h3></div>
+            <span class="selected-badge"><b id="selectedCount">63</b> / <span id="totalCount">63</span> NOKTA</span>
+          </div>
+          <p class="city-select-intro">Birden fazla şehir seçebilirsin. Seçtiğin şehirlerdeki bütün kayıtlı noktalar oyuna dahil olur.</p>
+          <div class="city-actions">
+            <button class="text-button" id="selectVisibleButton" type="button">Tüm şehirleri seç</button>
+            <button class="text-button muted" id="clearSelectionButton" type="button">Seçimi temizle</button>
+          </div>
+          <div class="city-grid" id="locationList" aria-label="Şehir seçimi"></div>
+          <div class="selection-footer"><span><i class="selection-dot"></i> Seçili şehirlerdeki tüm noktalar</span><span id="selectionFooterText">5 şehir · 63 nokta seçili</span></div>
+        </section>
+
+        <section class="builder-section mode-section">
+          <div class="section-title-row"><div><span class="section-kicker">OYUN MODU</span><h3>Nasıl oynamak istiyorsun?</h3></div></div>
+          <div class="mode-grid" id="modeGrid">
+            <button type="button" class="mode-card active" data-mode="classic" aria-pressed="true">
+              <span class="mode-icon">◎</span><span class="mode-name">Klasik</span><span class="mode-description">Süre baskısı yok. Düşün, incele, tahmin et.</span><span class="mode-check">✓</span>
+            </button>
+            <button type="button" class="mode-card" data-mode="timed" aria-pressed="false">
+              <span class="mode-icon">◷</span><span class="mode-name">Zamana karşı</span><span class="mode-description">Her tur için sayaç. Süre bitince tahmin kilitlenir.</span><span class="mode-check">✓</span>
+            </button>
+            <button type="button" class="mode-card" data-mode="hotcold" aria-pressed="false">
+              <span class="mode-icon">♨</span><span class="mode-name">Sıcak / soğuk</span><span class="mode-description">Haritaya her tıklayışında mesafeye göre ipucu.</span><span class="mode-check">✓</span>
+            </button>
+            <button type="button" class="mode-card" data-mode="oneshot" aria-pressed="false">
+              <span class="mode-icon">⌖</span><span class="mode-name">Tek atış</span><span class="mode-description">Haritadaki ilk tıklaman tahminin olur. Geri dönüş yok.</span><span class="mode-check">✓</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="builder-section options-section">
+          <div class="section-title-row"><div><span class="section-kicker">OYUN AYARLARI</span><h3>Kaç tur ve nasıl oynayalım?</h3></div><span class="custom-label">CUSTOM</span></div>
+          <div class="option-grid">
+            <label class="option-field" id="timeLimitField"><span>Tur süresi</span><select id="timeLimit"><option value="15">15 saniye</option><option value="30">30 saniye</option><option value="45">45 saniye</option><option value="60" selected>60 saniye</option><option value="90">90 saniye</option><option value="120">120 saniye</option></select></label>
+            <label class="option-field"><span>Tur sayısı</span><select id="roundCount"><option value="3">3 tur</option><option value="5" selected>5 tur</option><option value="10">10 tur</option><option value="15">15 tur</option><option value="20">20 tur</option><option value="30">30 tur</option><option value="all">Seçilenlerin hepsi</option></select></label>
+            <label class="option-field"><span>Puan hassasiyeti</span><select id="scoreProfile"><option value="relaxed">Rahat · geniş alan</option><option value="standard" selected>Standart</option><option value="precise">Keskin · zor</option></select></label>
+            <label class="option-field"><span>Sıralama</span><select id="roundOrder"><option value="random" selected>Karıştır · rastgele</option><option value="listed">Liste sırasıyla</option></select></label>
+          </div>
+        </section>
+
+        <div class="builder-summary">
+          <div class="summary-mark">✓</div><div><strong id="sessionSummaryTitle">5 turluk klasik oyun</strong><span id="sessionSummaryText">Seçtiğin şehirlerden 5 konum gelecek.</span></div><span class="summary-chip" id="sessionSummaryChip">HAZIR</span>
+        </div>
+        <button class="start-button" id="startButton" type="button"><span>OYUNA BAŞLA</span><b>↗</b></button>
+        <div class="builder-foot"><span>YALNIZCA SENİN NOKTALARIN</span><span>GOOGLE STREET VIEW</span></div>
+      </section>
+      <div class="home-footer"><span>SENİN KOORDİNATLARIN · 360° STREET VIEW</span><span>YEREL OYUN</span></div>
+    </main>
+
+    <main id="gameScreen" class="game-screen hidden">
+      <div class="game-toolbar">
+        <div class="round-progress-wrap">
+          <button class="back-button" id="quitButton" type="button" title="Oyundan çık">←</button>
+          <div class="round-label"><span class="eyebrow" id="gameModeLabel">KLASİK</span><strong id="roundLabel">TUR 01 / 05</strong></div>
+          <div class="round-progress"><i id="roundProgressBar"></i></div>
+        </div>
+        <div class="score-panel"><span>TOPLAM PUAN</span><strong id="totalScore">0</strong><small>/ <span id="scoreMax">25.000</span></small></div>
+        <div id="timerPanel" class="timer-panel hidden"><span>SÜRE</span><strong id="timerValue">60</strong><small>SN</small></div>
+      </div>
+      <section class="play-layout">
+        <div class="scene-column">
+          <div class="scene-heading"><div><span class="eyebrow">GİZLİ KONUM</span><strong>Şu an neredesin?</strong></div><span class="scene-counter" id="sceneCounter">01 — 05</span></div>
+          <div class="scene-frame" id="sceneFrame">
+            <div id="scenePlaceholder" class="scene-placeholder"><div id="placeholderLoader" class="loader-ring"></div><span id="placeholderTitle">GOOGLE STREET VIEW YÜKLENİYOR</span><small id="placeholderDescription">360° panorama hazırlanıyor…</small><button id="skipRoundButton" class="skip-round-button hidden" type="button">Bu konumu atla ↗</button></div>
+            <div id="googleViewer" class="viewer-layer hidden" role="application" aria-label="Google Street View 360 derece panorama"></div>
+            <div class="scene-top-tag"><span class="tag-dot"></span><span>GOOGLE STREET VIEW · 360°</span></div>
+            <button class="scene-expand" id="openSourceButton" type="button" title="Panoramayı Google Maps'te aç">↗</button>
+          </div>
+          <div class="scene-caption"><span id="sceneCredit">Google Street View</span><span id="sceneHint">360° ETRAFINA BAK</span><button id="skipCurrentButton" class="scene-skip hidden" type="button">Bu turu geç</button></div>
+          <div id="helperPanel" class="helper-panel hidden"><span class="helper-icon">♨</span><div><small>MESAFE GERİ BİLDİRİMİ</small><strong id="helperHint">Haritaya tıkla ve ipucunu al</strong></div><span class="helper-pulse" id="helperPulse">—</span></div>
+        </div>
+        <aside class="guess-column">
+          <div class="map-heading"><div><span class="eyebrow">TAHMİNİN</span><strong>Haritada bir yere tıkla</strong></div><span class="map-instruction">Konum seç</span></div>
+          <div class="map-wrap"><div id="guessMap" aria-label="Tahmin haritası"></div><div class="map-legend"><span><i class="legend-dot guess-dot"></i> Tahminin</span><span id="targetLegend" class="hidden"><i class="legend-dot target-dot"></i> Gerçek koordinat</span></div></div>
+          <div class="guess-controls"><div class="guess-status"><span class="status-pin">⌖</span><span id="guessStatus">Haritadan bir nokta seç</span></div><button class="guess-button" id="guessButton" type="button" disabled><span>TAHMİN ET</span><b>↗</b></button></div>
+          <div id="resultPanel" class="result-panel hidden"><div class="result-top"><span class="eyebrow">TUR SONUCU</span><span id="resultDistance" class="result-distance">—</span></div><div class="result-main"><strong id="resultPoints">+0</strong><span>PUAN</span></div><div class="result-location"><span>GERÇEK KONUM</span><strong id="resultLocation">—</strong><small id="resultArea">—</small></div><button class="start-button next-button" id="nextButton" type="button"><span>SONRAKİ TUR</span><b>→</b></button></div>
+        </aside>
+      </section>
+      <div class="game-footer"><span>© OPENSTREETMAP KATKIDA BULUNANLAR</span><span id="providerFooter">GOOGLE STREET VIEW · 360°</span></div>
+    </main>
+
+    <section id="summaryScreen" class="summary-screen hidden">
+      <div class="summary-card"><div class="eyebrow"><span class="eyebrow-line"></span> OYUN TAMAMLANDI</div><h2>Koordinatları<br><em>ne kadar iyi buldun?</em></h2><div class="final-score"><strong id="finalScore">0</strong><span>/ <b id="finalScoreMax">25.000</b></span></div><p id="finalMessage">Güzel bir turdu.</p><div class="summary-rounds" id="summaryRounds"></div><div class="summary-actions"><button class="start-button" id="playAgainButton" type="button"><span>AYNI AYARLARLA TEKRAR OYNA</span><b>↗</b></button><button class="secondary-button" id="homeButton" type="button">ANA SAYFAYA DÖN</button></div></div>
+    </section>
+  </div>
+
+  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-backdrop" data-close="settings"></div>
+    <div class="modal-card settings-modal-card"><div class="modal-header"><div><span class="eyebrow">AYARLAR</span><h2 id="settingsTitle">Uygulama ayarları</h2></div><button class="close-button" data-close="settings" type="button">×</button></div>
+      <p class="modal-intro">Oyun yalnızca senin koordinatlarını kullanır. Google Maps Embed API anahtarı panoramaları görüntülemek için bu tarayıcıda saklanır.</p>
+      <label class="option-field modal-field"><span>Google Maps API anahtarı</span><input id="googleKey" type="password" placeholder="Maps Embed API anahtarını buraya yapıştır" autocomplete="off"></label>
+      <div class="api-setup"><b>Street View açılmıyor mu?</b><p>Bu sürüm doğrudan <b>Maps Embed API</b> iframe’ini kullanır. Maps JavaScript API etkinleştirmen veya yeni API türü eklemen gerekmez. Önceden çalışan Embed API anahtarını kullanabilirsin.</p><ol><li>Google Cloud’da API anahtarının bağlı olduğu projeyi seç.</li><li><b>Maps Embed API</b> hizmetinin etkin olduğundan emin ol.</li><li>Anahtarın API kısıtlamalarında Maps Embed API’ye izin ver.</li><li>Web sitesi kısıtlamalarına <code>http://localhost:3170/*</code> ve <code>http://127.0.0.1:3170/*</code> adreslerini ekle.</li><li>Projede faturalandırmanın etkin olduğunu kontrol et.</li></ol><a href="https://console.cloud.google.com/apis/library/maps-embed-backend.googleapis.com" target="_blank" rel="noreferrer">Maps Embed API sayfasını aç ↗</a></div>
+      <div class="modal-divider"></div>
+      <div class="settings-grid">
+        <label class="option-field"><span>Street View arama yarıçapı</span><select id="panoramaRadius"><option value="50">50 metre · tam nokta</option><option value="100" selected>100 metre · önerilen</option><option value="200">200 metre</option><option value="300">300 metre</option><option value="500">500 metre</option></select></label>
+        
+        <label class="option-field"><span>Panorama başlangıç yönü</span><select id="initialHeading"><option value="random" selected>Rastgele yön</option><option value="north">Kuzeye bak</option></select></label>
+      </div>
+      <div class="api-note"><span>i</span><p>Google’ın koordinata en yakın dış mekân panoraması açılır. Görüntü içinde 360° bakabilir ve Google’ın kendi kontrollerini kullanabilirsin. Embed API ile sokak adlarını veya ileri-geri kontrollerini ayrı ayrı kapatmak mümkün değildir. Her noktada görüntü bulunmayabilir.</p></div>
+      <div class="modal-actions"><button class="secondary-button" id="clearKeyButton" type="button">ANAHTARI SİL</button><button class="start-button compact-start" id="saveSettings" type="button"><span>AYARLARI KAYDET</span><b>✓</b></button></div><div id="settingsFeedback" class="settings-feedback" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div id="creditsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="creditsTitle">
+    <div class="modal-backdrop" data-close="credits"></div>
+    <div class="modal-card"><div class="modal-header"><div><span class="eyebrow">OYUN HAKKINDA</span><h2 id="creditsTitle">Sadece senin noktaların.</h2></div><button class="close-button" data-close="credits" type="button">×</button></div>
+      <div class="credits-content"><p>Oyun yalnızca senin gönderdiğin koordinatları kullanır. Başka konum eklenmez.</p><p><b>Google Street View</b> yalnızca koordinat çevresindeki 360° panoramayı bulup görüntüler. Tahmin ve puanlama, senin verdiğin hedef koordinata göre yapılır.</p><p><b>Harita:</b> © OpenStreetMap contributors. <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">Telif bilgisi ↗</a></p><p><b>Google:</b> <a href="https://developers.google.com/maps/documentation/embed/embedding-map#streetview_mode" target="_blank" rel="noreferrer">Maps Embed API dokümantasyonu ↗</a></p></div>
+      <div class="modal-actions"><button class="start-button compact-start" data-close="credits" type="button"><span>TAMAM</span><b>✓</b></button></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

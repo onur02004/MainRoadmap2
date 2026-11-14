@@ -182,3 +182,335 @@ export const updateAdminUser = async (req, res, next) => {
     next(error);
   }
 };
+
+// ==========================================
+// ADMIN SERVICE MANAGEMENT
+// ==========================================
+
+const serviceFields = `
+  id,
+  service_key,
+  tag,
+  title,
+  description,
+  icon,
+  route,
+  category,
+  is_active,
+  requires_auth,
+  allowed_roles,
+  allowed_user_ids,
+  display_order,
+  created_at
+`;
+
+const validCategories = new Set(['core', 'privileged']);
+
+function normalizeServiceArray(value, fieldName) {
+  if (Array.isArray(value)) {
+    return value
+      .map(item => String(item).trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(/[,\n]/)
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
+  if (value == null) {
+    return [];
+  }
+
+  throw httpError(400, `${fieldName} geçerli bir liste olmalı.`);
+}
+
+function validateService(body, partial = false) {
+  const data = {};
+
+  const stringFields = [
+    'service_key',
+    'tag',
+    'title',
+    'description',
+    'icon',
+    'route',
+    'category'
+  ];
+
+  for (const key of stringFields) {
+    if (partial && body[key] === undefined) {
+      continue;
+    }
+
+    const value = String(body[key] ?? '').trim();
+
+    if (
+      !value &&
+      ['service_key', 'tag', 'title', 'route', 'category'].includes(key)
+    ) {
+      throw httpError(400, `${key} alanı zorunludur.`);
+    }
+
+    data[key] = value || null;
+  }
+
+  if (
+    data.service_key !== undefined &&
+    !/^[a-zA-Z0-9_-]{2,80}$/.test(data.service_key)
+  ) {
+    throw httpError(
+      400,
+      'Service key 2–80 karakter olmalı; harf, rakam, _ ve - kullanılabilir.'
+    );
+  }
+
+  if (
+    data.route !== undefined &&
+    data.route &&
+    !data.route.startsWith('/')
+  ) {
+    throw httpError(
+      400,
+      'Route / ile başlamalıdır. Örnek: /account'
+    );
+  }
+
+  if (
+    data.category !== undefined &&
+    !validCategories.has(data.category)
+  ) {
+    throw httpError(
+      400,
+      'Kategori core veya privileged olmalı.'
+    );
+  }
+
+  for (const key of ['is_active', 'requires_auth']) {
+    if (partial && body[key] === undefined) {
+      continue;
+    }
+
+    const value = body[key];
+
+    if (
+      typeof value !== 'boolean' &&
+      value !== 'true' &&
+      value !== 'false'
+    ) {
+      throw httpError(400, `${key} boolean olmalı.`);
+    }
+
+    data[key] = value === true || value === 'true';
+  }
+
+  for (const key of ['allowed_roles', 'allowed_user_ids']) {
+    if (partial && body[key] === undefined) {
+      continue;
+    }
+
+    data[key] = normalizeServiceArray(body[key], key);
+  }
+
+  if (!partial || body.display_order !== undefined) {
+    const order = Number(body.display_order ?? 0);
+
+    if (!Number.isInteger(order)) {
+      throw httpError(400, 'Display order tam sayı olmalı.');
+    }
+
+    data.display_order = order;
+  }
+
+  return data;
+}
+
+
+// GET /api/admin/services
+export const listAdminServices = async (req, res, next) => {
+  try {
+    const result = await query(`
+      SELECT ${serviceFields}
+      FROM cluster_services
+      ORDER BY display_order ASC, title ASC
+    `);
+
+    res.json({
+      status: 'success',
+      data: {
+        services: result.rows
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// POST /api/admin/services
+export const createAdminService = async (req, res, next) => {
+  try {
+    const service = validateService(req.body);
+
+    const result = await query(`
+      INSERT INTO cluster_services (
+        service_key,
+        tag,
+        title,
+        description,
+        icon,
+        route,
+        category,
+        is_active,
+        requires_auth,
+        allowed_roles,
+        allowed_user_ids,
+        display_order
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6,
+        $7, $8, $9, $10::text[], $11::text[], $12
+      )
+      RETURNING ${serviceFields}
+    `, [
+      service.service_key,
+      service.tag,
+      service.title,
+      service.description,
+      service.icon,
+      service.route,
+      service.category,
+      service.is_active,
+      service.requires_auth,
+      service.allowed_roles,
+      service.allowed_user_ids,
+      service.display_order
+    ]);
+
+    res.status(201).json({
+      status: 'success',
+      data: {
+        service: result.rows[0]
+      }
+    });
+  } catch (error) {
+    if (error.code === '23505') {
+      error.statusCode = 409;
+      error.message = 'Bu service_key zaten kullanılıyor.';
+    }
+
+    next(error);
+  }
+};
+
+
+// PATCH /api/admin/services/:id
+export const updateAdminService = async (req, res, next) => {
+  try {
+    const service = validateService(req.body, true);
+
+    // İstemciden gelen kolon isimlerini doğrudan SQL'e eklemiyoruz.
+    const allowedColumns = {
+      service_key: 'service_key',
+      tag: 'tag',
+      title: 'title',
+      description: 'description',
+      icon: 'icon',
+      route: 'route',
+      category: 'category',
+      is_active: 'is_active',
+      requires_auth: 'requires_auth',
+      allowed_roles: 'allowed_roles',
+      allowed_user_ids: 'allowed_user_ids',
+      display_order: 'display_order'
+    };
+
+    const assignments = [];
+    const values = [];
+
+    for (const [key, value] of Object.entries(service)) {
+      const column = allowedColumns[key];
+
+      if (!column) {
+        continue;
+      }
+
+      values.push(value);
+
+      const arrayCast =
+        key === 'allowed_roles' ||
+        key === 'allowed_user_ids'
+          ? '::text[]'
+          : '';
+
+      assignments.push(
+        `${column} = $${values.length}${arrayCast}`
+      );
+    }
+
+    if (assignments.length === 0) {
+      throw httpError(400, 'Güncellenecek alan bulunamadı.');
+    }
+
+    values.push(req.params.id);
+
+    const result = await query(`
+      UPDATE cluster_services
+      SET ${assignments.join(', ')}
+      WHERE id = $${values.length}
+      RETURNING ${serviceFields}
+    `, values);
+
+    if (!result.rowCount) {
+      throw httpError(404, 'Servis bulunamadı.');
+    }
+
+    res.json({
+      status: 'success',
+      data: {
+        service: result.rows[0]
+      }
+    });
+  } catch (error) {
+    if (error.code === '23505') {
+      error.statusCode = 409;
+      error.message = 'Bu service_key zaten kullanılıyor.';
+    }
+
+    next(error);
+  }
+};
+
+
+// PATCH /api/admin/services/:id/active
+export const setAdminServiceActive = async (req, res, next) => {
+  try {
+    const { is_active } = req.body;
+
+    if (typeof is_active !== 'boolean') {
+      throw httpError(400, 'is_active true veya false olmalı.');
+    }
+
+    const result = await query(`
+      UPDATE cluster_services
+      SET is_active = $1
+      WHERE id = $2
+      RETURNING ${serviceFields}
+    `, [is_active, req.params.id]);
+
+    if (!result.rowCount) {
+      throw httpError(404, 'Servis bulunamadı.');
+    }
+
+    res.json({
+      status: 'success',
+      data: {
+        service: result.rows[0]
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};

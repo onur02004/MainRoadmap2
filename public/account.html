@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="account.css" />
   <link rel="stylesheet" href="avatar-canvas.css" />
+  <link rel="stylesheet" href="/js/socket/presence-ui.css">
 </head>
 
 <body>
@@ -33,9 +34,20 @@
       <span class="kbd-badge">⌘K</span>
     </button>
 
-    <!-- Optional walkthrough -->
+    <button id="helpTourOpenBtn" class="gui-action-btn tour-open-btn" type="button">? QUICK GUIDE</button>
 
   </header>
+
+  <!-- ACCOUNT QUICK GUIDE -->
+  <div class="tour-backdrop" id="helpTourBackdrop" aria-hidden="true">
+    <section class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tourTitle">
+      <div class="tour-card-top"><span class="tour-kicker">ACCOUNT GUIDE</span><button type="button" class="tour-close" id="tourCloseBtn" aria-label="Close guide">×</button></div>
+      <div class="tour-step-label" id="tourStepLabel">STEP 1 OF 5</div>
+      <h2 id="tourTitle">Your account</h2><p id="tourBody">A quick look around your account page.</p>
+      <div class="tour-progress-track"><span id="tourProgressFill"></span></div>
+      <div class="tour-actions"><button type="button" class="tour-skip" id="tourSkipBtn">Skip guide</button><div class="tour-nav"><button type="button" class="tour-prev" id="tourPrevBtn">Back</button><button type="button" class="tour-next" id="tourNextBtn">Next</button></div></div>
+    </section>
+  </div>
 
   <!-- THEME SELECTOR MODAL / COMMAND PALETTE -->
   <div class="theme-modal-backdrop" id="themeModalBackdrop" style="display: none;">
@@ -206,24 +218,14 @@
 
       <!-- 2. Şifre ve Güvenlik Kartı -->
       <div class="service-block account-panel-block">
-        <div class="block-header">
-          <span class="tag">CREDENTIALS_AUTH</span>
-          <span class="dot online"></span>
-        </div>
-        <h3>Password</h3>
-        <p>Update your password</p>
+        <div class="block-header"><span class="tag">CREDENTIALS_AUTH</span><span class="feature-status">COMING SOON</span></div>
+        <h3>Password</h3><p>Password changes are temporarily unavailable.</p>
 
-        <form id="securityForm" class="settings-form-layout" onsubmit="return false;">
-          <div class="field-row">
-            <label>CURRENT PASSWORD</label>
-            <input type="password" id="inpCurrentPassword" placeholder="••••••••" />
-          </div>
-          <div class="field-row">
-            <label>NEW SECRET KEY / PASSWORD</label>
-            <input type="password" id="inpNewPassword" placeholder="••••••••" />
-          </div>
-          <button type="submit" class="gui-action-btn" id="btnSavePassword">Update Credentials</button>
-        </form>
+        <div class="settings-form-layout feature-disabled" aria-disabled="true">
+          <div class="field-row"><label>CURRENT PASSWORD</label><input type="password" placeholder="Unavailable right now" disabled /></div>
+          <div class="field-row"><label>NEW PASSWORD</label><input type="password" placeholder="Unavailable right now" disabled /></div>
+          <button type="button" class="gui-action-btn" disabled>Not available yet</button>
+        </div>
       </div>
 
       <!-- 3. Avatar Vault Hızlı Başlatıcı Kartı -->
@@ -295,9 +297,9 @@
         <div class="mode-icon-box">▦</div>
         <div class="mode-card-text">
           <strong>PIXEL STUDIO</strong>
-          <span>Create pixel artwork</span>
+          <span>Limited preview — some tools may not work</span>
         </div>
-        <span class="mode-launch-badge">CREATE →</span>
+        <span class="mode-launch-badge">BETA</span>
       </div>
     </aside>
 
@@ -339,6 +341,7 @@
       </div>
 
 
+      <div class="pixel-studio-notice" role="status"><strong>Pixel Studio is still a work in progress.</strong> Some editing, saving and avatar-application features may not work reliably yet.</div>
       <div class="pixel-studio-layout">
 
 
@@ -819,9 +822,8 @@
           <span id="inspectorAsset" class="mono-txt">none</span>
         </div>
       </div>
-      <button id="btnApplyCanvasAvatar" class="gui-action-btn primary" style="width: 100%; margin-top: 8px;" disabled>
-        Apply Identity
-      </button>
+      <button id="btnApplyCanvasAvatar" class="gui-action-btn primary avatar-apply-btn" style="width: 100%; margin-top: 8px;" disabled><span class="apply-btn-icon" aria-hidden="true">↗</span><span class="apply-btn-label">Choose an avatar</span></button>
+      <p class="apply-avatar-hint" id="applyAvatarHint">Select an avatar to enable this button.</p>
     </aside>
 
   </div>
@@ -830,6 +832,11 @@
 
   <script type="module" src="avatarRenderer.js">
   </script>
+  <!-- Socket.IO client -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/socket/socket-client.js"></script>
+<script src="/js/socket/presence-client.js"></script>
+<script src="/js/socket/presence-ui.js"></script>
 </body>
 
 </html>
