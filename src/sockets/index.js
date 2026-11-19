@@ -9,6 +9,7 @@ import {
 import { registerGameHandlers } from './games/gameHandlers.js';
 import { registerHockeyHandlers } from './games/hockeyHandlers.js';
 import { registerRoadtripHandlers } from './games/roadtripHandlers.js';
+import { registerOkeyHandlers } from './games/okeyHandlers.js';
 import { registerDeviceHandlers } from './devices/deviceHandlers.js';
 
 let ioInstance = null;
@@ -30,6 +31,7 @@ export const initializeSocket = (httpServer) => {
 
 
     registerHockeyHandlers(io, socket);
+    registerOkeyHandlers(io, socket);
     registerRoadtripHandlers(io, socket);
     registerPresenceHandlers(io, socket);
     registerGameHandlers(io, socket);
