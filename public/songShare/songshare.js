@@ -6940,7 +6940,15 @@ function prepareImage(img) {
 
     const safeText = (el, value, fallback = '') => { if (el) el.textContent = value || fallback; };
     const currentTrack = () => window.__songShareLastNowPlaying || {};
-    const coverUrl = () => document.getElementById('playerCoverImg')?.getAttribute('src') || currentTrack().albumArt || '';
+    // Prefer the latest Spotify snapshot over the dock image, which can briefly
+    // still contain the previous track's cover while the UI is transitioning.
+    const coverUrl = () => {
+      const track = currentTrack();
+      const dockCover = document.getElementById('playerCoverImg');
+      return track.albumArt || track.album_art || track.imageUrl || track.image_url ||
+        track.coverUrl || track.cover_url || dockCover?.currentSrc ||
+        dockCover?.getAttribute('src') || '';
+    };
     const playback = { position: 0, duration: 0, isPlaying: false, capturedAt: 0, trackKey: '', spotifyUrl: '' };
     let companionLyrics = [];
     let lyricsRequestId = 0;
@@ -6979,8 +6987,30 @@ function prepareImage(img) {
       return id || `${data?.title || ''}::${data?.artist || ''}`.toLocaleLowerCase();
     }
     function getPosition() {
+      // SongShare's main lyrics view uses this exact Spotify clock. Reuse it
+      // when the selected track and the live Spotify track are the same.
+      const selected = window.currentSelectedTrack;
+      const live = currentTrack();
+      const selectedId = extractSpotifyTrackId(
+        selected?.uri || selected?.spotifyUri || selected?.songUrl
+      );
+      const liveId = extractSpotifyTrackId(
+        playback.spotifyUrl || live.songUrl || live.spotifyUri || live.trackUri ||
+        live.uri || live.track_id || live.trackId
+      );
+
+      if (
+        selected && selectedId && liveId && selectedId === liveId &&
+        selected.syncWithSpotify && typeof getEstimatedSpotifyPosition === 'function'
+      ) {
+        return getEstimatedSpotifyPosition();
+      }
+
+      // Fallback for playback sessions where the Share view has not selected
+      // the live track: interpolate from the same now-playing snapshot.
       if (!playback.capturedAt || !playback.isPlaying) return playback.position;
-      return Math.min(playback.duration || Infinity, playback.position + (Date.now() - playback.capturedAt) / 1000);
+      const elapsed = Math.max(0, (performance.now() - playback.capturedAt) / 1000);
+      return Math.min(playback.duration || Infinity, playback.position + elapsed);
     }
     function formatTime(seconds) {
       const value = Math.max(0, Math.floor(Number(seconds) || 0));
@@ -6995,21 +7025,127 @@ function prepareImage(img) {
         fsLyrics.innerHTML = `<div class="fs-lyrics-empty"><strong>${escapeHtml(message)}</strong><span>${state === 'loading' ? 'Sözler yükleniyor…' : 'Başka bir parça başladığında tekrar denenecek.'}</span></div>`;
       }
     }
-    function parseLrc(raw) {
-      return String(raw || '').split(/\r?\n/).flatMap(rawLine => {
-        const stamps = [...rawLine.matchAll(/\[(\d{2}):(\d{2})(?:\.(\d{1,3}))?\]/g)];
-        const text = rawLine.replace(/\[\d{2}:\d{2}(?:\.\d{1,3})?\]/g, '').replace(/\[[^\]]*]/g, '').trim();
-        if (!text) return [];
-        if (!stamps.length) return [];
-        return stamps.map(match => ({ time: Number(match[1]) * 60 + Number(match[2]) + (match[3] ? Number(`0.${match[3]}`) : 0), text }));
-      }).sort((a, b) => a.time - b.time);
+    function parseLrc(raw, durationSeconds = 0) {
+      const source = String(raw || '').replace(/^\uFEFF/, '');
+      if (!source.trim()) return [];
+      const offsetMatch = source.match(/^\s*\[offset:([+-]?\d+)\]\s*$/im);
+      const offsetSeconds = offsetMatch ? Number(offsetMatch[1]) / 1000 : 0;
+      const timestampPattern = /(?:\[|<)(\d{1,2}):(\d{2})(?::(\d{2}))?(?:[.,](\d{1,3}))?(?:\]|>)/g;
+      const entries = [];
+      let order = 0;
+
+      // Keep source order while filling omitted timestamps. Sort by clock only afterwards.
+      for (const rawLine of source.split(/\r?\n/)) {
+        const stamps = [...rawLine.matchAll(timestampPattern)];
+        const text = rawLine
+          .replace(timestampPattern, '')
+          .replace(/\[[a-z]{2,12}:[^\]]*\]/gi, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (!text || /^\[[a-z]{2,12}:/i.test(rawLine.trim())) continue;
+
+        if (!stamps.length) {
+          if (!/^\[[^\]]+\]$/.test(rawLine.trim())) entries.push({ time: null, text, estimated: true, order: order++ });
+          continue;
+        }
+
+        const isEnhanced = stamps.some(match => match[0].startsWith('<'));
+        const selectedStamps = isEnhanced ? [stamps[0]] : stamps;
+        for (const match of selectedStamps) {
+          const first = Number(match[1]);
+          const second = Number(match[2]);
+          const third = match[3] === undefined ? null : Number(match[3]);
+          const fraction = match[4] ? Number(`0.${match[4]}`) : 0;
+          const seconds = third === null
+            ? first * 60 + second + fraction
+            : first * 3600 + second * 60 + third + fraction;
+          entries.push({ time: Math.max(0, seconds + offsetSeconds), text, estimated: false, order: order++ });
+        }
+      }
+
+      const timed = entries.map((entry, index) => entry.time === null ? -1 : index).filter(index => index >= 0);
+      if (!timed.length) return [];
+      const gaps = [];
+      for (let i = 1; i < timed.length; i++) {
+        const gap = entries[timed[i]].time - entries[timed[i - 1]].time;
+        if (gap > 0.35 && gap < 12) gaps.push(gap);
+      }
+      gaps.sort((a, b) => a - b);
+      const typicalGap = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 3.4;
+
+      let cursor = 0;
+      while (cursor < entries.length) {
+        if (entries[cursor].time !== null) { cursor++; continue; }
+        const begin = cursor;
+        while (cursor < entries.length && entries[cursor].time === null) cursor++;
+        const count = cursor - begin;
+        const previous = begin > 0 ? entries[begin - 1].time : null;
+        const next = cursor < entries.length ? entries[cursor].time : null;
+        if (previous !== null && next !== null && next > previous) {
+          const step = (next - previous) / (count + 1);
+          for (let i = 0; i < count; i++) entries[begin + i].time = previous + step * (i + 1);
+        } else if (next !== null) {
+          const firstTime = Math.max(0, next - typicalGap * count);
+          const step = (next - firstTime) / count;
+          for (let i = 0; i < count; i++) entries[begin + i].time = firstTime + step * i;
+        } else {
+          let time = previous === null ? 0 : previous;
+          for (let i = 0; i < count; i++) {
+            time += typicalGap;
+            entries[begin + i].time = durationSeconds > 0 ? Math.min(time, durationSeconds) : time;
+          }
+        }
+      }
+
+      entries.sort((a, b) => a.time - b.time || a.order - b.order);
+      const cleaned = [];
+      for (const entry of entries) {
+        entry.time = Math.max(0, Number(entry.time) || 0);
+        delete entry.order;
+        const previous = cleaned[cleaned.length - 1];
+        if (previous && Math.abs(previous.time - entry.time) < 0.015 && previous.text === entry.text) continue;
+        cleaned.push(entry);
+      }
+      return cleaned;
+    }
+
+    function parsePlainLyrics(raw, durationSeconds = 0) {
+      const lines = String(raw || '').split(/\r?\n/).map(line => line.trim())
+        .filter(line => line && !/^\[[a-z]{2,12}:[^\]]*\]$/i.test(line));
+      if (!lines.length) return [];
+      const duration = durationSeconds > 10 ? durationSeconds : Math.max(120, lines.length * 3.6);
+      const start = Math.min(2, duration * 0.025);
+      const end = Math.max(start, duration - Math.min(5, duration * 0.05));
+      const step = lines.length > 1 ? (end - start) / (lines.length - 1) : 0;
+      return lines.map((text, index) => ({ time: start + step * index, text, estimated: true }));
+    }
+
+    function normalizeLyricsCandidate(payload) {
+      let candidate = payload?.data ?? payload;
+      if (typeof candidate === 'string') {
+        return /(?:\[|<)\d{1,2}:\d{2}/.test(candidate) ? { syncedLyrics: candidate } : { plainLyrics: candidate };
+      }
+      if (!candidate || typeof candidate !== 'object') return null;
+      if (typeof candidate.lyrics === 'string' && !candidate.syncedLyrics && !candidate.plainLyrics) {
+        return /(?:\[|<)\d{1,2}:\d{2}/.test(candidate.lyrics)
+          ? { ...candidate, syncedLyrics: candidate.lyrics }
+          : { ...candidate, plainLyrics: candidate.lyrics };
+      }
+      if (typeof candidate.data === 'string' && !candidate.syncedLyrics && !candidate.plainLyrics) {
+        return /(?:\[|<)\d{1,2}:\d{2}/.test(candidate.data)
+          ? { ...candidate, syncedLyrics: candidate.data }
+          : { ...candidate, plainLyrics: candidate.data };
+      }
+      return candidate;
     }
     async function loadCompanionLyrics(data) {
       const requestId = ++lyricsRequestId;
       const key = trackKey(data);
       companionLyrics = [];
       lastActiveIndex = -1;
+      lastScrollIndex = -1;
       lastRenderedTrackKey = key;
+      if (fsLyrics) fsLyrics.innerHTML = '';
       setLyricsStatus('Senkronize sözler aranıyor…', 'loading');
       if (!data?.title || !data?.artist) return;
 
@@ -7019,36 +7155,89 @@ function prepareImage(img) {
       if (Number(data.duration_ms) > 0) params.set('duration', String(Math.round(Number(data.duration_ms) / 1000)));
       let songData = null;
       const urls = [`/api/songshare/lyrics?${params}`];
-      if (params.has('duration')) { const noDuration = new URLSearchParams(params); noDuration.delete('duration'); urls.push(`/api/songshare/lyrics?${noDuration}`); }
+      if (params.has('duration')) {
+        const noDuration = new URLSearchParams(params);
+        noDuration.delete('duration');
+        urls.push(`/api/songshare/lyrics?${noDuration}`);
+      }
+
       for (const url of urls) {
         try {
           const response = await fetch(url, { headers: { Accept: 'application/json' } });
           if (requestId !== lyricsRequestId) return;
           if (!response.ok) continue;
-          const payload = await response.json();
-          const candidate = payload?.data || payload?.lyrics || payload;
-          if (candidate?.syncedLyrics || candidate?.plainLyrics) { songData = candidate; break; }
-        } catch (_) { /* try LRCLIB fallback */ }
+          const candidate = normalizeLyricsCandidate(await response.json());
+          if (candidate?.syncedLyrics) { songData = candidate; break; }
+          if (!songData && candidate?.plainLyrics) songData = candidate;
+        } catch (_) { /* keep searching with the next lyrics source */ }
       }
-      if (!songData?.syncedLyrics && !songData?.plainLyrics) {
+
+      // Some endpoints return a synced file with only a few timed sections.
+      // In that case, compare against LRCLIB's exact and search results and
+      // retain the version with the fuller timestamp coverage.
+      const durationHint = Number(data.duration_ms) / 1000 || 0;
+      const timedLineCount = raw => [...String(raw || '').matchAll(/(?:\[|<)\d{1,2}:\d{2}/g)].length;
+      const minimumTimedLines = durationHint > 0 ? Math.max(8, Math.floor(durationHint / 12)) : 12;
+      const shouldSeekFullerSync = !songData?.syncedLyrics || timedLineCount(songData.syncedLyrics) < minimumTimedLines;
+
+      if (shouldSeekFullerSync) {
         try {
           const response = await fetch(`https://lrclib.net/api/get?${params}`, { headers: { Accept: 'application/json' } });
-          if (response.ok) songData = await response.json();
-          if (!songData?.syncedLyrics && !songData?.plainLyrics) {
-            const searchParams = new URLSearchParams({ track_name: cleanTrack, artist_name: cleanArtist });
-            const searchResponse = await fetch(`https://lrclib.net/api/search?${searchParams}`, { headers: { Accept: 'application/json' } });
-            if (searchResponse.ok) {
-              const candidates = await searchResponse.json();
-              songData = (Array.isArray(candidates) ? candidates : [candidates]).find(item => item?.syncedLyrics || item?.plainLyrics) || songData;
-            }
+          if (response.ok) {
+            const candidate = normalizeLyricsCandidate(await response.json());
+            if (candidate?.syncedLyrics && timedLineCount(candidate.syncedLyrics) > timedLineCount(songData?.syncedLyrics)) songData = candidate;
+            else if (!songData?.plainLyrics && candidate?.plainLyrics) songData = candidate;
           }
-        } catch (_) { /* handled below */ }
+        } catch (_) { /* the search endpoint below may still return a match */ }
       }
+
+      if (shouldSeekFullerSync && timedLineCount(songData?.syncedLyrics) < minimumTimedLines) {
+        try {
+          const searchParams = new URLSearchParams({ track_name: cleanTrack, artist_name: cleanArtist });
+          const response = await fetch(`https://lrclib.net/api/search?${searchParams}`, { headers: { Accept: 'application/json' } });
+          if (response.ok) {
+            const payload = await response.json();
+            const candidates = (Array.isArray(payload) ? payload : [payload])
+              .map(normalizeLyricsCandidate)
+              .filter(item => item?.syncedLyrics || item?.plainLyrics);
+            const normalize = value => String(value || '').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+            const wantedTitle = normalize(cleanTrack);
+            const wantedArtist = normalize(cleanArtist);
+            const score = item => {
+              let value = item.syncedLyrics ? 100 : 0;
+              if (normalize(item.trackName) === wantedTitle) value += 30;
+              if (normalize(item.artistName) === wantedArtist) value += 20;
+              const duration = Number(item.duration) || 0;
+              const target = Number(data.duration_ms) / 1000 || 0;
+              if (duration && target) value += Math.max(0, 12 - Math.abs(duration - target) / 2);
+              return value;
+            };
+            candidates.sort((a, b) => score(b) - score(a));
+            const synced = candidates
+              .filter(item => item.syncedLyrics)
+              .sort((a, b) => score(b) - score(a) || timedLineCount(b.syncedLyrics) - timedLineCount(a.syncedLyrics))[0];
+            if (synced && timedLineCount(synced.syncedLyrics) > timedLineCount(songData?.syncedLyrics)) songData = synced;
+            else if (!songData?.plainLyrics && candidates[0]) songData = candidates[0];
+          }
+        } catch (_) { /* use the first-party/plain fallback if available */ }
+      }
+
       if (requestId !== lyricsRequestId) return;
-      companionLyrics = parseLrc(songData?.syncedLyrics || '');
+      const durationSeconds = Math.max(0, Number(data.duration_ms) / 1000 || Number(songData?.duration) || 0);
+      companionLyrics = parseLrc(songData?.syncedLyrics || '', durationSeconds);
+      const approximateTiming = !companionLyrics.length && Boolean(songData?.plainLyrics);
+      if (approximateTiming) companionLyrics = parsePlainLyrics(songData.plainLyrics, durationSeconds);
+
       if (!companionLyrics.length) {
-        setLyricsStatus(songData?.plainLyrics ? 'Bu parça için yalnızca düz sözler var' : 'Senkronize söz bulunamadı', 'empty');
+        setLyricsStatus('Bu parça için kullanılabilir söz bulunamadı', 'empty');
         return;
+      }
+      const hasEstimatedRows = approximateTiming || companionLyrics.some(line => line.estimated);
+      if (fsLyrics) fsLyrics.dataset.syncQuality = hasEstimatedRows ? 'estimated' : 'synced';
+      const syncLabel = document.getElementById('dockLyricsSyncStatus');
+      if (syncLabel) {
+        syncLabel.textContent = approximateTiming ? 'Yaklaşık zamanlama' : (hasEstimatedRows ? 'Eksik satırlar tamamlandı' : 'Canlı senkronize');
+        syncLabel.dataset.state = approximateTiming ? 'waiting' : 'live';
       }
       renderLyrics();
       updatePlaybackUI();
@@ -7059,54 +7248,93 @@ function prepareImage(img) {
       const dataAttribute = target === 'fs' ? `data-fs-lyric="${index}"` : `data-companion-lyric="${index}"`;
       return `<div class="${target === 'fs' ? 'fs-lyric-line' : 'lyric-line'} ${state}" ${dataAttribute} data-lyric-index="${index}" aria-current="${index === activeIndex ? 'true' : 'false'}">${escapeHtml(line.text)}</div>`;
     }
+    function renderFullscreenLyrics(activeIndex = lastActiveIndex) {
+      if (!fsLyrics || !companionLyrics.length) return;
+
+      // Before the first timestamp, preview the first two lines without
+      // falsely marking the first line as already sung.
+      const currentIndex = Math.max(0, activeIndex);
+      const current = companionLyrics[currentIndex];
+      const next = companionLyrics[currentIndex + 1];
+      if (!current) return;
+
+      fsLyrics.dataset.activeIndex = String(currentIndex);
+      fsLyrics.setAttribute('aria-live', 'polite');
+      fsLyrics.innerHTML = `
+        <div class="fs-live-lyrics ${activeIndex < 0 ? 'is-waiting' : ''}">
+          <div class="fs-live-current">
+            <span class="fs-live-kicker">${activeIndex < 0 ? 'COMING UP' : 'NOW PLAYING'}</span>
+            <p class="fs-live-current-text">${escapeHtml(current.text)}</p>
+          </div>
+          ${next ? `
+            <div class="fs-live-next">
+              <span class="fs-live-kicker">UP NEXT</span>
+              <p class="fs-live-next-text">${escapeHtml(next.text)}</p>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
     function renderLyrics() {
       const stream = document.getElementById('lyricsStreamBox');
       if (!companionLyrics.length) return;
       const activeIndex = lastActiveIndex;
+
+      // Keep the Companion Dock's complete, scrollable lyrics list untouched.
       if (stream && lastRenderedTrackKey) {
-        stream.innerHTML = companionLyrics.map((line, index) => lyricButton(line, index, activeIndex, 'companion')).join('');
+        stream.innerHTML = companionLyrics
+          .map((line, index) => lyricButton(line, index, activeIndex, 'companion'))
+          .join('');
       }
-      if (fsLyrics) fsLyrics.innerHTML = companionLyrics.map((line, index) => lyricButton(line, index, activeIndex, 'fs')).join('');
+
+      // Immersive view gets a dedicated, minimal two-line renderer.
       lastScrollIndex = -1;
+      renderFullscreenLyrics(activeIndex);
       updateActiveLyrics(true);
     }
+
     function updateActiveLyrics(force = false) {
       if (!companionLyrics.length) return;
+
       const position = getPosition();
       let index = -1;
       for (let i = 0; i < companionLyrics.length; i++) {
         if (Number(companionLyrics[i].time) <= position + 0.12) index = i;
         else break;
       }
+
       if (index !== lastActiveIndex || force) {
         lastActiveIndex = index;
-        const update = (root, selector) => {
-          root?.querySelectorAll(selector).forEach((el, i) => {
-            el.classList.toggle('passed', i < index);
-            el.classList.toggle('active-line', i === index);
-            el.classList.toggle('upcoming', i > index);
-            el.setAttribute('aria-current', String(i === index));
-          });
-        };
-        update(document.getElementById('lyricsStreamBox'), '[data-companion-lyric]');
-        update(fsLyrics, '[data-fs-lyric]');
+
+        // The regular Companion Dock still highlights its full lyrics list.
+        const stream = document.getElementById('lyricsStreamBox');
+        stream?.querySelectorAll('[data-companion-lyric]').forEach((el, i) => {
+          el.classList.toggle('passed', i < index);
+          el.classList.toggle('active-line', i === index);
+          el.classList.toggle('upcoming', i > index);
+          el.setAttribute('aria-current', String(i === index));
+        });
+
+        // Only replace the two lines when the active timestamp changes.
+        renderFullscreenLyrics(index);
       }
-      if (index >= 0 && index !== lastScrollIndex) {
-        const shouldFollowDock = dock.dataset.activeTab === 'lyrics';
-        const shouldFollowFullscreen = modal?.classList.contains('active');
-        const centerLine = (container, line) => {
-          if (!container || !line) return;
-          const lineTop = line.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
-          const targetTop = lineTop - (container.clientHeight / 2) + (line.offsetHeight / 2);
+
+      // Auto-follow is intentionally limited to the Dock. The fullscreen
+      // two-line layout has no long list to scroll.
+      const shouldFollowDock = dock.dataset.activeTab === 'lyrics';
+      if (shouldFollowDock && index >= 0 && index !== lastScrollIndex) {
+        const container = document.getElementById('lyricsStreamBox');
+        const line = container?.querySelector(
+          `[data-companion-lyric="${index}"]`
+        );
+        if (container && line) {
+          const lineTop = line.getBoundingClientRect().top -
+            container.getBoundingClientRect().top + container.scrollTop;
+          const targetTop = lineTop - container.clientHeight / 2 + line.offsetHeight / 2;
           container.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
-        };
-        if (shouldFollowDock) {
-          centerLine(document.getElementById('lyricsStreamBox'), document.querySelector(`#lyricsStreamBox [data-companion-lyric="${index}"]`));
+          lastScrollIndex = index;
         }
-        if (shouldFollowFullscreen) {
-          centerLine(document.querySelector('.fs-lyrics-column'), fsLyrics?.querySelector(`[data-fs-lyric="${index}"]`));
-        }
-        if (shouldFollowDock || shouldFollowFullscreen) lastScrollIndex = index;
       }
     }
 
@@ -7117,8 +7345,15 @@ function prepareImage(img) {
       const cover = coverUrl();
       safeText(fsTitle, title, 'Müzik Çalmıyor');
       safeText(fsArtist, artist, 'Spotify Beklemede');
-      if (fsCover && cover) fsCover.src = cover;
-      if (fsBlur && cover) fsBlur.style.backgroundImage = `url("${cover.replace(/["\\]/g, '')}")`;
+      if (fsCover) {
+        const currentCover = fsCover.getAttribute('src') || '';
+        if (cover && currentCover !== cover) fsCover.src = cover;
+        else if (!cover && currentCover) fsCover.removeAttribute('src');
+      }
+      if (fsBlur) {
+        const nextBackground = cover ? `url("${cover.replace(/["\\]/g, '')}")` : '';
+        if (fsBlur.style.backgroundImage !== nextBackground) fsBlur.style.backgroundImage = nextBackground;
+      }
       safeText(document.getElementById('fsTriviaText'), document.getElementById('triviaTextBox')?.textContent?.trim(), 'Bu oturumda henüz parça bilgisi yok.');
       if (fsBrand) fsBrand.innerHTML = `<span class="live-dot-indicator ${playback.isPlaying ? 'is-playing' : ''}"></span><span>${playback.isPlaying ? 'NOW PLAYING ON SPOTIFY' : 'SONG SHARE IMMERSIVE'}</span>`;
       if (fsPlay) {
@@ -7146,22 +7381,53 @@ function prepareImage(img) {
     }
     window.updateCompanionPlaybackFromSpotify = data => {
       if (!data?.title) {
+        playback.position = getPosition();
         playback.isPlaying = false;
-        playback.capturedAt = Date.now();
+        playback.capturedAt = performance.now();
+        playback.spotifyUrl = '';
         updatePlaybackUI();
         return;
       }
       const nextKey = trackKey(data);
       const changed = nextKey !== playback.trackKey;
+      const currentEstimate = getPosition();
       playback.trackKey = nextKey;
-      playback.position = Math.max(0, Number(data.progress_ms) || 0) / 1000;
-      playback.duration = Math.max(0, Number(data.duration_ms) || 0) / 1000;
-      playback.isPlaying = Boolean(data.isPlaying);
-      playback.capturedAt = Date.now();
-      playback.spotifyUrl = data.songUrl || data.spotifyUrl || data.spotify_uri || '';
+      const incomingProgress = Number(data.progress_ms);
+      playback.position = Number.isFinite(incomingProgress) && incomingProgress >= 0
+        ? incomingProgress / 1000
+        : (changed ? 0 : currentEstimate);
+      const incomingDuration = Number(data.duration_ms);
+      if (Number.isFinite(incomingDuration) && incomingDuration > 0) playback.duration = incomingDuration / 1000;
+      playback.isPlaying = Boolean(data.isPlaying ?? data.is_playing ?? data.playing);
+      playback.capturedAt = performance.now();
+      playback.spotifyUrl = data.songUrl || data.spotifyUrl || data.spotify_uri || data.uri || '';
       if (changed) loadCompanionLyrics(data);
       updatePlaybackUI();
     };
+
+    const nativeFullscreenBtn = document.getElementById('btnNativeFullscreen');
+
+    function syncNativeFullscreenButton() {
+      if (!nativeFullscreenBtn) return;
+      const active = document.fullscreenElement === modal;
+      nativeFullscreenBtn.setAttribute('aria-pressed', String(active));
+      nativeFullscreenBtn.title = active ? 'Tarayıcı tam ekranından çık' : 'Gerçek tarayıcı tam ekranını aç';
+      nativeFullscreenBtn.innerHTML = active
+        ? '<i class="fa-solid fa-compress" aria-hidden="true"></i><span>Tam ekrandan çık</span>'
+        : '<i class="fa-solid fa-expand" aria-hidden="true"></i><span>Gerçek tam ekran</span>';
+    }
+
+    async function toggleNativeFullscreen() {
+      if (!modal) return;
+      try {
+        if (document.fullscreenElement === modal) await document.exitFullscreen();
+        else if (modal.requestFullscreen) await modal.requestFullscreen({ navigationUI: 'hide' });
+      } catch (error) {
+        console.warn('Tarayıcı tam ekranı açılamadı:', error);
+      } finally {
+        syncNativeFullscreenButton();
+      }
+    }
 
     function openFullscreen() {
       if (!modal) return;
@@ -7171,13 +7437,13 @@ function prepareImage(img) {
       modal.setAttribute('aria-hidden', 'false');
       document.body.classList.add('companion-immersive-open');
       document.addEventListener('keydown', onEscape);
-      // Browser fullscreen is optional; the immersive modal still works if denied.
-      if (!document.fullscreenElement && modal.requestFullscreen) modal.requestFullscreen().catch(() => {});
       lastScrollIndex = -1;
-      setTimeout(() => {
+      syncNativeFullscreenButton();
+      requestAnimationFrame(() => {
         updatePlaybackUI();
         updateActiveLyrics(true);
-      }, 100);
+        window.dispatchEvent(new Event('songshare:immersive-opened'));
+      });
     }
     function closeFullscreen() {
       if (!modal) return;
@@ -7185,15 +7451,26 @@ function prepareImage(img) {
       modal.setAttribute('aria-hidden', 'true');
       document.body.classList.remove('companion-immersive-open');
       document.removeEventListener('keydown', onEscape);
-      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      if (document.fullscreenElement === modal && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      syncNativeFullscreenButton();
     }
-    function onEscape(event) { if (event.key === 'Escape') closeFullscreen(); }
+    function onEscape(event) {
+      if (event.key !== 'Escape') return;
+      // First Escape exits native browser fullscreen; the immersive layer stays open.
+      if (document.fullscreenElement === modal) return;
+      closeFullscreen();
+    }
     fullscreenBtn?.addEventListener('click', openFullscreen);
+    nativeFullscreenBtn?.addEventListener('click', toggleNativeFullscreen);
+    if (nativeFullscreenBtn && !document.fullscreenEnabled) {
+      nativeFullscreenBtn.disabled = true;
+      nativeFullscreenBtn.title = 'Bu tarayıcı gerçek tam ekranı desteklemiyor';
+    }
     closeBtn?.addEventListener('click', closeFullscreen);
     modal?.addEventListener('click', event => { if (event.target === modal) closeFullscreen(); });
     document.addEventListener('fullscreenchange', () => {
+      syncNativeFullscreenButton();
       if (!document.fullscreenElement && modal?.classList.contains('active')) {
-        // Browser ESC may leave native fullscreen; keep the immersive modal open.
         document.body.classList.add('companion-immersive-open');
       }
     });

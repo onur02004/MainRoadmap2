@@ -781,9 +781,11 @@
   </div>
 
   <!-- 4. TAM EKRAN MODAL -->
-  <div class="fullscreen-player-modal" id="fullscreenPlayerModal">
+  <div class="fullscreen-player-modal" id="fullscreenPlayerModal" aria-hidden="true">
     <div class="fullscreen-dynamic-blur" id="fullscreenDynamicBlur"></div>
+    <div class="fs-cover-gradient" id="fsCoverGradient" aria-hidden="true"></div>
     <div class="fullscreen-mesh-glow"></div>
+    <canvas class="fs-ascii-ambient" id="fsAsciiAmbient" aria-hidden="true"></canvas>
 
     <div class="fullscreen-container">
       <div class="fullscreen-top-nav">
@@ -791,13 +793,28 @@
           <span class="live-dot-indicator"></span>
           <span>SONG SHARE IMMERSIVE</span>
         </div>
-        <button class="btn-close-fullscreen" id="btnCloseFullscreen" title="Tam Ekrandan Çık (ESC)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-          <span>Exit Fullscreen</span>
+        <button type="button" class="fs-scene-trigger" id="fsSceneLibraryToggle"
+          aria-expanded="false" aria-controls="fsSceneLibrary">
+          <span class="fs-scene-trigger-icon" id="fsCurrentSceneGlyph">/\</span>
+          <span class="fs-scene-trigger-copy">
+            <small>VISUAL ATMOSPHERE</small>
+            <strong id="fsCurrentSceneLabel">Mountain Dream</strong>
+          </span>
+          <svg class="fs-scene-trigger-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 6 5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
+        <div class="fs-top-actions">
+          <button type="button" class="btn-native-fullscreen" id="btnNativeFullscreen" title="Gerçek tarayıcı tam ekranını aç" aria-pressed="false">
+            <i class="fa-solid fa-expand" aria-hidden="true"></i>
+            <span>Gerçek tam ekran</span>
+          </button>
+          <button type="button" class="btn-close-fullscreen" id="btnCloseFullscreen" title="Dinleme ekranını kapat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span>Dinleme ekranını kapat</span>
+          </button>
+        </div>
       </div>
 
       <div class="fullscreen-content-grid">
@@ -852,6 +869,182 @@
         </div>
       </div>
     </div>
+
+    <div class="fs-scene-library-backdrop" id="fsSceneLibraryBackdrop" hidden></div>
+    <section class="fs-scene-library" id="fsSceneLibrary" role="dialog" aria-label="Visual scene library" aria-modal="true" hidden>
+      <div class="fs-scene-library-head">
+        <div>
+          <div class="fs-scene-library-kicker">SONG SHARE / VISUALS</div>
+          <h2>Choose your atmosphere<span>.</span></h2>
+          <p>Small worlds, made entirely from moving characters.</p>
+        </div>
+        <button type="button" class="fs-scene-library-close" id="fsSceneLibraryClose" aria-label="Close scene library">×</button>
+      </div>
+      <div class="fs-scene-library-meta"><span>SCENE COLLECTION</span><span id="fsSceneLibraryCount">19 WORLDS</span></div>
+      <div class="fs-scene-grid" id="fsSceneGrid">
+        <button type="button" class="fs-scene-card is-selected" data-ascii-scene="mountain" data-ascii-label="Mountain Dream" data-ascii-glyph="/\" aria-pressed="true">
+          <span class="fs-scene-card-preview"><pre>        .  *       .
+    /\       ~ ~
+  /    \  /\
+ /      \/  \   .
+      o__/|       </pre><i>LANDSCAPE</i></span>
+          <span class="fs-scene-card-info"><strong>Mountain Dream</strong><small>A quiet summit above drifting clouds.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="flowers" data-ascii-label="Bloom" data-ascii-glyph="✳" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>    .     *
+   /|\   .
+    |     /\
+   /|\    |
+  / | \  /|\</pre><i>BOTANICAL</i></span>
+          <span class="fs-scene-card-info"><strong>Bloom</strong><small>The original garden, swaying softly.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="city" data-ascii-label="Night City" data-ascii-glyph="▥" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre> .    .     .
+  |##|   |###|
+  |::|_| |:+:|
+__|:::|___|::|__
+  |||||||||||</pre><i>URBAN</i></span>
+          <span class="fs-scene-card-info"><strong>Night City</strong><small>Rain, windows and an after-hours skyline.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="music" data-ascii-label="Music Pulse" data-ascii-glyph="♫" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>      ~~~~~
+  .  _/|\_   .
+ |||  |#|  |||
+ ||| _|#|_ |||
+  '  ~~~~~  '</pre><i>AUDIO</i></span>
+          <span class="fs-scene-card-info"><strong>Music Pulse</strong><small>Waveforms and a breathing spectrum.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="disco" data-ascii-label="Disco" data-ascii-glyph="◉" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>   .  +  .
+  .-@@@@@-.
+ + @  @  @ +
+  '-@@@@@-'
+   .  +  .</pre><i>ENERGY</i></span>
+          <span class="fs-scene-card-info"><strong>Disco</strong><small>Slow orbiting geometry and light trails.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="aurora" data-ascii-label="Aurora" data-ascii-glyph="~" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre> .     *      .
+  ~~~\____/~~~
+ ~~~  \  /  ~~~
+       \/
+  /\       /\</pre><i>ATMOSPHERE</i></span>
+          <span class="fs-scene-card-info"><strong>Aurora</strong><small>Ribbons of light over a distant ridge.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="lilies" data-ascii-label="Lily Study" data-ascii-glyph="✿" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>   \  |  /
+    \ * /
+  --- ( ) ---
+      /|\
+     / | \</pre><i>BOTANICAL</i></span>
+          <span class="fs-scene-card-info"><strong>Lily Study</strong><small>Petals unfold one character at a time.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="bouquet" data-ascii-label="The Bouquet" data-ascii-glyph="✾" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>  *    @    *
+ /|\  /|\ /|\
+  | \/ | \/ |
+   \  |  /
+    \ | /
+     \|/</pre><i>BOTANICAL</i></span>
+          <span class="fs-scene-card-info"><strong>The Bouquet</strong><small>A floating arrangement of wild blooms.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="garden" data-ascii-label="Wildflower Field" data-ascii-glyph="✳" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>  *  .  +   *
+  |  /|\  |
+ /|\  |  /|\
+  |  /|\  |
+_/|\_|/|\_|_</pre><i>BOTANICAL</i></span>
+          <span class="fs-scene-card-info"><strong>Wildflower Field</strong><small>A whole meadow growing in slow motion.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="knight" data-ascii-label="The Knight" data-ascii-glyph="♞" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>       /^^\  +
+      | o  |  |
+   ___|____|__|
+      /|  |\
+     /_|__|_\   *</pre><i>CHARACTER</i></span>
+          <span class="fs-scene-card-info"><strong>The Knight</strong><small>A lone guardian among ember-lit flowers.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="starry" data-ascii-label="Starry Night" data-ascii-glyph="✦" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre> *   @~~~  .  *
+  .~~~  @~~~
+ ~~~~ .   ~~~
+   /\    /\
+__/  \__/  \_</pre><i>CELESTIAL</i></span>
+          <span class="fs-scene-card-info"><strong>Starry Night</strong><small>Swirling stars above a sleeping valley.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="ocean" data-ascii-label="Midnight Tide" data-ascii-glyph="≈" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>       .  *
+  ~~~~~~~~
+ _/\_/\_/\_
+  ~~~  ~~~~~
+_/\_/\_/\_/\</pre><i>LANDSCAPE</i></span>
+          <span class="fs-scene-card-info"><strong>Midnight Tide</strong><small>Moonlight moving across dark water.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="nightdrive" data-ascii-label="Night Drive" data-ascii-glyph="⌁" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre> .      .   *
+      __
+     /  \
+    / || \
+ __/  ||  \__</pre><i>JOURNEY</i></span>
+          <span class="fs-scene-card-info"><strong>Night Drive</strong><small>A first-person road through the dark.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="sunmoon" data-ascii-label="Sun & Moon" data-ascii-glyph="☾" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>      .-"-.     *
+   * (  ☼  )  .
+      `-.-'   (   .----o-----. 
+      `---'</pre><i>CELESTIAL</i></span>
+          <span class="fs-scene-card-info"><strong>Sun &amp; Moon</strong><small>Two quiet bodies sharing one orbit.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="butterflies" data-ascii-label="Butterfly Effect" data-ascii-glyph="୨୧" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>  \  /   .
+ . (**) .
+   /  \    *
+  .  \  / .
+     (**)</pre><i>INTERACTIVE</i></span>
+          <span class="fs-scene-card-info"><strong>Butterfly Effect</strong><small>Tap the dark and let the swarm scatter.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="christmas" data-ascii-label="Evergreen" data-ascii-glyph="✧" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>       *
+      /A\
+     /o*o\
+    /o/o*o\
+   /__|_|__\</pre><i>SEASONAL</i></span>
+          <span class="fs-scene-card-info"><strong>Evergreen</strong><small>Quiet snowfall and a glowing tree.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="artwork" data-ascii-label="Album ASCII" data-ascii-glyph="▦" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre> .:-=+*##%@
+ :-=+*##%@@
+.:-=+*#%@@@
+ :-=+*##%@@
+  .:-=+*##%</pre><i>PERSONAL</i></span>
+          <span class="fs-scene-card-info"><strong>Album ASCII</strong><small>Your current cover, rebuilt from glyphs.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="album" data-ascii-label="Album Atmosphere" data-ascii-glyph="◈" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>  .  .  .  .
+ .:--==--:.
+  +#%%#*+
+ .-#@@@#-.
+  '::--::'</pre><i>ARTWORK</i></span>
+          <span class="fs-scene-card-info"><strong>Album Atmosphere</strong><small>A living, cinematic version of your cover.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card" data-ascii-scene="chromatic" data-ascii-label="Chromatic Flow" data-ascii-glyph="◌" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre> ~~~:::::::~~~
+::---====---::
+  ==++++++==
+::---====---::
+ ~~~:::::::~~~</pre><i>COLOR STUDY</i></span>
+          <span class="fs-scene-card-info"><strong>Chromatic Flow</strong><small>Slow animated gradients sampled from the cover.</small></span>
+        </button>
+        <button type="button" class="fs-scene-card fs-scene-card-off" data-ascii-scene="off" data-ascii-label="No ambience" data-ascii-glyph="×" aria-pressed="false">
+          <span class="fs-scene-card-preview"><pre>
+
+      ×
+
+</pre><i>MINIMAL</i></span>
+          <span class="fs-scene-card-info"><strong>No ambience</strong><small>Keep the player clean and quiet.</small></span>
+        </button>
+      </div>
+      <div class="fs-scene-library-foot"><span>ALL WORLDS ARE DRAWN LIVE IN YOUR BROWSER</span><span>ESC TO CLOSE</span></div>
+    </section>
   </div>
 
   <!-- 5. RATING MODAL -->
@@ -1069,6 +1262,7 @@
   <script src="https://www.youtube.com/iframe_api"></script>
   <script type="module" src="/avatarRenderer.js"></script>
   <script type="module" src="/songShare/songshare.js"></script>
+  <script src="/songShare/ascii-ambient.js" defer></script>
   <!-- Socket.IO client -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/socket/socket-client.js"></script>

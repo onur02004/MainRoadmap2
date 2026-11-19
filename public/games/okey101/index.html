@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10140f">
+<title>101 Okey · 330nur Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./okey.css">
+<script src="/socket.io/socket.io.js" defer></script><script src="/js/socket/socket-client.js" defer></script><script src="./okey.js" defer></script>
+</head>
+<body>
+<header class="topbar"><a class="brand" href="/games">330nur<span>/games</span></a><div class="top-actions"><span id="connection" class="connection">CONNECTING</span><a href="/games">← ALL GAMES</a></div></header>
+<main class="shell">
+  <section id="lobby" class="lobby">
+    <div class="eyebrow">TABLE GAMES / TURKISH CLASSICS</div><h1>Okey<span>.</span></h1><p class="intro">Aynı masada buluş. Taşlarını diz, sıranı bekle ve oyunu kazan.</p>
+    <div class="game-switch"><button class="game-choice active" data-game="okey">Okey <small>Classic</small></button><button class="game-choice" data-game="101">101 Okey <small>101 points</small></button></div>
+    <div class="lobby-grid">
+      <article class="lobby-card"><span class="step">01 / CREATE</span><h2>Yeni masa kur</h2><p>Arkadaşlarını davet etmek için bir oda kodu oluştur.</p><button id="createRoom" class="primary">Masa oluştur <span>↗</span></button></article>
+      <article class="lobby-card"><span class="step">02 / JOIN</span><h2>Masaya katıl</h2><p>Arkadaşının paylaştığı altı karakterli kodu gir.</p><div class="join-row"><input id="roomCode" maxlength="6" placeholder="ROOM CODE" autocomplete="off"><button id="joinRoom" class="secondary">Katıl</button></div></article>
+    </div>
+    <section class="rooms-section"><div class="section-head"><div><span class="step">LIVE TABLES</span><h2>Açık masalar</h2></div><span id="roomCount">0 ROOMS</span></div><div id="rooms" class="rooms"><div class="empty">Şu anda açık masa yok.</div></div></section>
+    <p class="fineprint">Oyunlar gerçek zamanlıdır. Dört oyuncu masaya katıldığında el otomatik başlar.</p>
+  </section>
+
+  <section id="tableView" class="table-view" hidden>
+    <div class="table-head"><div><div class="eyebrow" id="tableType">OKEY / TABLE</div><h1 id="tableTitle">Okey<span>.</span></h1><div class="table-sub"><span id="roomLabel">ROOM —</span><span id="roundLabel">ROUND 1</span><span id="turnLabel">WAITING</span></div></div><div class="table-buttons"><button id="copyCode" class="quiet">Kodu kopyala</button><button id="leaveRoom" class="quiet">Masadan ayrıl</button></div></div>
+    <div class="table-layout">
+      <aside class="side-panel"><div class="side-title">PLAYERS <span id="playerCount">0/4</span></div><div id="players" class="players"></div><div class="indicator-card"><span class="side-title">GÖSTERGE</span><div id="indicator" class="indicator-tile">—</div><p id="jokerText">Okey belirleniyor</p></div><div class="side-title">GAME LOG</div><div id="gameMessage" class="game-message">Dört oyuncu bekleniyor…</div></aside>
+      <section class="board">
+        <div class="board-top"><div class="stock" id="stock"><span class="stack-icon">▤</span><strong>ORTA</strong><small id="stockCount">— taş</small><em>ÇEK</em></div><div class="discard-pile" id="discardPile"><span class="side-title">ATILAN TAŞ</span><div id="discardTile" class="discard-tile">—</div><em>ÜSTTEKİ TAŞI ÇEK</em></div></div>
+        <div class="table-melds" id="tableMelds"><div class="table-placeholder">101 Okey açılışları ve işlenen taşlar burada görünür.</div></div>
+        <div class="opponent-hands" id="opponentHands"></div>
+        <div class="hand-area"><div class="hand-head"><div><span class="side-title">YOUR HAND</span><strong id="handCount">0 taş</strong></div><div class="hand-tools"><button id="sortHand" class="quiet small">Sırala</button><button id="clearSelection" class="quiet small">Seçimi temizle</button></div></div><div id="hand" class="hand"></div></div>
+        <div id="meldBuilder" class="meld-builder" hidden><div class="builder-head"><div><strong>101 / MELD BUILDER</strong><span id="builderHint">Taşları seçip setlere ayır.</span></div><div class="builder-actions"><button id="addSet" class="quiet small">+ Set ekle</button><button id="submitMelds" class="primary small">Masaya aç</button></div></div><div id="draftSets" class="draft-sets"></div></div>
+        <div class="action-bar"><div id="actionHint">Sıra sana geldiğinde ortadan veya atılan taştan çek.</div><div class="action-buttons"><button id="attachTiles" class="secondary" hidden>Seçilenleri işle</button><button id="finish" class="secondary" disabled>Bitir</button><button id="discard" class="primary" disabled>Taş at</button></div></div>
+      </section>
+    </div>
+  </section>
+</main>
+<div id="toast" class="toast" role="status"></div>
+</body></html>
