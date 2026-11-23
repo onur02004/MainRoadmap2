@@ -164,30 +164,57 @@ $('#next').addEventListener('click', () => {
 /* ---------------- Service management ---------------- */
 let currentView = 'users';
 
+
 function setView(view) {
-  currentView = view === 'services' ? 'services' : 'users';
+  currentView = ['home', 'services'].includes(view) ? view : 'users';
+
+  const showHome = currentView === 'home';
   const showServices = currentView === 'services';
-  $('#userView').hidden = showServices;
+
+  $('#homeView').hidden = !showHome;
+  $('#userView').hidden = showHome || showServices;
   $('#serviceView').hidden = !showServices;
 
   document.querySelectorAll('[data-view]').forEach(button => {
-    button.classList.toggle('active', button.dataset.view === currentView);
+    button.classList.toggle(
+      'active',
+      button.dataset.view === currentView
+    );
   });
 
-  // The IDs exist in this package's admin.html; guards prevent crashes if HTML is customized.
   const pageTitle = $('#pageTitle');
   const pageDescription = $('#pageDescription');
-  if (pageTitle) pageTitle.textContent = showServices ? 'Service management' : 'User management';
-  if (pageDescription) pageDescription.textContent = showServices
-    ? 'Enable, disable, create and edit services.'
-    : 'Create accounts and edit existing user details and permissions.';
 
-  $('#createBtn').textContent = showServices ? '＋ Create service' : '＋ Create user';
+  if (pageTitle) {
+    pageTitle.textContent = showHome
+      ? 'Dashboard'
+      : showServices
+        ? 'Service management'
+        : 'User management';
+  }
+
+  if (pageDescription) {
+    pageDescription.textContent = showHome
+      ? 'Platform activity and recent user sessions.'
+      : showServices
+        ? 'Enable, disable, create and edit services.'
+        : 'Create accounts and edit existing user details and permissions.';
+  }
+
+  $('#createBtn').hidden = showHome;
+  $('#createBtn').textContent = showServices
+    ? '＋ Create service'
+    : '＋ Create user';
 
   if (showServices && !serviceState.loaded) {
     loadAdminServices().catch(error => notice(error.message, 'error'));
   }
+
+  if (showHome && typeof window.loadAdminHome === 'function') {
+    window.loadAdminHome();
+  }
 }
+
 document.querySelectorAll('[data-view]').forEach(button => {
   button.addEventListener('click', () => setView(button.dataset.view));
 });
@@ -352,3 +379,4 @@ $('#services').addEventListener('click', async event => {
 });
 
 loadUsers().catch(e => notice(e.message, 'error'));
+setView('home');

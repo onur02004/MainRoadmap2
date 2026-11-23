@@ -138,6 +138,10 @@ async function loadUserProfile() {
       currentAccountUser
     );
 
+    if (currentAccountUser.role === 'ADMIN') {
+  document.getElementById('accountAdminLink')?.removeAttribute('hidden');
+}
+
   } catch (error) {
 
     console.error(

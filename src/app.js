@@ -23,6 +23,7 @@ import songShareRoutes from './routes/songShareRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import gameRoutes from './routes/gameRoutes.js';
 import adminGamesRoutes from './routes/adminGamesRoutes.js';
+import adminPresenceRoutes from './routes/adminPresenceRoutes.js';
 
 const app = express();
 
@@ -63,9 +64,10 @@ app.use('/api/themes', themeRoutes);
 app.use('/api/avatars', avatarRoutes);
 app.use('/api/services', serviceRoutes);
 if (process.env.NODE_ENV !== 'production') app.use('/api/debug', debugRoutes);
-app.use('/api/songshare', songShareRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/songshare', songShareRoutes);
 app.use('/api/games', gameRoutes);
+app.use('/api/admin/presence', adminPresenceRoutes);
 
 // Public browser configuration for WeinGuesser. The key is read from the
 // server environment at request time; never expose the .env file itself.

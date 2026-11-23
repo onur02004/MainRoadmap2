@@ -1,0 +1,28 @@
+.presence-panel { margin-top: 22px; }
+.presence-sub { display:block; color:var(--muted,#8b949e); font-size:12px; margin-top:4px; }
+.presence-agent { max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#presenceView .toolbar select { min-width:120px; }
+#presenceView .stats { margin-bottom:22px; }
+#presenceView .nav-count { margin-left:auto; }
+
+
+#homeView .stats {
+  margin-bottom: 24px;
+}
+
+#homeView .panel {
+  margin-top: 20px;
+}
+
+.home-time {
+  color: var(--text-secondary, #94a3b8);
+  font-size: 13px;
+}
+
+#homeActivityRows .user-cell {
+  min-width: 150px;
+}
+
+#homeRefreshLabel {
+  white-space: nowrap;
+}

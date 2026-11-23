@@ -1,14 +1,18 @@
 // public/script.js
-import { ThemeManager } from './themes/theme-registry.js';
-import { loadServices, handleServiceClick, clearServicesCache } from './services-client.js';
-import { renderAvatar, refreshAvatar } from './avatarRenderer.js';
+import { ThemeManager } from "./themes/theme-registry.js";
+import {
+  loadServices,
+  handleServiceClick,
+  clearServicesCache,
+} from "./services-client.js";
+import { renderAvatar, refreshAvatar } from "./avatarRenderer.js";
 
 export let currentSession = {
   isLoggedIn: false,
   username: "anonymous",
   role: "GUEST",
   nodeId: "#OFFLINE",
-  avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=off"
+  avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=off",
 };
 
 let adminLogPollTimer = null;
@@ -21,7 +25,7 @@ let friendActivityPollTimer = null;
 let currentGridBlueprint = null;
 let currentGridMeta = null;
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener("DOMContentLoaded", async () => {
   initTimestamps();
   initResponsiveFixedGrid();
   initCliAuth();
@@ -46,23 +50,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Akıllı Aşağı Kaydırma Oku Yöneticisi
 function initScrollHintManager() {
-  const hintEl = document.getElementById('scrollDownHint');
-  const servicesSec = document.getElementById('servicesSection');
+  const hintEl = document.getElementById("scrollDownHint");
+  const servicesSec = document.getElementById("servicesSection");
   if (!hintEl) return;
 
-  const STORAGE_KEY = 'scroll_hint_seen_count';
+  const STORAGE_KEY = "scroll_hint_seen_count";
   const MAX_DISPLAYS = 3; // Kullanıcıya en fazla 3 kez gösterilir
 
-  let seenCount = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+  let seenCount = parseInt(localStorage.getItem(STORAGE_KEY) || "0", 10);
 
   if (seenCount < MAX_DISPLAYS) {
-    hintEl.style.display = 'flex';
+    hintEl.style.display = "flex";
     localStorage.setItem(STORAGE_KEY, (seenCount + 1).toString());
   }
 
   // Tıklandığında servisler bölümüne yumuşakça kaydır
-  hintEl.addEventListener('click', () => {
-    servicesSec?.scrollIntoView({ behavior: 'smooth' });
+  hintEl.addEventListener("click", () => {
+    servicesSec?.scrollIntoView({ behavior: "smooth" });
     hideHint();
   });
 
@@ -70,35 +74,37 @@ function initScrollHintManager() {
   const onScrollHandler = () => {
     if (window.scrollY > 80) {
       hideHint();
-      window.removeEventListener('scroll', onScrollHandler);
+      window.removeEventListener("scroll", onScrollHandler);
     }
   };
 
   function hideHint() {
-    hintEl.style.opacity = '0';
-    hintEl.style.pointerEvents = 'none';
-    setTimeout(() => { hintEl.style.display = 'none'; }, 400);
+    hintEl.style.opacity = "0";
+    hintEl.style.pointerEvents = "none";
+    setTimeout(() => {
+      hintEl.style.display = "none";
+    }, 400);
   }
 
-  window.addEventListener('scroll', onScrollHandler, { passive: true });
+  window.addEventListener("scroll", onScrollHandler, { passive: true });
 }
 
 // Avatar Tıklandığında Login / Account Yönlendirmesi
 function initAvatarClickRedirect() {
-  const avatarBadge = document.getElementById('cliAvatarContainer');
+  const avatarBadge = document.getElementById("cliAvatarContainer");
   if (avatarBadge) {
-    avatarBadge.addEventListener('click', () => {
+    avatarBadge.addEventListener("click", () => {
       if (currentSession.isLoggedIn) {
-        window.location.href = '/account';
+        window.location.href = "/account";
       } else {
-        window.location.href = '/login';
+        window.location.href = "/login";
       }
     });
   }
 }
 
 async function checkActiveSession() {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   clearServicesCache();
 
   if (!token) {
@@ -107,153 +113,177 @@ async function checkActiveSession() {
       username: "anonymous",
       role: "GUEST",
       nodeId: "#OFFLINE",
-      avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=off"
+      avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=off",
     };
     applyUserSession(currentSession);
     await renderServicesFromBackend();
-    appendTerminalLog(`[AUTH_REQUIRED] No active JWT bearer token found.`, true);
+    appendTerminalLog(
+      `[AUTH_REQUIRED] No active JWT bearer token found.`,
+      true,
+    );
     return;
   }
 
   try {
-    const res = await fetch('/api/users/profile', {
-      headers: { 'Authorization': `Bearer ${token}` }
+    const res = await fetch("/api/users/profile", {
+      headers: { Authorization: `Bearer ${token}` },
     });
     const result = await res.json();
 
-    if (res.ok && result.status === 'success') {
+    if (res.ok && result.status === "success") {
       const u = result.data.user;
       currentSession = {
         isLoggedIn: true,
         username: u.user_name,
-        role: (u.role || 'USER').toUpperCase(),
-        nodeId: `#${u.id ? String(u.id).slice(0, 4) : '8921'}-X`,
+        role: (u.role || "USER").toUpperCase(),
+        nodeId: `#${u.id ? String(u.id).slice(0, 4) : "8921"}-X`,
 
-        avatar: u.profile_pic_path ||
+        avatar:
+          u.profile_pic_path ||
           `https://api.dicebear.com/7.x/bottts/svg?seed=${u.user_name}`,
 
-        avatar_type: u.avatar_type || 'photo',
+        avatar_type: u.avatar_type || "photo",
         avatar_data: u.avatar_data || {},
-        profile_pic_path: u.profile_pic_path || null
+        profile_pic_path: u.profile_pic_path || null,
       };
       applyUserSession(currentSession);
       await renderServicesFromBackend();
-      appendTerminalLog(`[AUTH] Session validated: ${currentSession.username} [${currentSession.role}]`, true);
+      appendTerminalLog(
+        `[AUTH] Session validated: ${currentSession.username} [${currentSession.role}]`,
+        true,
+      );
     } else {
       throw new Error();
     }
   } catch (err) {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     clearServicesCache();
     currentSession = {
       isLoggedIn: false,
       username: "anonymous",
       role: "GUEST",
       nodeId: "#EXPIRED",
-      avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=off"
+      avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=off",
     };
     applyUserSession(currentSession);
     await renderServicesFromBackend();
-    appendTerminalLog(`[AUTH_EXPIRED] Session token expired. Please login again.`, true);
+    appendTerminalLog(
+      `[AUTH_EXPIRED] Session token expired. Please login again.`,
+      true,
+    );
   }
 }
 
 export function applyUserSession(user) {
-  const nameEl = document.getElementById('lblUsername');
-  const roleEl = document.getElementById('lblRole');
-  const sessionEl = document.getElementById('lblSessionId');
-  const statusEl = document.getElementById('lblStatus');
-  const promptEl = document.getElementById('lblCliPrompt');
+  const nameEl = document.getElementById("lblUsername");
+  const roleEl = document.getElementById("lblRole");
+  const sessionEl = document.getElementById("lblSessionId");
+  const statusEl = document.getElementById("lblStatus");
+  const promptEl = document.getElementById("lblCliPrompt");
 
   if (nameEl) nameEl.textContent = user.username;
   if (roleEl) roleEl.textContent = user.role;
   if (sessionEl) sessionEl.textContent = user.nodeId;
-  const avatarEl = document.getElementById('userAvatar');
+  const avatarEl = document.getElementById("userAvatar");
 
   if (avatarEl) {
     // Eski img ise global avatar container'a dönüştür
-    if (avatarEl.tagName === 'IMG') {
-      const container = document.createElement('div');
+    if (avatarEl.tagName === "IMG") {
+      const container = document.createElement("div");
 
       container.id = avatarEl.id;
       container.className = avatarEl.className;
-      container.dataset.avatar = '';
-      container.dataset.avatarSize = '64';
+      container.dataset.avatar = "";
+      container.dataset.avatarSize = "64";
 
       avatarEl.replaceWith(container);
     }
 
-    const globalAvatar = document.getElementById('userAvatar');
+    const globalAvatar = document.getElementById("userAvatar");
 
     if (globalAvatar && currentSession.isLoggedIn) {
-      renderAvatar(globalAvatar, {
-        user_name: user.username,
-        avatar_type: user.avatar_type || 'photo',
-        avatar_data: user.avatar_data || {},
-        profile_pic_path: user.profile_pic_path || user.avatar
-      }, {
-        size: 64
-      });
+      renderAvatar(
+        globalAvatar,
+        {
+          user_name: user.username,
+          avatar_type: user.avatar_type || "photo",
+          avatar_data: user.avatar_data || {},
+          profile_pic_path: user.profile_pic_path || user.avatar,
+        },
+        {
+          size: 64,
+        },
+      );
     }
 
-    const guestActions = document.getElementById('cliGuestActions');
-    const userStream = document.querySelector('.cli-user-stream-line');
-    const avatarContainer = document.getElementById('cliAvatarContainer');
+    const guestActions = document.getElementById("cliGuestActions");
+    const userStream = document.querySelector(".cli-user-stream-line");
+    const avatarContainer = document.getElementById("cliAvatarContainer");
 
     if (guestActions) {
       guestActions.hidden = user.isLoggedIn;
     }
 
     if (userStream) {
-      userStream.classList.toggle('is-guest', !user.isLoggedIn);
+      userStream.classList.toggle("is-guest", !user.isLoggedIn);
     }
 
     if (avatarContainer) {
-      avatarContainer.style.display = user.isLoggedIn ? '' : 'none';
+      avatarContainer.style.display = user.isLoggedIn ? "" : "none";
     }
   }
 
   if (!user.isLoggedIn) {
-    if (statusEl) { statusEl.textContent = 'OFFLINE'; statusEl.className = 'status-offline'; }
+    if (statusEl) {
+      statusEl.textContent = "OFFLINE";
+      statusEl.className = "status-offline";
+    }
     if (promptEl) promptEl.textContent = `guest@cluster:~$`;
   } else {
-    if (statusEl) { statusEl.textContent = 'HEALTHY'; statusEl.className = 'status-online'; }
+    if (statusEl) {
+      statusEl.textContent = "HEALTHY";
+      statusEl.className = "status-online";
+    }
     if (promptEl) promptEl.textContent = `${user.username}@cluster:~$`;
   }
 
-  const guiAvatar = document.getElementById('guiUserAvatar');
-  const guiName = document.getElementById('guiLblUsername');
-  const guiRole = document.getElementById('guiLblRole');
-  const guiSession = document.getElementById('guiLblSession');
-  const guiStatus = document.getElementById('guiLblStatus');
-  const guiDot = document.getElementById('guiStatusDot');
-  const guiActionsBar = document.getElementById('guiActionsBar');
+  const guiAvatar = document.getElementById("guiUserAvatar");
+  const guiName = document.getElementById("guiLblUsername");
+  const guiRole = document.getElementById("guiLblRole");
+  const guiSession = document.getElementById("guiLblSession");
+  const guiStatus = document.getElementById("guiLblStatus");
+  const guiDot = document.getElementById("guiStatusDot");
+  const guiActionsBar = document.getElementById("guiActionsBar");
 
   if (guiAvatar && user.isLoggedIn) {
-    renderAvatar(guiAvatar, {
-      user_name: user.username,
-      avatar_type: user.avatar_type || 'photo',
-      avatar_data: user.avatar_data || {},
-      profile_pic_path: user.profile_pic_path || user.avatar
-    }, {
-      size: guiAvatar.dataset.avatarSize || 96
-    });
+    renderAvatar(
+      guiAvatar,
+      {
+        user_name: user.username,
+        avatar_type: user.avatar_type || "photo",
+        avatar_data: user.avatar_data || {},
+        profile_pic_path: user.profile_pic_path || user.avatar,
+      },
+      {
+        size: guiAvatar.dataset.avatarSize || 96,
+      },
+    );
   }
   if (guiRole) guiRole.textContent = user.role;
   if (guiSession) guiSession.textContent = user.nodeId;
 
   if (!user.isLoggedIn) {
-    if (guiName) guiName.textContent = 'GUEST ACCESS';
-    if (guiRole) guiRole.textContent = 'GUEST';
-    if (guiStatus) guiStatus.textContent = 'LOGIN REQUIRED';
-    if (guiDot) guiDot.className = 'gui-status-indicator offline';
+    if (guiName) guiName.textContent = "GUEST ACCESS";
+    if (guiRole) guiRole.textContent = "GUEST";
+    if (guiStatus) guiStatus.textContent = "LOGIN REQUIRED";
+    if (guiDot) guiDot.className = "gui-status-indicator offline";
 
-    const guiPanel = document.getElementById('guiUserPanel');
-    guiPanel?.classList.add('is-guest');
+    const guiPanel = document.getElementById("guiUserPanel");
+    guiPanel?.classList.add("is-guest");
 
-    const sessionText = document.getElementById('guiSessionText');
+    const sessionText = document.getElementById("guiSessionText");
     if (sessionText) {
-      sessionText.textContent = 'Sign in to access your account and services.';
+      sessionText.textContent = "Sign in to access your account and services.";
     }
 
     if (guiActionsBar) {
@@ -266,45 +296,82 @@ export function applyUserSession(user) {
       </button>
     `;
 
-      document.getElementById('btnGuiGoLogin')
-        ?.addEventListener('click', () => window.location.href = '/login');
+      document
+        .getElementById("btnGuiGoLogin")
+        ?.addEventListener("click", () => (window.location.href = "/login"));
 
-      document.getElementById('btnGuiGoRegister')
-        ?.addEventListener('click', () => window.location.href = '/login#register');
+      document
+        .getElementById("btnGuiGoRegister")
+        ?.addEventListener(
+          "click",
+          () => (window.location.href = "/login#register"),
+        );
     }
   } else {
-    document.getElementById('guiUserPanel')?.classList.remove('is-guest');
+    document.getElementById("guiUserPanel")?.classList.remove("is-guest");
 
     if (guiName) guiName.textContent = user.username;
-    if (guiStatus) guiStatus.textContent = 'ACTIVE';
-    if (guiDot) guiDot.className = 'gui-status-indicator online';
+    if (guiStatus) guiStatus.textContent = "ACTIVE";
+    if (guiDot) guiDot.className = "gui-status-indicator online";
 
-    const sessionText = document.getElementById('guiSessionText');
+    const sessionText = document.getElementById("guiSessionText");
     if (sessionText) {
       sessionText.innerHTML =
         'SESSION ID: <strong id="guiLblSession">#NO-SESSION</strong>';
-      document.getElementById('guiLblSession').textContent = user.nodeId;
+      document.getElementById("guiLblSession").textContent = user.nodeId;
     }
 
     if (guiActionsBar) {
+      const isAdmin = String(user.role || "").toUpperCase() === "ADMIN";
+
       guiActionsBar.innerHTML = `
-      <button type="button" class="gui-action-btn primary" id="btnGuiGoAccount">
-        Account Console
-      </button>
-      <button type="button" class="gui-action-btn logout" id="btnGuiLogout">
-        Logout
-      </button>
-    `;
+    <button type="button" class="gui-action-btn primary" id="btnGuiGoAccount">
+      Account Console
+    </button>
 
-      document.getElementById('btnGuiGoAccount')
-        ?.addEventListener('click', () => window.location.href = '/account');
+    ${
+      isAdmin
+        ? `
+      <button type="button" class="gui-action-btn" id="btnGuiGoAdmin">
+        Admin Console ↗
+      </button>
+    `
+        : ""
+    }
 
-      document.getElementById('btnGuiLogout')?.addEventListener('click', () => {
-        localStorage.removeItem('token');
+    <button type="button" class="gui-action-btn logout" id="btnGuiLogout">
+      Logout
+    </button>
+  `;
+
+      document
+        .getElementById("btnGuiGoAccount")
+        ?.addEventListener("click", () => {
+          window.location.href = "/account";
+        });
+
+      document
+        .getElementById("btnGuiGoAdmin")
+        ?.addEventListener("click", () => {
+          window.location.href = "/admin/admin.html";
+        });
+
+      document.getElementById("btnGuiLogout")?.addEventListener("click", () => {
+        localStorage.removeItem("token");
         clearServicesCache();
         window.location.reload();
       });
     }
+
+    document
+      .getElementById("btnGuiGoAccount")
+      ?.addEventListener("click", () => (window.location.href = "/account"));
+
+    document.getElementById("btnGuiLogout")?.addEventListener("click", () => {
+      localStorage.removeItem("token");
+      clearServicesCache();
+      window.location.reload();
+    });
   }
 }
 
@@ -313,11 +380,11 @@ async function renderServicesFromBackend() {
   const core = servicesData?.core || [];
   const privileged = servicesData?.privileged || [];
 
-  const coreContainer = document.getElementById('coreServices');
-  const privContainer = document.getElementById('dynamicRoleFeatures');
+  const coreContainer = document.getElementById("coreServices");
+  const privContainer = document.getElementById("dynamicRoleFeatures");
 
   if (coreContainer) {
-    coreContainer.innerHTML = '';
+    coreContainer.innerHTML = "";
 
     if (core.length === 0) {
       coreContainer.innerHTML = `
@@ -331,26 +398,32 @@ async function renderServicesFromBackend() {
         </div>
       `;
     } else {
-      core.forEach(service => {
-        const isMaintenance = service.status === 'maintenance';
-        const isLoginReq = service.status === 'login_required';
+      core.forEach((service) => {
+        const isMaintenance = service.status === "maintenance";
+        const isLoginReq = service.status === "login_required";
 
-        const card = document.createElement('div');
-        card.className = `service-block ${isMaintenance ? 'locked maintenance-mode' : ''}`;
+        const card = document.createElement("div");
+        card.className = `service-block ${isMaintenance ? "locked maintenance-mode" : ""}`;
         card.onclick = () => handleServiceClick(service);
 
         card.innerHTML = `
           <div class="block-header">
             <span class="tag">${service.tag}</span>
-            <span class="dot ${isMaintenance ? 'offline' : 'online'}"></span>
+            <span class="dot ${isMaintenance ? "offline" : "online"}"></span>
           </div>
           <h3>${service.title}</h3>
           <p>${service.desc}</p>
-          ${isMaintenance ? `
+          ${
+            isMaintenance
+              ? `
             <span class="status-sub-badge maintenance">🛠️ Under Maintenance</span>
-          ` : (isLoginReq ? `
+          `
+              : isLoginReq
+                ? `
             <span class="status-sub-badge login-hint">🔑 Login Required</span>
-          ` : '')}
+          `
+                : ""
+          }
         `;
         coreContainer.appendChild(card);
       });
@@ -358,7 +431,7 @@ async function renderServicesFromBackend() {
   }
 
   if (privContainer) {
-    privContainer.innerHTML = '';
+    privContainer.innerHTML = "";
 
     if (!currentSession.isLoggedIn) {
       privContainer.innerHTML = `
@@ -388,20 +461,20 @@ async function renderServicesFromBackend() {
       return;
     }
 
-    privileged.forEach(service => {
-      const isMaintenance = service.status === 'maintenance';
-      const card = document.createElement('div');
-      card.className = `service-block ${isMaintenance ? 'locked maintenance-mode' : ''}`;
+    privileged.forEach((service) => {
+      const isMaintenance = service.status === "maintenance";
+      const card = document.createElement("div");
+      card.className = `service-block ${isMaintenance ? "locked maintenance-mode" : ""}`;
       card.onclick = () => handleServiceClick(service);
 
       card.innerHTML = `
         <div class="block-header">
           <span class="tag">${service.tag}</span>
-          <span class="dot ${isMaintenance ? 'offline' : 'online'}"></span>
+          <span class="dot ${isMaintenance ? "offline" : "online"}"></span>
         </div>
         <h3>${service.title}</h3>
         <p>${service.desc}</p>
-        ${isMaintenance ? `<span class="status-sub-badge maintenance">🛠️ Under Maintenance</span>` : ''}
+        ${isMaintenance ? `<span class="status-sub-badge maintenance">🛠️ Under Maintenance</span>` : ""}
       `;
       privContainer.appendChild(card);
     });
@@ -410,100 +483,205 @@ async function renderServicesFromBackend() {
 
 // Terminal Komut Yöneticisi
 function initCliAuth() {
-  const form = document.getElementById('cliForm');
-  const input = document.getElementById('cliInput');
+  const form = document.getElementById("cliForm");
+  const input = document.getElementById("cliInput");
   if (!form || !input) return;
 
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const rawCmd = input.value.trim();
     if (!rawCmd) return;
-    input.value = '';
+    input.value = "";
 
     appendTerminalLog(`$ ${rawCmd}`);
 
-    const parts = rawCmd.split(' ').filter(Boolean);
+    const parts = rawCmd.split(" ").filter(Boolean);
     const action = parts[0].toLowerCase();
 
-    if (action === 'login') {
-      if (parts[1] === '-a' || parts[1] === '--auto') {
+    if (action === "login") {
+      if (parts[1] === "-a" || parts[1] === "--auto") {
         appendTerminalLog(`[AUTH] Redirecting to login portal...`);
-        window.location.href = '/login';
+        window.location.href = "/login";
         return;
       }
 
       if (parts.length >= 3) {
         const username = parts[1];
-        const password = parts.slice(2).join(' ');
+        const password = parts.slice(2).join(" ");
 
         appendTerminalLog(`[AUTH] Authenticating as '${username}'...`);
 
         try {
-          const res = await fetch('/api/users/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identifier: username, password: password })
+          const res = await fetch("/api/users/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identifier: username, password: password }),
           });
           const data = await res.json();
 
           if (res.ok && data.token) {
-            localStorage.setItem('token', data.token);
-            appendTerminalLog(`[AUTH_OK] Welcome, ${username}! Refreshing telemetry...`, true);
+            localStorage.setItem("token", data.token);
+            appendTerminalLog(
+              `[AUTH_OK] Welcome, ${username}! Refreshing telemetry...`,
+              true,
+            );
             await checkActiveSession();
             startLiveFriendsSpotifySync();
           } else {
-            appendTerminalLog(`[AUTH_ERR] ${data.message || 'Invalid username or password.'}`, true);
+            appendTerminalLog(
+              `[AUTH_ERR] ${data.message || "Invalid username or password."}`,
+              true,
+            );
           }
         } catch (err) {
-          appendTerminalLog(`[AUTH_ERR] Connection failed: ${err.message}`, true);
+          appendTerminalLog(
+            `[AUTH_ERR] Connection failed: ${err.message}`,
+            true,
+          );
         }
         return;
       }
 
-      window.location.href = '/login';
-    }
-    else if (action === 'account') {
-      if (!currentSession.isLoggedIn) {
-        appendTerminalLog(`[AUTH_ERR] Login required to open account console.`, true);
-      } else {
-        window.location.href = '/account';
+      window.location.href = "/login";
+    } else if (action === "admin") {
+      if (
+        !currentSession.isLoggedIn ||
+        String(currentSession.role).toUpperCase() !== "ADMIN"
+      ) {
+        appendTerminalLog("[AUTH_ERR] Admin access required.", true);
+        return;
       }
-    }
-    else if (action === 'logout') {
-      try { await fetch('/api/users/logout', { method: 'POST', credentials: 'include' }); } catch (_) { }
-      localStorage.removeItem('token');
+
+      const subcommand = (parts[1] || "").toLowerCase();
+
+      if (!subcommand) {
+        window.location.href = "/admin/admin.html";
+        return;
+      }
+
+      try {
+        if (subcommand === "online") {
+          const response = await fetch("/api/admin/presence/online", {
+            credentials: "same-origin",
+            cache: "no-store",
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.message || "Request failed");
+          }
+
+          const users = result.data?.online || [];
+
+          appendTerminalLog(`[ADMIN] Currently online: ${users.length}`, true);
+
+          users.forEach((user) => {
+            appendTerminalLog(
+              `  ${user.user_name} | ${user.role} | ${user.activity?.page || "unknown page"}`,
+            );
+          });
+        } else if (subcommand === "logins") {
+          const requestedLimit = Number.parseInt(parts[2] || "20", 10);
+          const limit = Number.isFinite(requestedLimit)
+            ? Math.min(200, Math.max(1, requestedLimit))
+            : 20;
+
+          const response = await fetch(
+            `/api/admin/presence/logins?limit=${limit}`,
+            {
+              credentials: "same-origin",
+              cache: "no-store",
+            },
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.message || "Request failed");
+          }
+
+          const logins = result.data?.logins || [];
+
+          appendTerminalLog(
+            `[ADMIN] Latest ${logins.length} login records:`,
+            true,
+          );
+
+          logins.forEach((login) => {
+            appendTerminalLog(
+              `  ${login.user_name} | ${new Date(login.logged_in_at).toLocaleString()} | ${login.ip_address || "Unknown IP"}`,
+            );
+          });
+        } else {
+          appendTerminalLog(
+            "[ADMIN] Usage: admin | admin online | admin logins [count]",
+          );
+        }
+      } catch (error) {
+        appendTerminalLog(`[ADMIN_ERR] ${error.message}`, true);
+      }
+    } else if (action === "account") {
+      if (!currentSession.isLoggedIn) {
+        appendTerminalLog(
+          `[AUTH_ERR] Login required to open account console.`,
+          true,
+        );
+      } else {
+        window.location.href = "/account";
+      }
+    } else if (action === "logout") {
+      try {
+        await fetch("/api/users/logout", {
+          method: "POST",
+          credentials: "include",
+        });
+      } catch (_) {}
+      localStorage.removeItem("token");
       clearServicesCache();
       appendTerminalLog(`[AUTH] Session terminated. Redirecting...`);
       setTimeout(() => window.location.reload(), 400);
-    }
-    else if (action === 'clear') {
-      const history = document.getElementById('terminalHistory');
-      if (history) history.innerHTML = '';
+    } else if (action === "clear") {
+      const history = document.getElementById("terminalHistory");
+      if (history) history.innerHTML = "";
       appendTerminalLog(`[TERMINAL] Buffer cleared.`);
-    }
-    else if (action === 'help') {
+    } else if (action === "help") {
       appendTerminalLog(`COMMANDS:`);
-      appendTerminalLog(`  login <username> <password>  Direct terminal authentication`);
-      appendTerminalLog(`  login -a                     Open graphical login portal`);
+      appendTerminalLog(
+        `  login <username> <password>  Direct terminal authentication`,
+      );
+      appendTerminalLog(
+        `  login -a                     Open graphical login portal`,
+      );
       appendTerminalLog(`  account                      Open account settings`);
-      appendTerminalLog(`  whoami                       Display current node session`);
-      appendTerminalLog(`  logout                       Terminate cluster session`);
+      appendTerminalLog(
+        `  whoami                       Display current node session`,
+      );
+      appendTerminalLog(
+        `  logout                       Terminate cluster session`,
+      );
       appendTerminalLog(`  clear                        Clear terminal screen`);
-      appendTerminalLog(`  logs                         Start live server logs (admin only)`);
+      appendTerminalLog(
+        `  logs                         Start live server logs (admin only)`,
+      );
       appendTerminalLog(`  logs stop                    Stop live server logs`);
-    }
-    else if (action === 'whoami') {
-      appendTerminalLog(`USER: ${currentSession.username} | ROLE: ${currentSession.role} | NODE: ${currentSession.nodeId}`);
-    }
-    else if (action === 'logs') {
-      if (parts[1]?.toLowerCase() === 'stop') {
+      appendTerminalLog(`  admin                        Open admin console`);
+      appendTerminalLog(`  admin online                 List online users`);
+      appendTerminalLog(`  admin logins [count]         Show recent logins`);
+    } else if (action === "whoami") {
+      appendTerminalLog(
+        `USER: ${currentSession.username} | ROLE: ${currentSession.role} | NODE: ${currentSession.nodeId}`,
+      );
+    } else if (action === "logs") {
+      if (parts[1]?.toLowerCase() === "stop") {
         stopAdminLogStream();
       } else {
         startAdminLogStream();
       }
-    }
-    else {
-      appendTerminalLog(`[ERR] Command not found: ${action}. Type 'help' for available commands.`);
+    } else {
+      appendTerminalLog(
+        `[ERR] Command not found: ${action}. Type 'help' for available commands.`,
+      );
     }
   });
 }
@@ -513,13 +691,13 @@ function initTimestamps() {
     const now = new Date();
     const formatOffset = (sec) => {
       const d = new Date(now.getTime() - sec * 1000);
-      return d.toTimeString().split(' ')[0];
+      return d.toTimeString().split(" ")[0];
     };
 
-    const t1 = document.getElementById('logTime1');
-    const t2 = document.getElementById('logTime2');
-    const t3 = document.getElementById('logTime3');
-    const t4 = document.getElementById('logTime4');
+    const t1 = document.getElementById("logTime1");
+    const t2 = document.getElementById("logTime2");
+    const t3 = document.getElementById("logTime3");
+    const t4 = document.getElementById("logTime4");
 
     if (t1) t1.textContent = formatOffset(15);
     if (t2) t2.textContent = formatOffset(12);
@@ -532,54 +710,54 @@ function initTimestamps() {
 }
 
 function initScrollOpacityController() {
-  const bgLayer = document.getElementById('bgGridLayer');
-  window.addEventListener('scroll', () => {
+  const bgLayer = document.getElementById("bgGridLayer");
+  window.addEventListener("scroll", () => {
     if (window.scrollY > 80) {
-      bgLayer?.classList.add('scrolled-down');
+      bgLayer?.classList.add("scrolled-down");
     } else {
-      bgLayer?.classList.remove('scrolled-down');
+      bgLayer?.classList.remove("scrolled-down");
     }
   });
 }
 
 function scrollToTerminalBottom() {
-  const history = document.getElementById('terminalHistory');
+  const history = document.getElementById("terminalHistory");
   if (history) {
     history.scrollTop = history.scrollHeight;
   }
 }
 
 function appendServerLog(log) {
-  const history = document.getElementById('terminalHistory');
+  const history = document.getElementById("terminalHistory");
   if (!history) return;
 
-  const entry = document.createElement('div');
-  entry.className = 'log-entry';
+  const entry = document.createElement("div");
+  entry.className = "log-entry";
 
-  const time = document.createElement('span');
-  time.className = 'log-time';
+  const time = document.createElement("span");
+  time.className = "log-time";
   time.textContent = log.timestamp
-    ? new Date(log.timestamp).toLocaleTimeString('de-DE')
-    : new Date().toLocaleTimeString('de-DE');
+    ? new Date(log.timestamp).toLocaleTimeString("de-DE")
+    : new Date().toLocaleTimeString("de-DE");
 
-  const level = String(log.level || 'INFO').toUpperCase();
-  const category = log.category || 'SERVER';
-  const message = log.message ?? log.text ?? '';
+  const level = String(log.level || "INFO").toUpperCase();
+  const category = log.category || "SERVER";
+  const message = log.message ?? log.text ?? "";
 
   // Sunucudan gelen metni HTML olarak çalıştırma.
-  const content = document.createElement('span');
-  content.textContent =
-    `[${level}] [${category}] ${typeof message === 'string'
-      ? message
-      : JSON.stringify(message)}`;
+  const content = document.createElement("span");
+  content.textContent = `[${level}] [${category}] ${
+    typeof message === "string" ? message : JSON.stringify(message)
+  }`;
 
-  entry.append(time, document.createTextNode(' '), content);
+  entry.append(time, document.createTextNode(" "), content);
 
   if (log.data !== undefined) {
-    const details = document.createElement('pre');
-    details.textContent = typeof log.data === 'string'
-      ? log.data
-      : JSON.stringify(log.data, null, 2);
+    const details = document.createElement("pre");
+    details.textContent =
+      typeof log.data === "string"
+        ? log.data
+        : JSON.stringify(log.data, null, 2);
 
     entry.appendChild(details);
   }
@@ -589,25 +767,25 @@ function appendServerLog(log) {
 }
 
 async function fetchAdminLogs() {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   if (!token) {
-    appendTerminalLog('[LOGS] Login required.', true);
+    appendTerminalLog("[LOGS] Login required.", true);
     stopAdminLogStream();
     return;
   }
 
   try {
-    const response = await fetch('/api/admin/logs?limit=100', {
+    const response = await fetch("/api/admin/logs?limit=100", {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     if (response.status === 401 || response.status === 403) {
       stopAdminLogStream();
       appendTerminalLog(
-        '[LOGS] Access denied. Admin privileges required.',
-        true
+        "[LOGS] Access denied. Admin privileges required.",
+        true,
       );
       return;
     }
@@ -615,7 +793,7 @@ async function fetchAdminLogs() {
     const result = await response.json();
 
     if (!response.ok || result.success !== true) {
-      throw new Error(result.message || 'Could not retrieve logs.');
+      throw new Error(result.message || "Could not retrieve logs.");
     }
 
     const logs = Array.isArray(result.logs) ? result.logs : [];
@@ -625,9 +803,7 @@ async function fetchAdminLogs() {
     adminLogFirstLoad = false;
 
     for (const log of visibleLogs) {
-      const key = log.id != null
-        ? String(log.id)
-        : JSON.stringify(log);
+      const key = log.id != null ? String(log.id) : JSON.stringify(log);
 
       if (adminLogSeen.has(key)) continue;
 
@@ -646,24 +822,23 @@ async function fetchAdminLogs() {
 }
 
 function startAdminLogStream() {
-  if (!currentSession.isLoggedIn ||
-    currentSession.role.toUpperCase() !== 'ADMIN') {
-    appendTerminalLog(
-      '[LOGS] Admin privileges required.',
-      true
-    );
+  if (
+    !currentSession.isLoggedIn ||
+    currentSession.role.toUpperCase() !== "ADMIN"
+  ) {
+    appendTerminalLog("[LOGS] Admin privileges required.", true);
     return;
   }
 
   if (adminLogPollTimer) {
-    appendTerminalLog('[LOGS] Stream is already running.');
+    appendTerminalLog("[LOGS] Stream is already running.");
     return;
   }
 
   adminLogSeen.clear();
   adminLogFirstLoad = true;
 
-  appendTerminalLog('[LOGS] Live server log stream started.', true);
+  appendTerminalLog("[LOGS] Live server log stream started.", true);
 
   fetchAdminLogs();
   adminLogPollTimer = setInterval(fetchAdminLogs, 2000);
@@ -675,16 +850,16 @@ function stopAdminLogStream() {
     adminLogPollTimer = null;
   }
 
-  appendTerminalLog('[LOGS] Live stream stopped.');
+  appendTerminalLog("[LOGS] Live stream stopped.");
 }
 
 export function appendTerminalLog(text, isHighlight = false) {
-  const history = document.getElementById('terminalHistory');
+  const history = document.getElementById("terminalHistory");
   if (!history) return;
 
-  const now = new Date().toTimeString().split(' ')[0];
-  const div = document.createElement('div');
-  div.className = 'log-entry';
+  const now = new Date().toTimeString().split(" ")[0];
+  const div = document.createElement("div");
+  div.className = "log-entry";
   div.innerHTML = `<span class="log-time">${now}</span> ${isHighlight ? `<span class="highlight">${text}</span>` : text}`;
 
   history.appendChild(div);
@@ -692,11 +867,11 @@ export function appendTerminalLog(text, isHighlight = false) {
 }
 
 function initLiveTelemetrySimulation() {
-  const restEl = document.getElementById('metricRest');
-  const poolEl = document.getElementById('metricPool');
-  const poolBar = document.getElementById('poolBar');
-  const ramEl = document.getElementById('metricRam');
-  const ramBar = document.getElementById('ramBar');
+  const restEl = document.getElementById("metricRest");
+  const poolEl = document.getElementById("metricPool");
+  const poolBar = document.getElementById("poolBar");
+  const ramEl = document.getElementById("metricRam");
+  const ramBar = document.getElementById("ramBar");
 
   setInterval(() => {
     if (restEl) {
@@ -723,20 +898,23 @@ function startLiveFriendsSpotifySync() {
   if (friendActivityPollTimer) clearInterval(friendActivityPollTimer);
 
   const fetchActivity = async () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
-      const res = await fetch('/api/spotify/friends-activity', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const res = await fetch("/api/spotify/friends-activity", {
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;
 
       const result = await res.json();
-      const activeFriends = (result.data || []).filter(item => item.isPlaying && item.albumArt);
+      const activeFriends = (result.data || []).filter(
+        (item) => item.isPlaying && item.albumArt,
+      );
 
       if (activeFriends.length > 0) {
-        const randomFriend = activeFriends[Math.floor(Math.random() * activeFriends.length)];
+        const randomFriend =
+          activeFriends[Math.floor(Math.random() * activeFriends.length)];
         currentActiveFriendActivity = randomFriend;
       } else {
         currentActiveFriendActivity = null;
@@ -744,7 +922,7 @@ function startLiveFriendsSpotifySync() {
 
       renderCurrentGrid();
     } catch (err) {
-      console.warn('Spotify friend activity polling offline:', err);
+      console.warn("Spotify friend activity polling offline:", err);
     }
   };
 
@@ -773,7 +951,7 @@ function initResponsiveFixedGrid() {
   render();
 
   let resizeTimer;
-  window.addEventListener('resize', () => {
+  window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(render, 150);
   });
@@ -786,7 +964,7 @@ function renderDesktopGrid() {
     [0, 0, 1, 2, 1, 1],
     [0, 0, 0, 2, 1],
     [0, 0, 0, 1, 2],
-    [0, 0, 0, 0, 1]
+    [0, 0, 0, 0, 1],
   ];
 
   currentGridMeta = {
@@ -802,11 +980,11 @@ function renderTabletGrid() {
     [0, 1, 2, 1, 1],
     [0, 0, 2, 2],
     [0, 0, 1, 2],
-    [0, 0, 0, 1]
+    [0, 0, 0, 1],
   ];
 
   currentGridMeta = {
-    "0-2": { tag: "▲ REST", dot: true }
+    "0-2": { tag: "▲ REST", dot: true },
   };
 
   drawFixedGrid(currentGridBlueprint, currentGridMeta);
@@ -816,7 +994,7 @@ function renderMobileGrid() {
   currentGridBlueprint = [
     [0, 1, 2, 1],
     [0, 2, 2],
-    [0, 1, 2]
+    [0, 1, 2],
   ];
 
   currentGridMeta = {};
@@ -825,10 +1003,10 @@ function renderMobileGrid() {
 
 // Akıllı Çift Kareli (Dual-Tile) Spotify Izgara Çizimi
 function drawFixedGrid(blueprint, meta) {
-  const container = document.getElementById('cornerGrid');
+  const container = document.getElementById("cornerGrid");
   if (!container) return;
 
-  container.innerHTML = '';
+  container.innerHTML = "";
 
   let spotifyArtKey = null;
   let spotifyInfoKey = null;
@@ -839,17 +1017,20 @@ function drawFixedGrid(blueprint, meta) {
     blueprint.forEach((row, rIdx) => {
       for (let cIdx = 0; cIdx < row.length - 1; cIdx++) {
         if (row[cIdx] !== 0 && row[cIdx + 1] !== 0) {
-          const priority = (rIdx >= 1 && rIdx <= 3) ? 2 : 1;
+          const priority = rIdx >= 1 && rIdx <= 3 ? 2 : 1;
           pairCandidates.push({ rIdx, cIdx, priority });
         }
       }
     });
 
     if (pairCandidates.length > 0) {
-      const highPriorityPairs = pairCandidates.filter(p => p.priority === 2);
-      const chosenPair = highPriorityPairs.length > 0
-        ? highPriorityPairs[Math.floor(Math.random() * highPriorityPairs.length)]
-        : pairCandidates[Math.floor(Math.random() * pairCandidates.length)];
+      const highPriorityPairs = pairCandidates.filter((p) => p.priority === 2);
+      const chosenPair =
+        highPriorityPairs.length > 0
+          ? highPriorityPairs[
+              Math.floor(Math.random() * highPriorityPairs.length)
+            ]
+          : pairCandidates[Math.floor(Math.random() * pairCandidates.length)];
 
       spotifyArtKey = `${chosenPair.rIdx}-${chosenPair.cIdx}`;
       spotifyInfoKey = `${chosenPair.rIdx}-${chosenPair.cIdx + 1}`;
@@ -857,20 +1038,22 @@ function drawFixedGrid(blueprint, meta) {
   }
 
   blueprint.forEach((row, rIdx) => {
-    const rowEl = document.createElement('div');
-    rowEl.className = 'corner-row';
+    const rowEl = document.createElement("div");
+    rowEl.className = "corner-row";
 
     row.forEach((cellType, cIdx) => {
-      const cell = document.createElement('div');
+      const cell = document.createElement("div");
       const metaKey = `${rIdx}-${cIdx}`;
 
       // Albüm Kapağı Karesi
       if (metaKey === spotifyArtKey && currentActiveFriendActivity) {
         const act = currentActiveFriendActivity;
-        cell.className = 'corner-unit solid-box spotify-art-tile';
+        cell.className = "corner-unit solid-box spotify-art-tile";
         cell.style.backgroundImage = `url('${act.albumArt}')`;
         cell.title = `Spotify: ${act.title} - ${act.artist}`;
-        cell.onclick = () => { if (act.songUrl) window.open(act.songUrl, '_blank'); };
+        cell.onclick = () => {
+          if (act.songUrl) window.open(act.songUrl, "_blank");
+        };
 
         cell.innerHTML = `
           <div class="spotify-art-badge">
@@ -885,9 +1068,11 @@ function drawFixedGrid(blueprint, meta) {
       // Yanındaki Kullanıcı ve Şarkı Bilgi Karesi
       else if (metaKey === spotifyInfoKey && currentActiveFriendActivity) {
         const act = currentActiveFriendActivity;
-        cell.className = 'corner-unit solid-box spotify-info-tile';
+        cell.className = "corner-unit solid-box spotify-info-tile";
         cell.title = `Listening: ${act.title} - ${act.artist}`;
-        cell.onclick = () => { if (act.songUrl) window.open(act.songUrl, '_blank'); };
+        cell.onclick = () => {
+          if (act.songUrl) window.open(act.songUrl, "_blank");
+        };
 
         cell.innerHTML = `
           <div class="sp-info-header">
@@ -900,22 +1085,22 @@ function drawFixedGrid(blueprint, meta) {
           </div>
           <div class="sp-track-block">
             <span class="sp-song-title">${act.title}</span>
-            <span class="sp-artist-name">${act.artist || 'Spotify'}</span>
+            <span class="sp-artist-name">${act.artist || "Spotify"}</span>
           </div>
         `;
       }
       // Standart Bloklar
       else {
         if (cellType === 0) {
-          cell.className = 'corner-unit spacer';
+          cell.className = "corner-unit spacer";
         } else if (cellType === 1) {
-          cell.className = 'corner-unit wireframe';
+          cell.className = "corner-unit wireframe";
         } else if (cellType === 2) {
-          cell.className = 'corner-unit solid-box';
+          cell.className = "corner-unit solid-box";
           if (meta[metaKey]) {
             cell.innerHTML = `
               <span class="subtle-tag">${meta[metaKey].tag}</span>
-              ${meta[metaKey].dot ? '<span class="subtle-dot"></span>' : ''}
+              ${meta[metaKey].dot ? '<span class="subtle-dot"></span>' : ""}
             `;
           }
         }
@@ -930,42 +1115,42 @@ function drawFixedGrid(blueprint, meta) {
 
 //Guide
 function initQuickGuide() {
-  const backdrop = document.getElementById('helpTourBackdrop');
-  const openBtn = document.getElementById('helpTourOpenBtn');
-  const closeBtn = document.getElementById('tourCloseBtn');
-  const skipBtn = document.getElementById('tourSkipBtn');
-  const nextBtn = document.getElementById('tourNextBtn');
+  const backdrop = document.getElementById("helpTourBackdrop");
+  const openBtn = document.getElementById("helpTourOpenBtn");
+  const closeBtn = document.getElementById("tourCloseBtn");
+  const skipBtn = document.getElementById("tourSkipBtn");
+  const nextBtn = document.getElementById("tourNextBtn");
 
   if (!backdrop || !openBtn || !nextBtn) return;
 
   const steps = [
     {
-      title: 'Welcome to sys-cluster',
-      body: 'This page is a themed service console. The guide is optional and can be opened again from QUICK GUIDE at any time.'
+      title: "Welcome to sys-cluster",
+      body: "This page is a themed service console. The guide is optional and can be opened again from QUICK GUIDE at any time.",
     },
     {
-      title: 'Choose your theme',
-      body: 'The large THEME button opens the theme gallery. Search by name or use categories such as Retro & Gaming; choose a card to apply it.',
-      target: '#themeModalOpenBtn'
+      title: "Choose your theme",
+      body: "The large THEME button opens the theme gallery. Search by name or use categories such as Retro & Gaming; choose a card to apply it.",
+      target: "#themeModalOpenBtn",
     },
     {
-      title: 'Explore services',
-      body: 'Scroll down to the service directory. Each card describes a module; some may require login or a specific role.',
-      target: '#servicesSection'
+      title: "Explore services",
+      body: "Scroll down to the service directory. Each card describes a module; some may require login or a specific role.",
+      target: "#servicesSection",
     },
     {
-      title: 'Account and terminal',
-      body: 'Use the terminal prompt for commands like help, login -a, account, whoami and logout. You can also use the account/login buttons when shown.',
-      target: '#cliTerminalViewport'
-    }
+      title: "Account and terminal",
+      body: "Use the terminal prompt for commands like help, login -a, account, whoami and logout. You can also use the account/login buttons when shown.",
+      target: "#cliTerminalViewport",
+    },
   ];
 
   let step = 0;
 
-  const title = document.getElementById('tourTitle');
-  const body = document.getElementById('tourBody');
-  const label = document.getElementById('tourStepLabel');
-  const fill = document.getElementById('tourProgressFill');
+  const title = document.getElementById("tourTitle");
+  const body = document.getElementById("tourBody");
+  const label = document.getElementById("tourStepLabel");
+  const fill = document.getElementById("tourProgressFill");
 
   function renderStep() {
     const item = steps[step];
@@ -973,27 +1158,19 @@ function initQuickGuide() {
     title.textContent = item.title;
     body.textContent = item.body;
 
-    label.textContent =
-      `QUICK GUIDE · ${step + 1} / ${steps.length}`;
+    label.textContent = `QUICK GUIDE · ${step + 1} / ${steps.length}`;
 
-    fill.style.width =
-      `${((step + 1) / steps.length) * 100}%`;
+    fill.style.width = `${((step + 1) / steps.length) * 100}%`;
 
-    nextBtn.textContent =
-      step === steps.length - 1
-        ? 'Done ✓'
-        : 'Next →';
+    nextBtn.textContent = step === steps.length - 1 ? "Done ✓" : "Next →";
   }
 
   function closeTour(markSeen = false) {
     backdrop.hidden = true;
-    document.body.classList.remove('tour-open');
+    document.body.classList.remove("tour-open");
 
     if (markSeen) {
-      localStorage.setItem(
-        'syscluster_quick_guide_seen',
-        '1'
-      );
+      localStorage.setItem("syscluster_quick_guide_seen", "1");
     }
   }
 
@@ -1003,22 +1180,22 @@ function initQuickGuide() {
     renderStep();
 
     backdrop.hidden = false;
-    document.body.classList.add('tour-open');
+    document.body.classList.add("tour-open");
 
     nextBtn.focus();
   }
 
-  openBtn.addEventListener('click', openTour);
+  openBtn.addEventListener("click", openTour);
 
-  closeBtn?.addEventListener('click', () => {
+  closeBtn?.addEventListener("click", () => {
     closeTour(true);
   });
 
-  skipBtn?.addEventListener('click', () => {
+  skipBtn?.addEventListener("click", () => {
     closeTour(true);
   });
 
-  nextBtn.addEventListener('click', () => {
+  nextBtn.addEventListener("click", () => {
     if (step < steps.length - 1) {
       step++;
       renderStep();
@@ -1027,161 +1204,143 @@ function initQuickGuide() {
     }
   });
 
-  backdrop.addEventListener('click', event => {
+  backdrop.addEventListener("click", (event) => {
     if (event.target === backdrop) {
       closeTour();
     }
   });
 
-  document.addEventListener('keydown', event => {
-    if (
-      event.key === 'Escape' &&
-      !backdrop.hidden
-    ) {
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !backdrop.hidden) {
       closeTour();
     }
   });
 }
 
 function initThemeFeatureRail() {
-  const rail = document.getElementById('themeFeatureRail');
-  const cards = document.getElementById('themeFeatureCards');
-  const title = document.getElementById('themeFeatureTitle');
-  const intro = document.getElementById('themeFeatureIntro');
+  const rail = document.getElementById("themeFeatureRail");
+  const cards = document.getElementById("themeFeatureCards");
+  const title = document.getElementById("themeFeatureTitle");
+  const intro = document.getElementById("themeFeatureIntro");
 
   if (!rail || !cards) return;
 
   const catalog = [
     {
       match: /minecraft|voxel/i,
-      name: 'Minecraft mode',
-      intro: 'Voxel-inspired extras for this theme.',
+      name: "Minecraft mode",
+      intro: "Voxel-inspired extras for this theme.",
 
       items: [
         {
-          icon: '▦',
-          title: 'Voxel explorer',
-          text: 'Jump to the animated grid and explore the block-style environment.',
+          icon: "▦",
+          title: "Voxel explorer",
+          text: "Jump to the animated grid and explore the block-style environment.",
 
           action: () => {
-            document
-              .getElementById('cornerGrid')
-              ?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-              });
-          }
+            document.getElementById("cornerGrid")?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          },
         },
         {
-          icon: '⌘',
-          title: 'Command console',
-          text: 'Try the built-in terminal commands.',
+          icon: "⌘",
+          title: "Command console",
+          text: "Try the built-in terminal commands.",
 
           action: () => {
-            document.getElementById('cliInput')?.focus();
+            document.getElementById("cliInput")?.focus();
 
-            document
-              .getElementById('cliTerminalViewport')
-              ?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-              });
-          }
-        }
-      ]
+            document.getElementById("cliTerminalViewport")?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          },
+        },
+      ],
     },
 
     {
       match: /fnaf|five.?nights|horror/i,
-      name: 'Night shift features',
-      intro: 'A few quick actions that fit the horror-console theme.',
+      name: "Night shift features",
+      intro: "A few quick actions that fit the horror-console theme.",
 
       items: [
         {
-          icon: '◉',
-          title: 'System status',
-          text: 'Jump to the live telemetry readout.',
+          icon: "◉",
+          title: "System status",
+          text: "Jump to the live telemetry readout.",
 
           action: () => {
-            document
-              .querySelector('.telemetry-bar')
-              ?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-              });
-          }
+            document.querySelector(".telemetry-bar")?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          },
         },
         {
-          icon: '⌁',
-          title: 'Signal terminal',
-          text: 'Focus the console input and inspect available commands.',
+          icon: "⌁",
+          title: "Signal terminal",
+          text: "Focus the console input and inspect available commands.",
 
           action: () => {
-            document.getElementById('cliInput')?.focus();
+            document.getElementById("cliInput")?.focus();
 
-            document
-              .getElementById('cliTerminalViewport')
-              ?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-              });
-          }
-        }
-      ]
+            document.getElementById("cliTerminalViewport")?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          },
+        },
+      ],
     },
 
     {
       match: /gta|grand.?theft|racing|cyberpunk|retro|gaming|arcade/i,
-      name: 'Arcade shortcuts',
-      intro: 'Theme-related shortcuts are collected here while a gaming theme is active.',
+      name: "Arcade shortcuts",
+      intro:
+        "Theme-related shortcuts are collected here while a gaming theme is active.",
 
       items: [
         {
-          icon: '▤',
-          title: 'Browse modules',
-          text: 'Find the services and interactive modules available to your account.',
+          icon: "▤",
+          title: "Browse modules",
+          text: "Find the services and interactive modules available to your account.",
 
           action: () => {
-            document
-              .getElementById('servicesSection')
-              ?.scrollIntoView({
-                behavior: 'smooth'
-              });
-          }
+            document.getElementById("servicesSection")?.scrollIntoView({
+              behavior: "smooth",
+            });
+          },
         },
         {
-          icon: '⌘',
-          title: 'Open console',
-          text: 'Focus the terminal and see the help command list.',
+          icon: "⌘",
+          title: "Open console",
+          text: "Focus the terminal and see the help command list.",
 
           action: () => {
-            document.getElementById('cliInput')?.focus();
+            document.getElementById("cliInput")?.focus();
 
-            document
-              .getElementById('cliTerminalViewport')
-              ?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-              });
-          }
-        }
-      ]
-    }
+            document.getElementById("cliTerminalViewport")?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          },
+        },
+      ],
+    },
   ];
 
   function update() {
-    const themeId =
-      document.documentElement.dataset.theme || '';
+    const themeId = document.documentElement.dataset.theme || "";
 
     const themeLabel =
-      document.getElementById('currentThemeName')
-        ?.textContent || '';
+      document.getElementById("currentThemeName")?.textContent || "";
 
     const combined = `${themeId} ${themeLabel}`;
 
-    const entry = catalog.find(item =>
-      item.match.test(combined)
-    );
+    const entry = catalog.find((item) => item.match.test(combined));
 
     // Bu temaya özel özellik yoksa bölümü gizle.
     if (!entry) {
@@ -1195,34 +1354,29 @@ function initThemeFeatureRail() {
 
     cards.replaceChildren();
 
-    entry.items.forEach(item => {
-      const button = document.createElement('button');
+    entry.items.forEach((item) => {
+      const button = document.createElement("button");
 
-      button.type = 'button';
-      button.className = 'theme-feature-card';
+      button.type = "button";
+      button.className = "theme-feature-card";
 
-      const icon = document.createElement('span');
-      icon.className = 'theme-feature-icon';
+      const icon = document.createElement("span");
+      icon.className = "theme-feature-icon";
       icon.textContent = item.icon;
 
-      const heading = document.createElement('strong');
+      const heading = document.createElement("strong");
       heading.textContent = item.title;
 
-      const description = document.createElement('span');
+      const description = document.createElement("span");
       description.textContent = item.text;
 
-      const action = document.createElement('span');
-      action.className = 'theme-feature-action';
-      action.textContent = 'Open →';
+      const action = document.createElement("span");
+      action.className = "theme-feature-action";
+      action.textContent = "Open →";
 
-      button.append(
-        icon,
-        heading,
-        description,
-        action
-      );
+      button.append(icon, heading, description, action);
 
-      button.addEventListener('click', item.action);
+      button.addEventListener("click", item.action);
 
       cards.appendChild(button);
     });
@@ -1234,26 +1388,19 @@ function initThemeFeatureRail() {
   update();
 
   // Tema değiştiğinde özellikleri güncelle.
-  new MutationObserver(update).observe(
-    document.documentElement,
-    {
-      attributes: true,
-      attributeFilter: ['data-theme']
-    }
-  );
+  new MutationObserver(update).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
 
   // Görünen tema adını da takip et.
-  const themeName =
-    document.getElementById('currentThemeName');
+  const themeName = document.getElementById("currentThemeName");
 
   if (themeName) {
-    new MutationObserver(update).observe(
-      themeName,
-      {
-        childList: true,
-        characterData: true,
-        subtree: true
-      }
-    );
+    new MutationObserver(update).observe(themeName, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
   }
 }

@@ -9,6 +9,8 @@ import {
   archiveAdminGame
 } from '../controllers/adminGamesController.js';
 
+
+
 const router = express.Router();
 router.use(protect, restrictTo('ADMIN'));
 

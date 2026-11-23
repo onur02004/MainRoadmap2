@@ -1,132 +1,418 @@
 <!doctype html>
 <html lang="tr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SongShare · Admin Console</title>
-  <link rel="stylesheet" href="/admin/admin.css">
-  <script src="/admin/admin.js" defer></script>
-</head>
-<body>
-  <div class="shell">
-    <aside class="sidebar">
-      <a class="brand" href="/"><span class="brand-icon">S</span><span>SongShare<small>ADMIN CONSOLE</small></span></a>
-      <div class="nav-label">MANAGEMENT</div>
-      <button class="nav-item active" type="button" data-view="users"><span>♙</span> Users <span class="nav-count" id="userNavCount">CRUD</span></button>
-      <button class="nav-item" type="button" data-view="services"><span>▦</span> Services <span class="nav-count" id="serviceNavCount">—</span></button>
-      <div class="sidebar-foot"><span class="online-dot"></span><span>Secure admin session</span><a href="/">← Back to SongShare</a></div>
-    </aside>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SongShare · Admin Console</title>
+    <link rel="stylesheet" href="/admin/admin.css" />
+    <link rel="stylesheet" href="/admin/presence.css" />
 
-    <main class="main">
-      <header class="header">
-        <div>
-          <div class="eyebrow">SONGSHARE / ADMIN</div>
-          <h1 id="pageTitle">User management</h1>
-          <p id="pageDescription">Create accounts and edit existing user details and permissions.</p>
+    <script src="/admin/admin.js" defer></script>
+    <script src="/admin/presence.js" defer></script>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <a class="brand" href="/"
+          ><span class="brand-icon">S</span
+          ><span>SongShare<small>ADMIN CONSOLE</small></span></a
+        >
+        <div class="nav-label">MANAGEMENT</div>
+        <button class="nav-item active" type="button" data-view="home">
+          <span>⌂</span> Home
+        </button>
+        <button class="nav-item" type="button" data-view="users">
+          <span>♙</span> Users
+          <span class="nav-count" id="userNavCount">CRUD</span>
+        </button>
+        <button class="nav-item" type="button" data-view="services">
+          <span>▦</span> Services
+          <span class="nav-count" id="serviceNavCount">—</span>
+        </button>
+        <div class="sidebar-foot">
+          <span class="online-dot"></span><span>Secure admin session</span
+          ><a href="/">← Back to SongShare</a>
         </div>
-        <button id="createBtn" class="primary" type="button">＋ Create user</button>
-      </header>
+      </aside>
 
-      <div id="notice" class="notice" hidden></div>
+      <main class="main">
+        <header class="header">
+          <div>
+            <div class="eyebrow">SONGSHARE / ADMIN</div>
+            <h1 id="pageTitle">User management</h1>
+            <p id="pageDescription">
+              Create accounts and edit existing user details and permissions.
+            </p>
+          </div>
+          <button id="createBtn" class="primary" type="button">
+            ＋ Create user
+          </button>
+        </header>
 
-      <section id="userView">
-        <section class="stats">
-          <div class="stat"><span>Matching users</span><strong id="totalCount">—</strong><small>Based on current filters</small></div>
-          <div class="stat"><span>Admins in results</span><strong id="adminCount">—</strong><small>Current page</small></div>
-          <div class="stat"><span>Verified emails</span><strong id="verifiedCount">—</strong><small>Current page</small></div>
-        </section>
+        <div id="notice" class="notice" hidden></div>
 
-        <section class="panel">
-          <div class="toolbar">
-            <div><h2>Users</h2><p>Find an account, edit profile fields or update its role.</p></div>
-            <div class="filters">
-              <input id="search" type="search" placeholder="Username, name or email…">
-              <select id="roleFilter"><option value="">All roles</option><option value="user">User</option><option value="moderator">Moderator</option><option value="admin">Admin</option></select>
+        <section id="homeView">
+          <section class="stats">
+            <div class="stat">
+              <span>Currently online</span>
+              <strong id="homeOnlineCount">—</strong>
+              <small>Connected users</small>
             </div>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>USER</th><th>EMAIL</th><th>ROLE</th><th>VERIFIED</th><th>JOINED</th><th></th></tr></thead>
-              <tbody id="users"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
-            </table>
-          </div>
-          <div class="pager"><span id="pageInfo">—</span><div><button id="prev" class="secondary" type="button">← Previous</button><button id="next" class="secondary" type="button">Next →</button></div></div>
-        </section>
-      </section>
 
-      <section id="serviceView" hidden>
-        <section class="stats">
-          <div class="stat"><span>Total services</span><strong id="serviceTotal">—</strong><small>All configured modules</small></div>
-          <div class="stat"><span>Active services</span><strong id="serviceActive">—</strong><small>Enabled services</small></div>
-          <div class="stat"><span>Maintenance</span><strong id="serviceInactive">—</strong><small>Disabled services</small></div>
-        </section>
-
-        <section class="panel">
-          <div class="toolbar">
-            <div><h2>Service directory</h2><p>Enable, disable, create or edit services.</p></div>
-            <div class="filters">
-              <input id="serviceSearch" type="search" placeholder="Search service…">
-              <select id="serviceStatusFilter">
-                <option value="">All statuses</option>
-                <option value="active">Active</option>
-                <option value="inactive">Maintenance</option>
-              </select>
+            <div class="stat">
+              <span>Recent logins</span>
+              <strong id="homeLoginCount">—</strong>
+              <small>Latest 15 records</small>
             </div>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>SERVICE</th><th>KEY / ROUTE</th><th>CATEGORY</th><th>ACCESS</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
-              <tbody id="services"><tr><td colspan="6" class="empty">Open Services to load the list.</td></tr></tbody>
-            </table>
-          </div>
+
+            <div class="stat">
+              <span>Activity</span>
+              <strong id="homeActivityStatus">—</strong>
+              <small>Live overview</small>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="toolbar">
+              <div>
+                <h2 id="homeListTitle">Currently online</h2>
+                <p id="homeListDescription">
+                  Users currently connected to the platform.
+                </p>
+              </div>
+              <span class="pill verified" id="homeRefreshLabel"> LIVE </span>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>USER</th>
+                    <th>ROLE</th>
+                    <th>ACTIVITY</th>
+                    <th>LAST SEEN / LOGIN</th>
+                  </tr>
+                </thead>
+                <tbody id="homeActivityRows">
+                  <tr>
+                    <td colspan="4" class="empty">Loading activity…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
         </section>
-      </section>
 
-      <footer>SongShare Admin · User and service management</footer>
-    </main>
-  </div>
+        <section id="userView">
+          <section class="stats">
+            <div class="stat">
+              <span>Matching users</span><strong id="totalCount">—</strong
+              ><small>Based on current filters</small>
+            </div>
+            <div class="stat">
+              <span>Admins in results</span><strong id="adminCount">—</strong
+              ><small>Current page</small>
+            </div>
+            <div class="stat">
+              <span>Verified emails</span><strong id="verifiedCount">—</strong
+              ><small>Current page</small>
+            </div>
+          </section>
 
-  <dialog id="userModal">
-    <form id="userForm">
-      <div class="modal-top"><div><div class="eyebrow" id="modalEyebrow">NEW ACCOUNT</div><h2 id="modalTitle">Create user</h2><p>Fields are saved directly to PostgreSQL.</p></div><button type="button" class="close" id="closeModal" aria-label="Close">×</button></div>
-      <input type="hidden" id="userId">
-      <div class="form-grid">
-        <label>Username<input id="user_name" name="user_name" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_]+" placeholder="username"></label>
-        <label>Email<input id="email" name="email" type="email" required placeholder="user@example.com"></label>
-        <label>Real name<input id="real_name" name="real_name" placeholder="Full name"></label>
-        <label>Telephone<input id="tel_nr" name="tel_nr" placeholder="+49…"></label>
-        <label>Role<select id="role" name="role"><option value="user">User</option><option value="moderator">Moderator</option><option value="admin">Admin</option></select></label>
-        <label>Relation<select id="relation" name="relation"><option value="normal">Normal</option><option value="friends">Friends</option><option value="acquaintance">Acquaintance</option><option value="family">Family</option><option value="business">Business</option></select></label>
-        <label class="full" id="passwordLabel">Password<input id="password" name="password" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters"><small id="passwordHint">Required when creating a user.</small></label>
-        <label class="check full"><input id="email_verified" type="checkbox"> Email verified</label>
-      </div>
-      <div class="modal-actions"><button type="button" id="cancelBtn" class="secondary">Cancel</button><button type="submit" id="saveBtn" class="primary">Create user</button></div>
-    </form>
-  </dialog>
+          <section class="panel">
+            <div class="toolbar">
+              <div>
+                <h2>Users</h2>
+                <p>Find an account, edit profile fields or update its role.</p>
+              </div>
+              <div class="filters">
+                <input
+                  id="search"
+                  type="search"
+                  placeholder="Username, name or email…"
+                />
+                <select id="roleFilter">
+                  <option value="">All roles</option>
+                  <option value="user">User</option>
+                  <option value="moderator">Moderator</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>USER</th>
+                    <th>EMAIL</th>
+                    <th>ROLE</th>
+                    <th>VERIFIED</th>
+                    <th>JOINED</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="users">
+                  <tr>
+                    <td colspan="6" class="empty">Loading…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pager">
+              <span id="pageInfo">—</span>
+              <div>
+                <button id="prev" class="secondary" type="button">
+                  ← Previous</button
+                ><button id="next" class="secondary" type="button">
+                  Next →
+                </button>
+              </div>
+            </div>
+          </section>
+        </section>
 
-  <dialog id="serviceModal">
-    <form id="serviceForm">
-      <div class="modal-top">
-        <div><div class="eyebrow" id="serviceModalEyebrow">NEW SERVICE</div><h2 id="serviceModalTitle">Create service</h2><p>Changes are saved in cluster_services.</p></div>
-        <button type="button" class="close" id="closeServiceModal" aria-label="Close">×</button>
-      </div>
-      <input type="hidden" id="serviceId">
-      <div class="form-grid">
-        <label>Service key<input id="service_key" required pattern="[A-Za-z0-9_-]{2,80}" maxlength="80" placeholder="my-service"><small>Unique key used by the application.</small></label>
-        <label>Tag<input id="service_tag" required maxlength="120" placeholder="MY_SERVICE"></label>
-        <label>Title<input id="service_title" required maxlength="160" placeholder="My service"></label>
-        <label>Icon<input id="service_icon" maxlength="120" placeholder="⌘"></label>
-        <label class="full">Description<input id="service_description" placeholder="What does this service do?"></label>
-        <label>Route<input id="service_route" required placeholder="/my-service"></label>
-        <label>Category<select id="service_category" required><option value="core">Core</option><option value="privileged">Privileged</option></select></label>
-        <label>Display order<input id="service_order" type="number" step="1" value="0" required></label>
-        <label class="check"><input id="service_active" type="checkbox" checked> Active</label>
-        <label class="check"><input id="service_auth" type="checkbox"> Requires login</label>
-        <label class="full">Allowed roles<small>Comma-separated, e.g. GUEST, USER, ADMIN or *</small><input id="service_roles" placeholder="GUEST, USER, ADMIN"></label>
-        <label class="full">Allowed user IDs / usernames<small>Comma-separated user UUIDs or usernames.</small><input id="service_users" placeholder="username, UUID"></label>
-      </div>
-      <div class="modal-actions"><button type="button" id="cancelServiceBtn" class="secondary">Cancel</button><button type="submit" id="saveServiceBtn" class="primary">Create service</button></div>
-    </form>
-  </dialog>
-</body>
+        <section id="serviceView" hidden>
+          <section class="stats">
+            <div class="stat">
+              <span>Total services</span><strong id="serviceTotal">—</strong
+              ><small>All configured modules</small>
+            </div>
+            <div class="stat">
+              <span>Active services</span><strong id="serviceActive">—</strong
+              ><small>Enabled services</small>
+            </div>
+            <div class="stat">
+              <span>Maintenance</span><strong id="serviceInactive">—</strong
+              ><small>Disabled services</small>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="toolbar">
+              <div>
+                <h2>Service directory</h2>
+                <p>Enable, disable, create or edit services.</p>
+              </div>
+              <div class="filters">
+                <input
+                  id="serviceSearch"
+                  type="search"
+                  placeholder="Search service…"
+                />
+                <select id="serviceStatusFilter">
+                  <option value="">All statuses</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Maintenance</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>SERVICE</th>
+                    <th>KEY / ROUTE</th>
+                    <th>CATEGORY</th>
+                    <th>ACCESS</th>
+                    <th>STATUS</th>
+                    <th>ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody id="services">
+                  <tr>
+                    <td colspan="6" class="empty">
+                      Open Services to load the list.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <footer>SongShare Admin · User and service management</footer>
+      </main>
+    </div>
+
+    <dialog id="userModal">
+      <form id="userForm">
+        <div class="modal-top">
+          <div>
+            <div class="eyebrow" id="modalEyebrow">NEW ACCOUNT</div>
+            <h2 id="modalTitle">Create user</h2>
+            <p>Fields are saved directly to PostgreSQL.</p>
+          </div>
+          <button
+            type="button"
+            class="close"
+            id="closeModal"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <input type="hidden" id="userId" />
+        <div class="form-grid">
+          <label
+            >Username<input
+              id="user_name"
+              name="user_name"
+              required
+              minlength="3"
+              maxlength="32"
+              pattern="[A-Za-z0-9_]+"
+              placeholder="username"
+          /></label>
+          <label
+            >Email<input
+              id="email"
+              name="email"
+              type="email"
+              required
+              placeholder="user@example.com"
+          /></label>
+          <label
+            >Real name<input
+              id="real_name"
+              name="real_name"
+              placeholder="Full name"
+          /></label>
+          <label
+            >Telephone<input id="tel_nr" name="tel_nr" placeholder="+49…"
+          /></label>
+          <label
+            >Role<select id="role" name="role">
+              <option value="user">User</option>
+              <option value="moderator">Moderator</option>
+              <option value="admin">Admin</option>
+            </select></label
+          >
+          <label
+            >Relation<select id="relation" name="relation">
+              <option value="normal">Normal</option>
+              <option value="friends">Friends</option>
+              <option value="acquaintance">Acquaintance</option>
+              <option value="family">Family</option>
+              <option value="business">Business</option>
+            </select></label
+          >
+          <label class="full" id="passwordLabel"
+            >Password<input
+              id="password"
+              name="password"
+              type="password"
+              minlength="8"
+              autocomplete="new-password"
+              placeholder="At least 8 characters"
+            /><small id="passwordHint"
+              >Required when creating a user.</small
+            ></label
+          >
+          <label class="check full"
+            ><input id="email_verified" type="checkbox" /> Email verified</label
+          >
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancelBtn" class="secondary">Cancel</button
+          ><button type="submit" id="saveBtn" class="primary">
+            Create user
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="serviceModal">
+      <form id="serviceForm">
+        <div class="modal-top">
+          <div>
+            <div class="eyebrow" id="serviceModalEyebrow">NEW SERVICE</div>
+            <h2 id="serviceModalTitle">Create service</h2>
+            <p>Changes are saved in cluster_services.</p>
+          </div>
+          <button
+            type="button"
+            class="close"
+            id="closeServiceModal"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <input type="hidden" id="serviceId" />
+        <div class="form-grid">
+          <label
+            >Service key<input
+              id="service_key"
+              required
+              pattern="[A-Za-z0-9_-]{2,80}"
+              maxlength="80"
+              placeholder="my-service"
+            /><small>Unique key used by the application.</small></label
+          >
+          <label
+            >Tag<input
+              id="service_tag"
+              required
+              maxlength="120"
+              placeholder="MY_SERVICE"
+          /></label>
+          <label
+            >Title<input
+              id="service_title"
+              required
+              maxlength="160"
+              placeholder="My service"
+          /></label>
+          <label
+            >Icon<input id="service_icon" maxlength="120" placeholder="⌘"
+          /></label>
+          <label class="full"
+            >Description<input
+              id="service_description"
+              placeholder="What does this service do?"
+          /></label>
+          <label
+            >Route<input id="service_route" required placeholder="/my-service"
+          /></label>
+          <label
+            >Category<select id="service_category" required>
+              <option value="core">Core</option>
+              <option value="privileged">Privileged</option>
+            </select></label
+          >
+          <label
+            >Display order<input
+              id="service_order"
+              type="number"
+              step="1"
+              value="0"
+              required
+          /></label>
+          <label class="check"
+            ><input id="service_active" type="checkbox" checked /> Active</label
+          >
+          <label class="check"
+            ><input id="service_auth" type="checkbox" /> Requires login</label
+          >
+          <label class="full"
+            >Allowed roles<small
+              >Comma-separated, e.g. GUEST, USER, ADMIN or *</small
+            ><input id="service_roles" placeholder="GUEST, USER, ADMIN"
+          /></label>
+          <label class="full"
+            >Allowed user IDs / usernames<small
+              >Comma-separated user UUIDs or usernames.</small
+            ><input id="service_users" placeholder="username, UUID"
+          /></label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancelServiceBtn" class="secondary">
+            Cancel</button
+          ><button type="submit" id="saveServiceBtn" class="primary">
+            Create service
+          </button>
+        </div>
+      </form>
+    </dialog>
+  </body>
 </html>
