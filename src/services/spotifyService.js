@@ -30,7 +30,8 @@ export const getAuthorizeURL = (state = '') => {
     'user-read-recently-played',
     'user-top-read',
     'user-read-private',
-    'user-read-email'
+    'user-read-email',
+    'user-library-read'
   ].join(' ');
 
   const params = new URLSearchParams({
@@ -138,10 +139,27 @@ export const getTopTracks = async (accessToken, timeRange = 'medium_term', limit
   });
 
   if (!res.ok) {
-    return { items: [] };
+    const error = new Error(`Spotify top tracks request failed (${res.status})`);
+    error.status = res.status;
+    throw error;
   }
 
   return await res.json();
+};
+
+
+/** Saved tracks (Spotify user's Liked Songs). */
+export const getSavedTracks = async (accessToken, limit = 30) => {
+  const safeLimit = Math.min(50, Math.max(1, Number(limit) || 30));
+  const res = await fetch(`https://api.spotify.com/v1/me/tracks?limit=${safeLimit}`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  if (!res.ok) {
+    const error = new Error(`Spotify saved tracks request failed (${res.status})`);
+    error.status = res.status;
+    throw error;
+  }
+  return res.json();
 };
 
 /**

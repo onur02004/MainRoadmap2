@@ -31,65 +31,67 @@ export const getLoginUrl = catchAsync(async (req, res, next) => {
  * 2. Spotify Callback: Token'ları user_spotify_accounts tablosuna kaydeder
  */
 export const callback = catchAsync(async (req, res, next) => {
+  const returnToAccount = (key, value = '1') => {
+    const params = new URLSearchParams({ [key]: value });
+    return res.redirect(`/songShare/songShare.html?${params.toString()}#account`);
+  };
+
   const { code, state, error } = req.query;
   const userId = req.user?.id || req.user?._id;
   const expectedState = req.cookies?.spotify_oauth_state;
   res.clearCookie('spotify_oauth_state', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/api/spotify/callback' });
 
-  if (error) return next(new AppError('Spotify yetkilendirmesi tamamlanmadı.', 400));
-  if (!userId || typeof code !== 'string' || typeof state !== 'string' || !expectedState) {
-    return next(new AppError('Geçersiz veya süresi dolmuş Spotify yetkilendirme isteği.', 400));
+  try {
+    if (error) return returnToAccount('spotify_error', error === 'access_denied' ? 'denied' : 'authorization');
+    if (!userId || typeof code !== 'string' || typeof state !== 'string' || !expectedState) {
+      return returnToAccount('spotify_error', 'session');
+    }
+    const supplied = Buffer.from(state);
+    const expected = Buffer.from(expectedState);
+    if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) {
+      return returnToAccount('spotify_error', 'state');
+    }
+
+    const tokenData = await spotifyService.getTokensFromCode(code);
+    if (!tokenData?.access_token || !Number.isFinite(Number(tokenData.expires_in))) {
+      console.error('[Spotify OAuth] Token exchange failed:', tokenData?.error || 'invalid_token_response');
+      return returnToAccount('spotify_error', tokenData?.error === 'invalid_grant' ? 'expired' : 'token');
+    }
+
+    const { access_token, refresh_token, expires_in } = tokenData;
+    if (!refresh_token) {
+      console.error('[Spotify OAuth] Initial token response did not include a refresh token.');
+      return returnToAccount('spotify_error', 'refresh');
+    }
+    const expiresAt = new Date(Date.now() + Number(expires_in) * 1000);
+    const profile = await spotifyService.getUserProfile(access_token);
+    if (!profile?.id) {
+      console.error('[Spotify OAuth] Spotify profile could not be loaded.');
+      return returnToAccount('spotify_error', 'profile');
+    }
+
+    await db.query(`
+      INSERT INTO user_spotify_accounts
+        (user_id, spotify_user_id, display_name, email, access_token, refresh_token, expires_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      ON CONFLICT (user_id) DO UPDATE SET
+        spotify_user_id = EXCLUDED.spotify_user_id,
+        display_name = EXCLUDED.display_name,
+        email = EXCLUDED.email,
+        access_token = EXCLUDED.access_token,
+        refresh_token = EXCLUDED.refresh_token,
+        expires_at = EXCLUDED.expires_at,
+        updated_at = NOW()
+    `, [
+      userId, profile.id, profile.display_name || null, profile.email || null,
+      encryptSpotifyToken(access_token), encryptSpotifyToken(refresh_token), expiresAt
+    ]);
+
+    return returnToAccount('spotify', 'connected');
+  } catch (oauthError) {
+    console.error('[Spotify OAuth] Callback failed:', oauthError?.message || oauthError);
+    return returnToAccount('spotify_error', 'server');
   }
-  const supplied = Buffer.from(state);
-  const expected = Buffer.from(expectedState);
-  if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) {
-    return next(new AppError('Spotify OAuth state doğrulaması başarısız.', 400));
-  }
-
-  const tokenData = await spotifyService.getTokensFromCode(code);
-
-  if (tokenData.error) {
-    return next(new AppError(tokenData.error_description || 'Token alınamadı', 400));
-  }
-
-  const { access_token, refresh_token, expires_in } = tokenData;
-  if (!access_token || !Number.isFinite(Number(expires_in))) return next(new AppError('Spotify token yanıtı geçersiz.', 502));
-  const expiresAt = new Date(Date.now() + Number(expires_in) * 1000);
-  const encryptedAccessToken = encryptSpotifyToken(access_token);
-  const encryptedRefreshToken = encryptSpotifyToken(refresh_token);
-
-  // Profil detaylarını al (opsiyonel)
-  const profile = await spotifyService.getUserProfile(access_token);
-
-  // user_spotify_accounts tablosuna UPSERT
-  const upsertQuery = `
-    INSERT INTO user_spotify_accounts 
-      (user_id, spotify_user_id, display_name, email, access_token, refresh_token, expires_at, updated_at)
-    VALUES 
-      ($1, $2, $3, $4, $5, $6, $7, NOW())
-    ON CONFLICT (user_id) 
-    DO UPDATE SET
-      spotify_user_id = EXCLUDED.spotify_user_id,
-      display_name = EXCLUDED.display_name,
-      email = EXCLUDED.email,
-      access_token = EXCLUDED.access_token,
-      refresh_token = COALESCE(EXCLUDED.refresh_token, user_spotify_accounts.refresh_token),
-      expires_at = EXCLUDED.expires_at,
-      updated_at = NOW();
-  `;
-
-  await db.query(upsertQuery, [
-    userId,
-    profile?.id || null,
-    profile?.display_name || null,
-    profile?.email || null,
-    encryptedAccessToken,
-    encryptedRefreshToken,
-    expiresAt
-  ]);
-
-  // Giriş tamamlandıktan sonra sayfaya yönlendir
-  res.redirect('/spotifyStatus.html?spotify=connected');
 });
 
 /**
@@ -188,18 +190,52 @@ export const getTopTracks = catchAsync(async (req, res, next) => {
     return next(new AppError('Spotify hesabı bağlı değil veya oturum yenilenemedi.', 401));
   }
 
-  const { time_range = 'medium_term', limit = 10 } = req.query;
-  const data = await spotifyService.getTopTracks(accessToken, time_range, Number(limit));
+  const allowedRanges = new Set(['short_term', 'medium_term', 'long_term']);
+  const requestedRange = String(req.query.time_range || 'medium_term');
+  const timeRange = allowedRanges.has(requestedRange) ? requestedRange : 'medium_term';
+  const requestedLimit = Number.parseInt(req.query.limit, 10) || 10;
+  const limit = Math.min(50, Math.max(1, requestedLimit));
 
-  const formattedTracks = data.items?.map((item, index) => ({
-    rank: index + 1,
-    title: item.name,
-    artist: item.artists.map(a => a.name).join(', '),
-    albumArt: item.album.images?.[0]?.url,
-    url: item.external_urls.spotify
-  })) || [];
+  try {
+    const data = await spotifyService.getTopTracks(accessToken, timeRange, limit);
+    const formattedTracks = data.items?.map((item, index) => ({
+      rank: index + 1,
+      title: item.name,
+      artist: item.artists?.map(a => a.name).join(', ') || 'Bilinmeyen sanatçı',
+      albumArt: item.album?.images?.[0]?.url || '',
+      url: item.external_urls?.spotify || ''
+    })) || [];
+    return res.status(200).json({ status: 'success', topTracks: formattedTracks });
+  } catch (error) {
+    if (error.status === 401 || error.status === 403) return next(new AppError('Spotify erişimin geçersiz veya dinleme verilerine izin verilmiyor. Hesabını yeniden bağla.', error.status));
+    throw error;
+  }
+});
 
-  res.status(200).json({ status: 'success', topTracks: formattedTracks });
+
+/** Saved Songs / Liked Songs for the authenticated user. */
+export const getSavedTracks = catchAsync(async (req, res, next) => {
+  const userId = req.user.id || req.user._id;
+  const accessToken = await getValidAccessTokenForUser(userId);
+  if (!accessToken) return next(new AppError('Spotify hesabın bağlı değil veya yeniden bağlanman gerekiyor.', 401));
+
+  try {
+    const data = await spotifyService.getSavedTracks(accessToken, 30);
+    const tracks = (data.items || []).map(({ track }, index) => ({
+      rank: index + 1,
+      id: track?.id,
+      title: track?.name || 'Bilinmeyen parça',
+      artist: track?.artists?.map(artist => artist.name).join(', ') || 'Bilinmeyen sanatçı',
+      album: track?.album?.name || '',
+      albumArt: track?.album?.images?.[0]?.url || '',
+      url: track?.external_urls?.spotify || ''
+    })).filter(track => track.id);
+    return res.status(200).json({ status: 'success', tracks, total: data.total || tracks.length });
+  } catch (error) {
+    if (error.status === 401) return next(new AppError('Spotify erişimin geçersiz. Lütfen hesabını yeniden bağla.', 401));
+    if (error.status === 403) return next(new AppError('Spotify kaydedilen şarkılarına erişim izni vermedi. Hesabını yeniden bağla.', 403));
+    throw error;
+  }
 });
 
 
@@ -230,13 +266,15 @@ export const getSpotifyStatus = catchAsync(async (req, res, next) => {
 
   const account = result.rows[0];
   let usable = false;
+  let spotifyProfile = null;
 
   // Token'ı backend tarafında kontrol et ve gerekiyorsa yenile.
   try {
     const accessToken = await getValidAccessTokenForUser(userId);
-    usable = Boolean(accessToken);
+    if (accessToken) spotifyProfile = await spotifyService.getUserProfile(accessToken);
+    usable = Boolean(spotifyProfile?.id);
   } catch (error) {
-    // Token bilgilerini veya hata ayrıntılarını istemciye gönderme.
+    // Token'ı veya hata ayrıntılarını istemciye gönderme.
     usable = false;
   }
 
@@ -246,8 +284,12 @@ export const getSpotifyStatus = catchAsync(async (req, res, next) => {
     usable,
     reconnectRequired: !usable,
     account: {
-      displayName: account.display_name,
-      spotifyUserId: account.spotify_user_id
+      displayName: spotifyProfile?.display_name || account.display_name,
+      spotifyUserId: account.spotify_user_id,
+      image: spotifyProfile?.images?.[0]?.url || null,
+      country: spotifyProfile?.country || null,
+      product: spotifyProfile?.product || null,
+      followers: spotifyProfile?.followers?.total ?? null
     }
   });
 });

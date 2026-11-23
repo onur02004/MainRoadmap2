@@ -70,6 +70,12 @@
             </svg>
             <span class="nav-label">Search</span>
           </a>
+          <a href="#account" class="nav-link" id="navLinkAccount">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path>
+            </svg>
+            <span class="nav-label">Hesabım</span>
+          </a>
           <a href="#quit" class="nav-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none"
               stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
@@ -639,6 +645,31 @@
             </div>
 
           </div>
+        </div>
+      </div>
+
+      <div id="view-account" class="view-section account-view">
+        <div class="account-page-scroll">
+          <header class="account-page-header">
+            <div><span class="account-eyebrow">SONG SHARE / PERSONAL SPACE</span><h1>Hesabım</h1><p>Spotify bağlantını ve müzik zevkini buradan yönet.</p></div>
+            <div class="account-header-actions"><span class="account-connection-pill" id="accountConnectionPill">Kontrol ediliyor</span></div>
+          </header>
+
+          <section class="account-spotify-profile glass-panel" id="accountSpotifyProfile">
+            <div class="account-spotify-mark" id="accountSpotifyMark"><i class="fa-brands fa-spotify"></i></div>
+            <div class="account-spotify-copy"><span class="account-eyebrow">SPOTIFY HESABI</span><h2 id="accountSpotifyName">Spotify bağlı değil</h2><p id="accountSpotifyDescription">Spotify hesabını bağlayarak favorilerini ve dinleme istatistiklerini burada görebilirsin.</p><div class="account-profile-facts" id="accountSpotifyFacts"></div></div>
+            <div class="account-spotify-actions"><button type="button" class="account-primary-button" id="accountSpotifyConnect">Spotify'ı bağla</button><button type="button" class="account-secondary-button" id="accountSpotifyDisconnect" hidden>Bağlantıyı kaldır</button></div>
+          </section>
+
+          <section class="account-section-block">
+            <div class="account-section-heading"><div><span class="account-eyebrow">YOUR LIBRARY</span><h2>Beğendiğin şarkılar</h2></div><span class="account-section-count" id="savedTracksCount">—</span></div>
+            <div class="account-track-grid" id="savedTracksGrid"><div class="account-empty-state">Spotify bağlantısı kontrol ediliyor…</div></div>
+          </section>
+
+          <section class="account-section-block">
+            <div class="account-section-heading"><div><span class="account-eyebrow">YOUR TASTE</span><h2>En çok dinlediklerin</h2></div><div class="account-range-tabs" role="group" aria-label="Dinleme dönemi"><button type="button" class="is-active" data-top-range="short_term">1 ay</button><button type="button" data-top-range="medium_term">6 ay</button><button type="button" data-top-range="long_term">Tümü</button></div></div>
+            <div class="account-track-grid" id="topTracksGrid"><div class="account-empty-state">Dinleme istatistikleri yükleniyor…</div></div>
+          </section>
         </div>
       </div>
 
@@ -1259,9 +1290,11 @@ _/\_/\_/\_/\</pre><i>LANDSCAPE</i></span>
     </div>
   </section>
 
+  <div id="songShareToastRegion" class="songshare-toast-region" aria-live="polite" aria-atomic="false"></div>
   <script src="https://www.youtube.com/iframe_api"></script>
   <script type="module" src="/avatarRenderer.js"></script>
   <script type="module" src="/songShare/songshare.js"></script>
+  <script type="module" src="/songShare/account.js"></script>
   <script src="/songShare/ascii-ambient.js" defer></script>
   <!-- Socket.IO client -->
 <script src="/socket.io/socket.io.js"></script>

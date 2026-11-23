@@ -9962,3 +9962,56 @@ body.companion-immersive-open .friends-listening-strip.is-docked-right {
   .fs-live-next-text,
   #fullscreenPlayerModal .fs-cover-gradient { animation: none !important; }
 }
+
+/* Song Share account view */
+.account-view { min-height: 0; }
+.account-page-scroll { height: 100%; overflow: auto; padding: 28px clamp(18px, 3vw, 42px) 42px; scrollbar-width: thin; }
+.account-page-header { display:flex; justify-content:space-between; align-items:flex-end; gap:20px; margin:0 0 26px; }
+.account-page-header h1 { margin:5px 0 7px; font-size:clamp(2rem,4vw,3rem); letter-spacing:-1.8px; }
+.account-page-header p { margin:0; color:var(--text-main); font-size:.9rem; }
+.account-eyebrow { color:var(--accent-action); font-size:.63rem; font-weight:800; letter-spacing:1.5px; }
+.account-connection-pill { display:inline-flex; align-items:center; border:1px solid var(--border-color); border-radius:99px; padding:8px 12px; color:var(--text-main); font-size:.7rem; font-weight:800; white-space:nowrap; }
+.account-connection-pill[data-state="on"] { color:#3ecf8e; border-color:rgba(62,207,142,.35); background:rgba(62,207,142,.08); }
+.account-connection-pill[data-state="warning"] { color:#fbbf24; border-color:rgba(251,191,36,.3); }
+.account-spotify-profile { display:flex; align-items:center; gap:18px; padding:22px; margin-bottom:30px; }
+.account-spotify-mark { width:54px; height:54px; display:grid; place-items:center; flex:0 0 54px; border-radius:50%; background:#1db954; color:#07130b; font-size:30px; }
+.account-spotify-copy { min-width:0; flex:1; }
+.account-spotify-copy h2 { margin:5px 0; font-size:1.15rem; }
+.account-spotify-copy p { margin:0; color:var(--text-main); font-size:.8rem; line-height:1.55; }
+.account-spotify-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.account-primary-button,.account-secondary-button { border-radius:10px; padding:10px 14px; font:700 .75rem inherit; font-family:inherit; font-size:.75rem; font-weight:800; cursor:pointer; transition:.2s ease; }
+.account-primary-button { background:var(--accent-action); color:#06110b; border:1px solid var(--accent-action); }
+.account-primary-button:hover { filter:brightness(1.08); transform:translateY(-1px); }
+.account-secondary-button { color:#fca5a5; background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.25); }
+.account-primary-button:disabled,.account-secondary-button:disabled { opacity:.55; cursor:wait; }
+.account-section-block { margin:28px 0 34px; }
+.account-section-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:13px; }
+.account-section-heading h2 { margin:5px 0 0; font-size:1.2rem; letter-spacing:-.5px; }
+.account-section-count { color:var(--text-dim); font-size:.62rem; font-weight:800; letter-spacing:1px; }
+.account-range-tabs { display:flex; gap:4px; padding:3px; border:1px solid var(--border-color); background:rgba(0,0,0,.18); border-radius:10px; }
+.account-range-tabs button { border:0; background:transparent; color:var(--text-main); padding:7px 10px; border-radius:7px; font:700 .66rem inherit; font-family:inherit; cursor:pointer; }
+.account-range-tabs button.is-active { background:rgba(62,207,142,.15); color:var(--accent-action); }
+.account-track-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.account-track-row { min-width:0; display:flex; align-items:center; gap:11px; padding:9px 11px; border:1px solid var(--border-color); border-radius:12px; background:rgba(255,255,255,.025); color:inherit; text-decoration:none; transition:.18s ease; }
+.account-track-row:hover { background:rgba(255,255,255,.055); border-color:rgba(62,207,142,.28); transform:translateY(-1px); }
+.account-track-row img { width:43px; height:43px; flex:0 0 43px; object-fit:cover; border-radius:7px; background:rgba(255,255,255,.06); }
+.account-track-rank { width:20px; flex:0 0 20px; color:var(--text-dim); font:700 .68rem 'JetBrains Mono',monospace; }
+.account-track-copy { display:flex; flex-direction:column; gap:4px; min-width:0; flex:1; }
+.account-track-copy strong,.account-track-copy small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.account-track-copy strong { font-size:.76rem; }
+.account-track-copy small { color:var(--text-main); font-size:.65rem; }
+.account-track-row > i { color:#1db954; font-size:1rem; }
+.account-empty-state { grid-column:1/-1; padding:24px; text-align:center; border:1px dashed var(--border-color); border-radius:12px; color:var(--text-main); font-size:.78rem; }
+.songshare-toast-region { position:fixed; z-index:10000; top:18px; right:18px; display:flex; flex-direction:column; gap:9px; width:min(370px,calc(100vw - 36px)); pointer-events:none; }
+.songshare-toast { display:flex; align-items:center; gap:11px; padding:13px 14px; border:1px solid rgba(255,255,255,.12); border-radius:13px; background:rgba(18,21,27,.96); color:#f8fafc; box-shadow:0 14px 38px rgba(0,0,0,.35); backdrop-filter:blur(18px); font-size:.78rem; line-height:1.45; pointer-events:auto; animation:songshareToastIn .22s ease-out; }
+.songshare-toast > i { font-size:1rem; color:#93c5fd; }
+.songshare-toast.is-success > i { color:#3ecf8e; }
+.songshare-toast.is-error > i { color:#f87171; }
+.songshare-toast span { flex:1; }
+.songshare-toast button { border:0; background:transparent; color:#94a3b8; font-size:1.2rem; cursor:pointer; }
+@keyframes songshareToastIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+@media(max-width:900px) { .account-track-grid { grid-template-columns:1fr; } .account-spotify-profile { align-items:flex-start; flex-wrap:wrap; } .account-spotify-actions { width:100%; } }
+@media(max-width:560px) { .account-page-scroll { padding:20px 14px 30px; } .account-page-header,.account-section-heading { align-items:flex-start; flex-direction:column; } .account-spotify-profile { padding:16px; } .account-range-tabs { width:100%; } .account-range-tabs button { flex:1; } }
+.account-spotify-mark img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.account-profile-facts { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
+.account-profile-facts span { padding:4px 8px; border:1px solid var(--border-color); border-radius:99px; color:var(--text-main); font-size:.62rem; }

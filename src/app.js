@@ -91,7 +91,7 @@ app.use((err, req, res, next) => {
   if (res.headersSent) return next(err);
   const statusCode = Number(err.statusCode || err.status) || 500;
   const safeStatus = statusCode >= 400 && statusCode < 600 ? statusCode : 500;
-  logger.error('HTTP', 'Request failed', { method: req.method, path: req.path, status: safeStatus, name: err.name, code: err.code });
+  logger.error('HTTP', 'Request failed', { method: req.method, path: req.path, status: safeStatus, name: err.name, code: err.code, message: err.message, ...(process.env.NODE_ENV !== 'production' ? { stack: err.stack } : {}) });
   res.status(safeStatus).json({
     status: 'error',
     message: safeStatus >= 500 && process.env.NODE_ENV === 'production'

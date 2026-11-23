@@ -16,6 +16,7 @@ router.get('/now-playing', protect, spotifyController.getNowPlaying);
 
 // /api/spotify/top-tracks
 router.get('/top-tracks', protect, spotifyController.getTopTracks);
+router.get('/saved-tracks', protect, spotifyController.getSavedTracks);
 
 router.get('/status', protect, spotifyController.getSpotifyStatus);
 router.delete('/connection', protect, spotifyController.disconnectSpotify);

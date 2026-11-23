@@ -1,5 +1,23 @@
 import { getCurrentUser, renderAvatar } from '/avatarRenderer.js';
 
+// Small, non-blocking toast notifications shared by SongShare modules.
+window.showSongShareToast = function(message, type = 'info', duration = 4200) {
+  const region = document.getElementById('songShareToastRegion');
+  if (!region) return;
+  const toast = document.createElement('div');
+  toast.className = `songshare-toast is-${type}`;
+  const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info';
+  const symbol = document.createElement('i');
+  symbol.className = `fa-solid ${icon}`;
+  const text = document.createElement('span');
+  text.textContent = String(message || 'İşlem tamamlanamadı.');
+  const close = document.createElement('button');
+  close.type = 'button'; close.setAttribute('aria-label', 'Bildirimi kapat'); close.textContent = '×';
+  close.addEventListener('click', () => toast.remove());
+  toast.append(symbol, text, close); region.appendChild(toast);
+  window.setTimeout(() => toast.remove(), duration);
+};
+
 
 // Geçici geliştirme bildirimi: modal/alert kullanmadan kısa süre gösterilir.
 let developmentNoticeTimer = null;
@@ -1400,6 +1418,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (viewName === 'home') {
       window.restoreRightPanels();
+    } else if (viewName === 'account') {
+      window.dispatchEvent(new CustomEvent('songshare:account-view')); 
     } else if (viewName === 'share' && window.currentSelectedTrack) {
       // Home/feed görünümünden geri dönünce seçili şarkı, lyrics ve sanatçı bilgileri korunur.
       window.triggerRightPanelsSlideOut(window.currentSelectedTrack);
@@ -1552,6 +1572,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setNowPlayingPolling(false);
       console.error('Spotify durum kontrolü başarısız:', err);
 
+      window.showSongShareToast?.(err.message || 'Spotify bağlantı durumu alınamadı.', 'error');
       updateSpotifyCard({
         status: 'KONTROL EDİLEMEDİ',
         label: 'Bağlantı durumu alınamadı. Sayfayı yenilemeyi dene.',
@@ -1593,6 +1614,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Spotify bağlantı hatası:', err);
 
+      window.showSongShareToast?.(err.message || 'Spotify bağlantısı başlatılamadı.', 'error');
       updateSpotifyCard({
         status: 'BAĞLANTI BAŞARISIZ',
         label: err.message || 'Spotify bağlantısı başlatılamadı.',
@@ -1600,6 +1622,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   });
+  window.addEventListener('songshare:spotify-disconnected', () => loadSpotifyStatus());
   // Spotify status is checked from startup after page state is ready.
 
   let lastTrackTitle = null;
