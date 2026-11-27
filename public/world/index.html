@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111511">
+  <title>The Commons — MainRoadmap</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/world/world.css">
+</head>
+<body>
+  <main class="world-shell">
+    <header class="world-topbar">
+      <a class="brand" href="/" aria-label="Back to MainRoadmap"><span class="brand-mark">m</span><span>mainroadmap<span class="brand-muted"> / places</span></span></a>
+      <div class="top-center"><span class="live-dot"></span><span id="online-count">CONNECTING</span><span class="top-divider"></span><span id="world-clock">THE COMMONS</span></div>
+      <a class="back-link" href="/">← Back to site</a>
+    </header>
+
+    <section class="world-stage">
+      <div id="world-canvas" class="world-canvas" aria-label="Walkable 3D office map"></div>
+      <div class="stage-vignette"></div>
+      <div class="map-title">
+        <span class="eyebrow">MAINROADMAP SOCIAL SPACE</span>
+        <h1>The Commons<span>.</span></h1>
+        <p>A little place to bump into each other.</p>
+      </div>
+      <div class="room-chip" id="current-room"><span class="room-chip-dot"></span><span>Entering the building…</span></div>
+      <div class="map-tools">
+        <button id="zoom-out" aria-label="Zoom out">−</button><button id="zoom-in" aria-label="Zoom in">+</button>
+        <button id="reset-camera" aria-label="Reset camera">◎</button>
+      </div>
+      <div class="minimap-wrap"><div class="minimap-label">FLOOR PLAN</div><canvas id="minimap" width="220" height="160"></canvas></div>
+      <div class="world-loading" id="world-loading"><div class="loader-orbit"></div><strong>Opening The Commons</strong><span>Setting the lights, pulling up a chair…</span></div>
+      <div class="world-error" id="world-error" hidden></div>
+    </section>
+
+    <footer class="world-footer">
+      <div class="player-card">
+        <div class="player-avatar" id="self-avatar"></div>
+        <div class="player-meta"><strong id="self-name">You</strong><span><i class="status-dot"></i> Exploring</span></div>
+      </div>
+      <div class="movement-hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>to move</span><b>·</b><kbd>SHIFT</kbd><span>to walk faster</span></div>
+      <div class="room-people" id="room-people"><span class="people-label">AROUND YOU</span><span class="people-empty">Just you for now</span></div>
+    </footer>
+  </main>
+  <div class="mobile-controls" id="mobile-controls" aria-label="Movement controls">
+    <button data-move="forward">▲</button><div><button data-move="left">◀</button><button data-move="back">▼</button><button data-move="right">▶</button></div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/world/world.js"></script>
+</body>
+</html>
